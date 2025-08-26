@@ -85,7 +85,7 @@ export default function HomePage() {
                   placeholder="Search by city, service type, or waiver..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-6 py-4 rounded-l-lg text-gray-900 text-lg"
+                  className="flex-1 px-6 py-4 rounded-l-lg text-gray-900 text-lg bg-white/90 backdrop-blur"
                 />
                 <button
                   type="submit"
@@ -159,10 +159,10 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">Accepted Waiver Programs</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            We work with all major Minnesota waiver programs to ensure coverage for your care needs
+            We work with caregivers that accept all major Minnesota waiver programs to ensure coverage for your care needs
           </p>
           
-          <div className="grid md:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <h3 className="font-bold text-lg mb-2 text-blue-600">CADI</h3>
               <p className="text-sm text-gray-600">Community Access for Disability Inclusion</p>
@@ -176,16 +176,12 @@ export default function HomePage() {
               <p className="text-sm text-gray-600">Elderly Waiver for seniors needing support</p>
             </div>
             <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">AC</h3>
-              <p className="text-sm text-gray-600">Alternative Care for preventive services</p>
-            </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <h3 className="font-bold text-lg mb-2 text-blue-600">DD</h3>
               <p className="text-sm text-gray-600">Developmental Disabilities comprehensive care</p>
             </div>
             <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <h3 className="font-bold text-lg mb-2 text-blue-600">CRS</h3>
-              <p className="text-sm text-gray-600">Corporate Residential Services</p>
+              <p className="text-sm text-gray-600">Community Residential Services</p>
             </div>
             <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
               <h3 className="font-bold text-lg mb-2 text-blue-600">ICS</h3>
