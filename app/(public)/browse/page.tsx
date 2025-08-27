@@ -5,25 +5,19 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ServiceType, WaiverType, SERVICE_TYPE_LABELS, WAIVER_TYPE_SHORT } from '@/lib/types/careconnect'
+import dynamic from 'next/dynamic'
+import { ServiceType, WaiverType, SERVICE_TYPE_LABELS, WAIVER_TYPE_SHORT, Provider } from '@/lib/types/careconnect'
+import { getUserLocation, calculateDistance } from '@/lib/geocoding'
 
-interface Provider {
-  id: string
-  business_name: string
-  city: string
-  state: string
-  service_types: ServiceType[]
-  accepted_waivers: WaiverType[]
-  total_capacity: number
-  current_capacity: number
-  description?: string
-  primary_photo_url?: string
-  languages_spoken?: string[]
-  years_in_business?: number
-  verified_245d: boolean
-  address?: string
-  zip_code?: string
-}
+// Dynamic import for map to avoid SSR issues
+const MapComponent = dynamic(() => import('@/components/MapComponent'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[400px] bg-gray-100 animate-pulse rounded-lg flex items-center justify-center">
+      <span className="text-gray-500">Loading map...</span>
+    </div>
+  )
+})
 
 interface User {
   id: string
@@ -32,15 +26,20 @@ interface User {
 
 export default function BrowseProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([])
+  const [filteredProviders, setFilteredProviders] = useState<Provider[]>([])
   const [loading, setLoading] = useState(true)
-  const [filters, setFilters] = useState({
-    city: '',
-    serviceType: '',
-    waiverType: '',
-    hasAvailability: false,
-  })
   const [user, setUser] = useState<User | null>(null)
   const [savedProviders, setSavedProviders] = useState<string[]>([])
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid')
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  
+  // Filters
+  const [selectedServices, setSelectedServices] = useState<ServiceType[]>([])
+  const [selectedWaivers, setSelectedWaivers] = useState<WaiverType[]>([])
+  const [selectedCity, setSelectedCity] = useState('')
+  const [maxDistance, setMaxDistance] = useState(50)
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
   
   const router = useRouter()
   const supabase = createClient()
@@ -48,6 +47,11 @@ export default function BrowseProvidersPage() {
   useEffect(() => {
     checkUser()
     loadProviders()
+    getUserLocation().then(location => {
+      if (location) {
+        setUserLocation(location)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -63,16 +67,49 @@ export default function BrowseProvidersPage() {
 
   const loadProviders = async () => {
     try {
+      // For public browsing, we'll select limited fields
+      // Protected info like contact details won't be included for non-logged users
       const query = supabase
         .from('providers')
         .select('*')
         .eq('status', 'active')
         .eq('verified_245d', true)
+        .order('created_at', { ascending: false })
 
       const { data, error } = await query
 
       if (error) throw error
-      setProviders(data || [])
+
+      // Process data to ensure it matches Provider type
+      const processedData = (data || []).map(provider => {
+        const processedProvider: Provider = {
+          ...provider,
+          // Ensure all required fields have defaults
+          service_types: provider.service_types || [],
+          accepted_waivers: provider.accepted_waivers || [],
+          status: provider.status || 'active',
+          is_at_capacity: provider.is_at_capacity || false,
+          is_ghosted: provider.is_ghosted || false,
+          referral_agreement_signed: provider.referral_agreement_signed || false,
+          verified_245d: provider.verified_245d || false,
+          total_capacity: provider.total_capacity || 0,
+          current_capacity: provider.current_capacity || 0,
+          created_at: provider.created_at || new Date().toISOString(),
+          updated_at: provider.updated_at || new Date().toISOString()
+        }
+
+        // If user is not logged in, remove sensitive information
+        if (!user) {
+          delete processedProvider.contact_phone
+          delete processedProvider.contact_email
+          delete processedProvider.contact_person
+        }
+
+        return processedProvider
+      })
+
+      setProviders(processedData)
+      setFilteredProviders(processedData)
     } catch (error) {
       console.error('Error loading providers:', error)
     } finally {
@@ -104,9 +141,99 @@ export default function BrowseProvidersPage() {
     }
   }
 
+  // Apply filters function
+  const applyFilters = () => {
+    let filtered = [...providers]
+
+    // Filter by search query
+    if (searchQuery && searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter(p => {
+        const nameMatch = p.business_name?.toLowerCase().includes(query)
+        const cityMatch = p.city?.toLowerCase().includes(query)
+        const zipMatch = p.zip_code?.includes(query)
+        const addressMatch = p.address?.toLowerCase().includes(query)
+        return nameMatch || cityMatch || zipMatch || addressMatch
+      })
+    }
+
+    // Filter by availability
+    if (showAvailableOnly) {
+      filtered = filtered.filter(p => {
+        const hasAvailability = p.current_capacity < p.total_capacity
+        return hasAvailability && !p.is_at_capacity && !p.is_ghosted
+      })
+    }
+
+    // Filter by services
+    if (selectedServices.length > 0) {
+      filtered = filtered.filter(p => 
+        p.service_types && Array.isArray(p.service_types) && 
+        selectedServices.some(service => p.service_types.includes(service))
+      )
+    }
+
+    // Filter by waivers
+    if (selectedWaivers.length > 0) {
+      filtered = filtered.filter(p => 
+        p.accepted_waivers && Array.isArray(p.accepted_waivers) && 
+        selectedWaivers.some(waiver => p.accepted_waivers.includes(waiver))
+      )
+    }
+
+    // Filter by city
+    if (selectedCity && selectedCity.trim() !== '') {
+      const cityQuery = selectedCity.toLowerCase().trim()
+      filtered = filtered.filter(p => 
+        p.city?.toLowerCase().includes(cityQuery)
+      )
+    }
+
+    // Filter by distance if user location is available
+    if (userLocation && maxDistance < 200 && providers.some(p => p.latitude && p.longitude)) {
+      filtered = filtered.filter(p => {
+        if (p.latitude && p.longitude) {
+          const distance = calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            p.latitude,
+            p.longitude
+          )
+          return distance <= maxDistance
+        }
+        return true
+      })
+    }
+
+    setFilteredProviders(filtered)
+  }
+
+  // Apply filters when filter criteria change
+  useEffect(() => {
+    if (providers.length > 0) {
+      applyFilters()
+    }
+  }, [selectedServices, selectedWaivers, selectedCity, maxDistance, showAvailableOnly, searchQuery, userLocation, providers])
+
+  const toggleService = (service: ServiceType) => {
+    setSelectedServices(prev =>
+      prev.includes(service)
+        ? prev.filter(s => s !== service)
+        : [...prev, service]
+    )
+  }
+
+  const toggleWaiver = (waiver: WaiverType) => {
+    setSelectedWaivers(prev =>
+      prev.includes(waiver)
+        ? prev.filter(w => w !== waiver)
+        : [...prev, waiver]
+    )
+  }
+
   const handleSaveProvider = async (providerId: string) => {
     if (!user) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
 
@@ -151,27 +278,15 @@ export default function BrowseProvidersPage() {
 
   const handleContact = (providerId: string) => {
     if (!user) {
-      router.push('/login')
+      router.push('/auth/login')
       return
     }
     router.push(`/care-seeker/contact/${providerId}`)
   }
 
-  const filteredProviders = providers.filter(provider => {
-    if (filters.city && !provider.city.toLowerCase().includes(filters.city.toLowerCase())) {
-      return false
-    }
-    if (filters.serviceType && !provider.service_types.includes(filters.serviceType as ServiceType)) {
-      return false
-    }
-    if (filters.waiverType && !provider.accepted_waivers.includes(filters.waiverType as WaiverType)) {
-      return false
-    }
-    if (filters.hasAvailability && provider.current_capacity >= provider.total_capacity) {
-      return false
-    }
-    return true
-  })
+  const handleProviderClick = (provider: Provider) => {
+    router.push(`/providers/${provider.id}`)
+  }
 
   const getAvailableSpots = (provider: Provider) => {
     return provider.total_capacity - provider.current_capacity
@@ -187,219 +302,356 @@ export default function BrowseProvidersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header with Search */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="text-2xl font-bold text-blue-600">
-              CareConnect
-            </Link>
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div className="flex items-center gap-4 w-full md:w-auto">
+              <h1 className="text-2xl font-bold text-gray-900">Browse 245D Care Providers</h1>
+              <span className="text-gray-500">
+                {filteredProviders.length} providers found
+              </span>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="flex-1 max-w-xl">
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search by name, city, or ZIP code..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <svg 
+                  className="absolute right-3 top-2.5 w-5 h-5 text-gray-400"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+            </div>
+
+            {/* View Toggle */}
             <div className="flex items-center gap-4">
+              <div className="flex bg-gray-100 rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'grid' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Grid
+                </button>
+                <button
+                  onClick={() => setViewMode('map')}
+                  className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                    viewMode === 'map' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Map
+                </button>
+              </div>
+              
+              {/* Auth Actions */}
               {user ? (
-                <>
-                  <Link href="/care-seeker/dashboard" className="text-gray-700 hover:text-blue-600">
-                    Dashboard
-                  </Link>
-                  <Link href="/care-seeker/saved" className="text-gray-700 hover:text-blue-600">
-                    Saved ({savedProviders.length})
-                  </Link>
-                </>
+                <Link href="/care-seeker/saved" className="text-gray-700 hover:text-blue-600 font-medium">
+                  Saved ({savedProviders.length})
+                </Link>
               ) : (
-                <>
-                  <Link href="/login" className="text-gray-700 hover:text-blue-600">
+                <div className="flex gap-2">
+                  <Link href="/auth/login" className="text-gray-700 hover:text-blue-600">
                     Sign In
                   </Link>
                   <Link 
                     href="/auth/register-care-seeker" 
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm"
                   >
                     Sign Up
                   </Link>
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="bg-white border-b py-4">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-wrap gap-4">
-            <input
-              type="text"
-              placeholder="City"
-              value={filters.city}
-              onChange={(e) => setFilters({...filters, city: e.target.value})}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            
-            <select
-              value={filters.serviceType}
-              onChange={(e) => setFilters({...filters, serviceType: e.target.value})}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Services</option>
-              <option value="ICS">Integrated Community Services</option>
-              <option value="FRS">Family Residential Services</option>
-              <option value="CRS">Community Residential Services</option>
-              <option value="DC_DM">Day Care/Day Services</option>
-              <option value="ADL_SUPPORT">ADLs Support</option>
-              <option value="ASSISTED_LIVING">Assisted Living</option>
-            </select>
-
-            <select
-              value={filters.waiverType}
-              onChange={(e) => setFilters({...filters, waiverType: e.target.value})}
-              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">All Waivers</option>
-              <option value="CADI">CADI Waiver</option>
-              <option value="DD">DD Waiver</option>
-              <option value="BI">BI Waiver</option>
-              <option value="ELDERLY">Elderly Waiver</option>
-            </select>
-
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={filters.hasAvailability}
-                onChange={(e) => setFilters({...filters, hasAvailability: e.target.checked})}
-                className="mr-2"
-              />
-              <span>Available spots only</span>
-            </label>
-
-            <button
-              onClick={() => setFilters({ city: '', serviceType: '', waiverType: '', hasAvailability: false })}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              Clear filters
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Results */}
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Browse Care Providers
-          </h1>
-          <p className="text-gray-600">
-            {filteredProviders.length} verified 245D providers found
-          </p>
-        </div>
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Filters Sidebar */}
+          <div className="lg:w-1/4">
+            <div className="bg-white rounded-lg shadow p-6 sticky top-24">
+              <h2 className="text-lg font-semibold mb-4">Filters</h2>
 
-        {filteredProviders.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600">No providers found matching your criteria</p>
-            <button
-              onClick={() => setFilters({ city: '', serviceType: '', waiverType: '', hasAvailability: false })}
-              className="mt-4 text-blue-600 hover:underline"
-            >
-              Clear all filters
-            </button>
-          </div>
-        ) : (
-          <div className="grid gap-6">
-            {filteredProviders.map((provider) => {
-              const availableSpots = getAvailableSpots(provider)
-              const isSaved = savedProviders.includes(provider.id)
-              
-              return (
-                <div key={provider.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
-                  <div className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                          {provider.business_name}
-                        </h2>
-                        <p className="text-gray-600">
-                          {provider.city}, {provider.state} {provider.zip_code}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {provider.verified_245d && (
-                          <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                            ✓ 245D Verified
-                          </span>
-                        )}
-                        {availableSpots > 0 ? (
-                          <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                            {availableSpots} spots available
-                          </span>
-                        ) : (
-                          <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                            Full
-                          </span>
-                        )}
-                      </div>
-                    </div>
+              {/* Availability Filter */}
+              <div className="mb-6">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={showAvailableOnly}
+                    onChange={(e) => setShowAvailableOnly(e.target.checked)}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">Show available only</span>
+                </label>
+              </div>
 
-                    {provider.description && (
-                      <p className="text-gray-700 mb-4 line-clamp-2">
-                        {provider.description}
-                      </p>
-                    )}
-
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2 mb-2">
-                        <span className="text-sm font-medium text-gray-600">Services:</span>
-                        {provider.service_types.map((service) => (
-                          <span key={service} className="text-sm bg-gray-100 px-2 py-1 rounded">
-                            {SERVICE_TYPE_LABELS[service]}
-                          </span>
-                        ))}
-                      </div>
-                      
-                      <div className="flex flex-wrap gap-2">
-                        <span className="text-sm font-medium text-gray-600">Accepts:</span>
-                        {provider.accepted_waivers.map((waiver) => (
-                          <span key={waiver} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                            {WAIVER_TYPE_SHORT[waiver]}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {provider.languages_spoken && provider.languages_spoken.length > 0 && (
-                      <div className="mb-4">
-                        <span className="text-sm font-medium text-gray-600">Languages: </span>
-                        <span className="text-sm text-gray-700">{provider.languages_spoken.join(', ')}</span>
-                      </div>
-                    )}
-
-                    <div className="flex gap-3">
-                      <Link
-                        href={`/providers/${provider.id}`}
-                        className="flex-1 text-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        View Details
-                      </Link>
-                      <button
-                        onClick={() => handleSaveProvider(provider.id)}
-                        className={`py-2 px-4 rounded-lg transition-colors ${
-                          isSaved 
-                            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {isSaved ? '★ Saved' : '☆ Save'}
-                      </button>
-                      <button
-                        onClick={() => handleContact(provider.id)}
-                        className="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                      >
-                        Contact
-                      </button>
-                    </div>
+              {/* 245D Service Types */}
+              <div className="mb-6">
+                <h3 className="font-medium mb-3">245D Service Types</h3>
+                
+                {/* Basic Services */}
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-blue-600 mb-2">Basic Services</h4>
+                  <div className="space-y-2 ml-2">
+                    {['ICS', 'FRS', 'CRS', 'DC_DM'].map(key => (
+                      <label key={key} className="flex items-center text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedServices.includes(key as ServiceType)}
+                          onChange={() => toggleService(key as ServiceType)}
+                          className="mr-2"
+                        />
+                        <span className="text-xs">{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                      </label>
+                    ))}
                   </div>
                 </div>
-              )
-            })}
+
+                {/* Comprehensive Services */}
+                <div>
+                  <h4 className="text-sm font-medium text-green-600 mb-2">Comprehensive Services</h4>
+                  <div className="space-y-2 ml-2">
+                    {['ADL_SUPPORT', 'ASSISTED_LIVING'].map(key => (
+                      <label key={key} className="flex items-center text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedServices.includes(key as ServiceType)}
+                          onChange={() => toggleService(key as ServiceType)}
+                          className="mr-2"
+                        />
+                        <span className="text-xs">{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Waiver Types */}
+              <div className="mb-6">
+                <h3 className="font-medium mb-3">Accepted Waivers</h3>
+                <div className="space-y-2">
+                  {Object.entries(WAIVER_TYPE_SHORT).map(([key, label]) => (
+                    <label key={key} className="flex items-center text-sm">
+                      <input
+                        type="checkbox"
+                        checked={selectedWaivers.includes(key as WaiverType)}
+                        onChange={() => toggleWaiver(key as WaiverType)}
+                        className="mr-2"
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Location */}
+              <div className="mb-6">
+                <h3 className="font-medium mb-3">Location</h3>
+                <input
+                  type="text"
+                  placeholder="City name..."
+                  value={selectedCity}
+                  onChange={(e) => setSelectedCity(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+                {userLocation && (
+                  <div className="mt-3">
+                    <label className="text-sm text-gray-600">
+                      Within {maxDistance} miles
+                    </label>
+                    <input
+                      type="range"
+                      min="10"
+                      max="200"
+                      step="10"
+                      value={maxDistance}
+                      onChange={(e) => setMaxDistance(Number(e.target.value))}
+                      className="w-full mt-1"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Clear Filters */}
+              <button
+                onClick={() => {
+                  setSelectedServices([])
+                  setSelectedWaivers([])
+                  setSelectedCity('')
+                  setMaxDistance(50)
+                  setShowAvailableOnly(false)
+                  setSearchQuery('')
+                }}
+                className="w-full py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+              >
+                Clear All Filters
+              </button>
+            </div>
           </div>
-        )}
+
+          {/* Main Content Area */}
+          <div className="lg:w-3/4">
+            {filteredProviders.length === 0 ? (
+              <div className="bg-white rounded-lg shadow p-12 text-center">
+                <p className="text-gray-600">No providers found matching your criteria.</p>
+                <button
+                  onClick={() => {
+                    setSelectedServices([])
+                    setSelectedWaivers([])
+                    setSelectedCity('')
+                    setShowAvailableOnly(false)
+                    setSearchQuery('')
+                  }}
+                  className="mt-4 text-blue-600 hover:underline"
+                >
+                  Clear filters and try again
+                </button>
+              </div>
+            ) : viewMode === 'map' ? (
+              <div className="bg-white rounded-lg shadow overflow-hidden">
+                <MapComponent 
+                  providers={filteredProviders}
+                  height="700px"
+                  onProviderClick={handleProviderClick}
+                  showSearch={false}
+                />
+              </div>
+            ) : (
+              <div className="grid gap-6">
+                {filteredProviders.map((provider) => {
+                  const availableSpots = getAvailableSpots(provider)
+                  const isSaved = savedProviders.includes(provider.id)
+                  
+                  return (
+                    <div key={provider.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+                      <div className="p-6">
+                        <div className="flex justify-between items-start mb-4">
+                          <div>
+                            <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                              {provider.business_name}
+                            </h2>
+                            <p className="text-gray-600">
+                              {provider.city}, {provider.state} {provider.zip_code}
+                            </p>
+                            {/* Only show contact info if logged in */}
+                            {user && provider.contact_phone && (
+                              <p className="text-sm text-gray-500 mt-1">
+                                Contact: {provider.contact_person}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {provider.verified_245d && (
+                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                ✓ 245D Verified
+                              </span>
+                            )}
+                            {availableSpots > 0 ? (
+                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                {availableSpots} spots available
+                              </span>
+                            ) : (
+                              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                Full
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {provider.description && (
+                          <p className="text-gray-700 mb-4 line-clamp-2">
+                            {provider.description}
+                          </p>
+                        )}
+
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            <span className="text-sm font-medium text-gray-600">Services:</span>
+                            {provider.service_types.map((service) => (
+                              <span key={service} className="text-sm bg-gray-100 px-2 py-1 rounded">
+                                {SERVICE_TYPE_LABELS[service] || service}
+                              </span>
+                            ))}
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            <span className="text-sm font-medium text-gray-600">Accepts:</span>
+                            {provider.accepted_waivers.map((waiver) => (
+                              <span key={waiver} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                                {WAIVER_TYPE_SHORT[waiver] || waiver}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {provider.languages_spoken && provider.languages_spoken.length > 0 && (
+                          <div className="mb-4">
+                            <span className="text-sm font-medium text-gray-600">Languages: </span>
+                            <span className="text-sm text-gray-700">{provider.languages_spoken.join(', ')}</span>
+                          </div>
+                        )}
+
+                        <div className="flex gap-3">
+                          <Link
+                            href={`/providers/${provider.id}`}
+                            className="flex-1 text-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                          >
+                            View Details
+                          </Link>
+                          
+                          {user ? (
+                            <>
+                              <button
+                                onClick={() => handleSaveProvider(provider.id)}
+                                className={`py-2 px-4 rounded-lg transition-colors ${
+                                  isSaved 
+                                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                {isSaved ? '★ Saved' : '☆ Save'}
+                              </button>
+                              <button
+                                onClick={() => handleContact(provider.id)}
+                                className="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                              >
+                                Contact
+                              </button>
+                            </>
+                          ) : (
+                            <Link
+                              href="/auth/login"
+                              className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                              Sign in to Contact
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
