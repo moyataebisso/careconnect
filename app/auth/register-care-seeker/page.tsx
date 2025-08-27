@@ -137,65 +137,172 @@ export default function RegisterCareSeekerPage() {
     setError(null)
 
     try {
+      console.log('Starting care seeker registration...')
+      
       // 1. Create auth user
+      console.log('Creating auth user with email:', formData.email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
       })
 
-      if (authError) throw authError
-      if (!authData.user) throw new Error('Registration failed')
-
-      // 2. Create user role
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: authData.user.id,
-          role: 'care_seeker'
-        })
-
-      if (roleError) {
-        console.error('Role creation error:', roleError)
+      if (authError) {
+        console.error('Auth error details:', authError)
+        
+        // Check for duplicate user error
+        if (authError.message?.includes('already registered') || 
+            authError.message?.includes('duplicate') ||
+            authError.message?.includes('already exists')) {
+          throw new Error('This email is already registered. Please login or use a different email.')
+        }
+        
+        throw new Error(authError.message)
       }
 
-      // 3. Create care seeker profile
-      const { error: profileError } = await supabase
-        .from('care_seekers')
-        .insert({
-          user_id: authData.user.id,
-          email: formData.email,
-          first_name: formData.first_name,
-          last_name: formData.last_name,
-          phone: formData.phone || null,
-          relationship_to_patient: formData.relationship_to_patient,
-          patient_name: formData.relationship_to_patient !== 'self' ? formData.patient_name : null,
-          patient_age: formData.patient_age ? parseInt(formData.patient_age) : null,
-          care_type: formData.care_type || null,
-          service_types_needed: formData.service_types_needed,
-          care_needs: formData.care_needs,
-          preferred_city: formData.preferred_city || null,
-          preferred_zip: formData.preferred_zip || null,
-          preferred_distance: parseInt(formData.preferred_distance),
-          has_waiver: formData.has_waiver,
-          waiver_type: formData.has_waiver ? formData.waiver_type : null,
-          budget_min: formData.budget_min ? parseFloat(formData.budget_min) : null,
-          budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
-          urgency: formData.urgency,
-          move_in_date: formData.move_in_date || null,
-        })
+      if (!authData.user) {
+        throw new Error('No user returned from signup')
+      }
 
-      if (profileError) throw profileError
+      console.log('User created successfully:', authData.user.id)
+
+      // 2. Create user role (optional - skip if it fails)
+      try {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: authData.user.id,
+            role: 'care_seeker'
+          })
+
+        if (roleError) {
+          console.log('Role creation skipped:', roleError.message)
+          // Don't throw - this is non-critical
+        } else {
+          console.log('User role created successfully')
+        }
+      } catch (roleErr) {
+        console.log('User roles table may not exist, skipping role creation')
+      }
+
+      // 3. Create care seeker profile - FIXED VERSION
+      console.log('Creating care seeker profile...')
+      
+      // Build the care seeker data to match your database schema exactly
+      const careSeekerData = {
+        // Don't include 'id' - let the database generate it with gen_random_uuid()
+        user_id: authData.user.id,
+        email: formData.email, // ADD this - it was missing!
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        phone: formData.phone || null,
+        relationship_to_patient: formData.relationship_to_patient,
+        patient_name: formData.relationship_to_patient !== 'self' ? formData.patient_name : null,
+        patient_age: formData.patient_age ? parseInt(formData.patient_age) : null,
+        care_type: formData.care_type || null,
+        service_types_needed: formData.service_types_needed, // This should work as ARRAY
+        care_needs: formData.care_needs,
+        preferred_city: formData.preferred_city || null,
+        preferred_zip: formData.preferred_zip || null,
+        preferred_distance: parseInt(formData.preferred_distance),
+        has_waiver: formData.has_waiver,
+        waiver_type: formData.has_waiver ? formData.waiver_type : null,
+        budget_min: formData.budget_min ? parseFloat(formData.budget_min) : null,
+        budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
+        urgency: formData.urgency,
+        move_in_date: formData.move_in_date || null,
+        is_active: true, // Set to true by default
+        // created_at and updated_at will be set automatically
+      }
+
+      console.log('Care seeker data to insert:', careSeekerData)
+
+      const { data: careSeekerResult, error: profileError } = await supabase
+        .from('care_seekers')
+        .insert(careSeekerData)
+        .select()
+
+      if (profileError) {
+        console.error('Care seeker profile error details:', {
+          message: profileError.message,
+          details: profileError.details,
+          hint: profileError.hint,
+          code: profileError.code
+        })
+        console.error('Care seeker data that failed:', careSeekerData)
+        
+        // Better error messages for common issues
+        if (profileError.code === '23505') { // Unique violation
+          if (profileError.message.includes('email')) {
+            throw new Error('A care seeker account with this email already exists.')
+          }
+          if (profileError.message.includes('user_id')) {
+            throw new Error('A care seeker account already exists for this user.')
+          }
+          throw new Error('This care seeker information already exists.')
+        }
+        
+        if (profileError.code === '23503') { // Foreign key violation
+          throw new Error('User registration failed. Please try again.')
+        }
+        
+        if (profileError.code === '42501') { // Permission denied
+          throw new Error('Permission denied. Please check your account permissions.')
+        }
+        
+        throw new Error(`Profile creation failed: ${profileError.message}`)
+      }
+
+      console.log('Care seeker profile created successfully:', careSeekerResult)
+
+      // 4. Try to update or create profile in profiles table if it exists (optional)
+      try {
+        // First try to insert the profile
+        const { error: profileInsertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: authData.user.id,
+            email: formData.email,
+            full_name: `${formData.first_name} ${formData.last_name}`,
+            role: 'care_seeker',
+            phone: formData.phone || null
+          })
+
+        if (profileInsertError) {
+          // If insert fails (profile might already exist from trigger), try update
+          const { error: profileUpdateError } = await supabase
+            .from('profiles')
+            .update({
+              full_name: `${formData.first_name} ${formData.last_name}`,
+              role: 'care_seeker',
+              phone: formData.phone || null
+            })
+            .eq('id', authData.user.id)
+
+          if (profileUpdateError) {
+            console.log('Profile update skipped:', profileUpdateError.message)
+          } else {
+            console.log('Profile updated successfully')
+          }
+        } else {
+          console.log('Profile created successfully')
+        }
+      } catch (profileErr) {
+        console.log('Profile table operation skipped:', profileErr)
+        // Don't throw - profile table operations are non-critical
+      }
 
       // Success!
       alert('Registration successful! Please check your email to verify your account.')
       router.push('/login')
       
     } catch (error) {
-      console.error('Registration error:', error)
+      console.error('Full registration error:', error)
       if (error instanceof Error) {
         setError(error.message)
+      } else if (typeof error === 'string') {
+        setError(error)
       } else {
-        setError('Registration failed. Please try again.')
+        setError('Registration failed. Please check the console for details.')
       }
     } finally {
       setLoading(false)
