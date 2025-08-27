@@ -115,40 +115,85 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Services Section */}
+      {/* 245D Services Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Our Services</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">245D Licensed Services</h2>
+          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+            All our providers are licensed under Minnesota 245D program standards
+          </p>
           
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
+          <div className="max-w-6xl mx-auto">
+            {/* Basic Services */}
+            <div className="mb-8">
+              <h3 className="text-2xl font-semibold mb-4 text-blue-600">Basic Services</h3>
+              <div className="grid md:grid-cols-4 gap-4">
+                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">ICS</h4>
+                  <p className="text-sm text-gray-600">Integrated Community Services - Support for independent living</p>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">FRS</h4>
+                  <p className="text-sm text-gray-600">Family Residential Services - Family-style home environment</p>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">CRS</h4>
+                  <p className="text-sm text-gray-600">Community Residential Services - Group living with support</p>
+                </div>
+
+                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">DC/DM</h4>
+                  <p className="text-sm text-gray-600">Day Care/Day Services - Daily programs and activities</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Foster Care</h3>
-              <p className="text-gray-600">Safe, nurturing homes for children and adults needing temporary or long-term care</p>
             </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Group Homes</h3>
-              <p className="text-gray-600">Community-based residential settings with professional support staff</p>
-            </div>
+            {/* Comprehensive Services */}
+            <div>
+              <h3 className="text-2xl font-semibold mb-4 text-blue-600">Comprehensive Services</h3>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">ADLs Support</h4>
+                  <p className="text-sm text-gray-600">Activities of Daily Living - Personal care assistance including bathing, dressing, medication management</p>
+                </div>
 
-            <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
+                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow">
+                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-semibold mb-2">Assisted Living</h4>
+                  <p className="text-sm text-gray-600">24/7 comprehensive care with full ADL support, meals, and medication administration</p>
+                </div>
               </div>
-              <h3 className="text-xl font-semibold mb-2">Assisted Living</h3>
-              <p className="text-gray-600">Comprehensive care with daily living assistance and medical support</p>
             </div>
           </div>
         </div>
@@ -159,38 +204,36 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4">Accepted Waiver Programs</h2>
           <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            We work with caregivers that accept all major Minnesota waiver programs to ensure coverage for your care needs
+            We work with providers that accept Minnesota waiver programs to ensure coverage for your care needs
           </p>
           
-          <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">CADI</h3>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+            <div className="border-2 border-blue-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-blue-50">
+              <h3 className="font-bold text-lg mb-2 text-blue-700">CADI Waiver</h3>
+              <p className="text-sm text-gray-700 font-medium mb-1">Ages 18+</p>
               <p className="text-sm text-gray-600">Community Access for Disability Inclusion</p>
             </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">BI</h3>
-              <p className="text-sm text-gray-600">Brain Injury waiver for specialized care</p>
-            </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">EW</h3>
-              <p className="text-sm text-gray-600">Elderly Waiver for seniors needing support</p>
-            </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">DD</h3>
+            <div className="border-2 border-blue-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-blue-50">
+              <h3 className="font-bold text-lg mb-2 text-blue-700">DD Waiver</h3>
+              <p className="text-sm text-gray-700 font-medium mb-1">All Ages</p>
               <p className="text-sm text-gray-600">Developmental Disabilities comprehensive care</p>
             </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">CRS</h3>
-              <p className="text-sm text-gray-600">Community Residential Services</p>
+            <div className="border-2 border-blue-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-blue-50">
+              <h3 className="font-bold text-lg mb-2 text-blue-700">BI Waiver</h3>
+              <p className="text-sm text-gray-700 font-medium mb-1">All Ages</p>
+              <p className="text-sm text-gray-600">Brain Injury specialized support services</p>
             </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">ICS</h3>
-              <p className="text-sm text-gray-600">Integrated Community Services</p>
+            <div className="border-2 border-blue-200 rounded-lg p-6 hover:shadow-lg transition-shadow bg-blue-50">
+              <h3 className="font-bold text-lg mb-2 text-blue-700">Elderly Waiver</h3>
+              <p className="text-sm text-gray-700 font-medium mb-1">Ages 65+</p>
+              <p className="text-sm text-gray-600">Support for seniors to remain in community settings</p>
             </div>
-            <div className="border rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <h3 className="font-bold text-lg mb-2 text-blue-600">Assisted Living</h3>
-              <p className="text-sm text-gray-600">24/7 care with ADL support</p>
-            </div>
+          </div>
+          
+          <div className="mt-8 text-center">
+            <p className="text-sm text-gray-500 italic">
+              Note: We do not currently work with providers accepting private pay clients
+            </p>
           </div>
         </div>
       </section>
@@ -198,8 +241,8 @@ export default function HomePage() {
       {/* CTA Section for Providers */}
       <section className="py-16 bg-orange-500 text-white">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Are you a 245D care provider?</h2>
-          <p className="text-xl mb-8">Join CareConnect to receive qualified referrals</p>
+          <h2 className="text-3xl font-bold mb-4">Are you a 245D licensed provider?</h2>
+          <p className="text-xl mb-8">Join CareConnect to receive qualified waiver-based referrals</p>
           <Link 
             href="/register" 
             className="inline-block bg-white text-orange-500 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
@@ -243,7 +286,7 @@ export default function HomePage() {
           <div className="mt-16 max-w-3xl mx-auto text-center">
             <p className="text-gray-600 mb-8">
               Our proven system connects you with social workers, discharge planners, and case managers 
-              who are actively seeking quality housing solutions for their clients.
+              who are actively seeking quality 245D licensed housing solutions for their waiver clients.
             </p>
             <Link 
               href="/providers" 

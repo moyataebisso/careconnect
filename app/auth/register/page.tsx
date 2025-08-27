@@ -4,7 +4,27 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { ServiceType, WaiverType, SERVICE_TYPE_LABELS, WAIVER_TYPE_LABELS } from '@/lib/types/careconnect'
+import { ServiceType, WaiverType } from '@/lib/types/careconnect'
+
+// Updated service types for 245D programs
+const SERVICE_TYPES_245D = {
+  // Basic Services
+  ICS: 'Integrated Community Services',
+  FRS: 'Family Residential Services', 
+  CRS: 'Community Residential Services',
+  DC_DM: 'Day Care/Day Services',
+  // Comprehensive Services
+  ADL_SUPPORT: 'ADLs Support (Activities of Daily Living)',
+  ASSISTED_LIVING: 'Assisted Living (24/7 Care with ADLs)'
+} as const
+
+// Updated waiver types - removed private pay
+const WAIVER_TYPES = {
+  CADI: 'CADI - Community Access for Disability Inclusion (18+)',
+  DD: 'DD - Developmental Disabilities (All Ages)',
+  BI: 'BI - Brain Injury (All Ages)',
+  ELDERLY: 'Elderly Waiver (65+)'
+} as const
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -33,8 +53,8 @@ export default function RegisterPage() {
     zip_code: '',
     
     // Step 4: Services
-    service_types: [] as ServiceType[],
-    accepted_waivers: [] as WaiverType[],
+    service_types: [] as string[],
+    accepted_waivers: [] as string[],
     total_capacity: '',
     current_capacity: '0',
     
@@ -61,7 +81,7 @@ export default function RegisterPage() {
     }
   }
 
-  const handleServiceTypeChange = (service: ServiceType) => {
+  const handleServiceTypeChange = (service: string) => {
     setFormData(prev => ({
       ...prev,
       service_types: prev.service_types.includes(service)
@@ -70,7 +90,7 @@ export default function RegisterPage() {
     }))
   }
 
-  const handleWaiverChange = (waiver: WaiverType) => {
+  const handleWaiverChange = (waiver: string) => {
     setFormData(prev => ({
       ...prev,
       accepted_waivers: prev.accepted_waivers.includes(waiver)
@@ -109,7 +129,7 @@ export default function RegisterPage() {
         break
       case 4:
         if (formData.service_types.length === 0) {
-          setError('Please select at least one service type')
+          setError('Please select at least one 245D service type')
           return false
         }
         if (formData.accepted_waivers.length === 0) {
@@ -223,7 +243,7 @@ export default function RegisterPage() {
       }
 
       // Success!
-      alert('Registration successful! Please check your email to verify your account. An admin will review your application within 24-48 hours.')
+      alert('Registration successful! Please check your email to verify your account. An admin will review your 245D license within 24-48 hours.')
       router.push('/login')
       
     } catch (error) {
@@ -245,8 +265,8 @@ export default function RegisterPage() {
       <div className="container mx-auto px-4 max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Provider Registration</h1>
-          <p className="text-gray-600">Join CareConnect network of quality 245D care providers</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">245D Provider Registration</h1>
+          <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
         </div>
 
         {/* Progress Bar */}
@@ -333,7 +353,7 @@ export default function RegisterPage() {
             {/* Step 2: Business Information */}
             {step === 2 && (
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold mb-4">Business Information</h2>
+                <h2 className="text-xl font-semibold mb-4">245D Business Information</h2>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -346,7 +366,7 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Your Care Home Name"
+                    placeholder="Your Licensed Facility Name"
                   />
                 </div>
 
@@ -363,6 +383,7 @@ export default function RegisterPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="245D-XXXX-XXX"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Your Minnesota 245D license number for verification</p>
                 </div>
 
                 <div>
@@ -453,48 +474,135 @@ export default function RegisterPage() {
 
             {/* Step 4: Services & Capacity */}
             {step === 4 && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-semibold mb-4">Services & Capacity</h2>
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold mb-4">245D Services & Waiver Programs</h2>
                 
+                {/* 245D Service Types */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Service Types Offered * (Select all that apply)
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    245D Service Types * (Select all that apply)
                   </label>
-                  <div className="space-y-2">
-                    {(Object.keys(SERVICE_TYPE_LABELS) as ServiceType[]).map(service => (
-                      <label key={service} className="flex items-center">
+                  
+                  {/* Basic Services */}
+                  <div className="mb-4">
+                    <h4 className="font-medium text-blue-600 mb-2">Basic Services</h4>
+                    <div className="space-y-2 ml-3">
+                      <label className="flex items-center">
                         <input
                           type="checkbox"
-                          checked={formData.service_types.includes(service)}
-                          onChange={() => handleServiceTypeChange(service)}
+                          checked={formData.service_types.includes('ICS')}
+                          onChange={() => handleServiceTypeChange('ICS')}
                           className="mr-3"
                         />
-                        <span>
-                          <strong>{service}</strong> - {SERVICE_TYPE_LABELS[service]}
-                        </span>
+                        <span><strong>ICS</strong> - Integrated Community Services</span>
                       </label>
-                    ))}
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.service_types.includes('FRS')}
+                          onChange={() => handleServiceTypeChange('FRS')}
+                          className="mr-3"
+                        />
+                        <span><strong>FRS</strong> - Family Residential Services</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.service_types.includes('CRS')}
+                          onChange={() => handleServiceTypeChange('CRS')}
+                          className="mr-3"
+                        />
+                        <span><strong>CRS</strong> - Community Residential Services</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.service_types.includes('DC_DM')}
+                          onChange={() => handleServiceTypeChange('DC_DM')}
+                          className="mr-3"
+                        />
+                        <span><strong>DC/DM</strong> - Day Care/Day Services</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Comprehensive Services */}
+                  <div>
+                    <h4 className="font-medium text-green-600 mb-2">Comprehensive Services</h4>
+                    <div className="space-y-2 ml-3">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.service_types.includes('ADL_SUPPORT')}
+                          onChange={() => handleServiceTypeChange('ADL_SUPPORT')}
+                          className="mr-3"
+                        />
+                        <span><strong>ADLs Support</strong> - Activities of Daily Living assistance</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.service_types.includes('ASSISTED_LIVING')}
+                          onChange={() => handleServiceTypeChange('ASSISTED_LIVING')}
+                          className="mr-3"
+                        />
+                        <span><strong>Assisted Living</strong> - 24/7 Care with full ADL support</span>
+                      </label>
+                    </div>
                   </div>
                 </div>
 
+                {/* Accepted Waivers */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Accepted Waivers * (Select all that apply)
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Accepted Waiver Programs * (Select all that apply)
                   </label>
+                  <p className="text-xs text-gray-500 mb-3">Note: We only work with waiver-accepting providers, not private pay</p>
                   <div className="space-y-2">
-                    {(Object.keys(WAIVER_TYPE_LABELS) as WaiverType[]).map(waiver => (
-                      <label key={waiver} className="flex items-start">
-                        <input
-                          type="checkbox"
-                          checked={formData.accepted_waivers.includes(waiver)}
-                          onChange={() => handleWaiverChange(waiver)}
-                          className="mr-3 mt-1"
-                        />
-                        <span>
-                          <strong>{waiver}</strong> - {WAIVER_TYPE_LABELS[waiver]}
-                        </span>
-                      </label>
-                    ))}
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={formData.accepted_waivers.includes('CADI')}
+                        onChange={() => handleWaiverChange('CADI')}
+                        className="mr-3 mt-1"
+                      />
+                      <span>
+                        <strong>CADI</strong> - Community Access for Disability Inclusion (Ages 18+)
+                      </span>
+                    </label>
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={formData.accepted_waivers.includes('DD')}
+                        onChange={() => handleWaiverChange('DD')}
+                        className="mr-3 mt-1"
+                      />
+                      <span>
+                        <strong>DD</strong> - Developmental Disabilities (All Ages)
+                      </span>
+                    </label>
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={formData.accepted_waivers.includes('BI')}
+                        onChange={() => handleWaiverChange('BI')}
+                        className="mr-3 mt-1"
+                      />
+                      <span>
+                        <strong>BI</strong> - Brain Injury (All Ages)
+                      </span>
+                    </label>
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={formData.accepted_waivers.includes('ELDERLY')}
+                        onChange={() => handleWaiverChange('ELDERLY')}
+                        className="mr-3 mt-1"
+                      />
+                      <span>
+                        <strong>Elderly</strong> - Elderly Waiver (Ages 65+)
+                      </span>
+                    </label>
                   </div>
                 </div>
 
@@ -548,7 +656,7 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Tell potential residents about your facility..."
+                    placeholder="Describe your 245D facility and services..."
                   />
                 </div>
 
@@ -606,7 +714,7 @@ export default function RegisterPage() {
                       className="mr-3 mt-1"
                     />
                     <span className="text-sm">
-                      I agree to CareConnect Terms of Service and authorize CareConnect to market my facility to qualified referral sources. *
+                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. *
                     </span>
                   </label>
 
@@ -619,7 +727,7 @@ export default function RegisterPage() {
                       className="mr-3 mt-1"
                     />
                     <span className="text-sm">
-                      I understand that CareConnect charges a 10% commission on successful placements made through the platform. *
+                      I understand that CareConnect charges a 10% commission on successful waiver-based placements made through the platform. *
                     </span>
                   </label>
                 </div>

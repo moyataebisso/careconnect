@@ -134,6 +134,17 @@ export default function ProviderDetailPage() {
     })
   }
 
+  // Helper function to categorize services
+  const categorizeServices = (services: string[]) => {
+    const basicServices = ['ICS', 'FRS', 'CRS', 'DC_DM']
+    const comprehensiveServices = ['ADL_SUPPORT', 'ASSISTED_LIVING']
+    
+    return {
+      basic: services.filter(s => basicServices.includes(s)),
+      comprehensive: services.filter(s => comprehensiveServices.includes(s))
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -154,6 +165,8 @@ export default function ProviderDetailPage() {
       </div>
     )
   }
+
+  const serviceCategories = categorizeServices(provider.service_types)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -250,26 +263,50 @@ export default function ProviderDetailPage() {
                 )}
               </div>
 
-              {/* Services Offered */}
+              {/* 245D Services Offered */}
               <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-3">Services Offered</h2>
-                <div className="flex flex-wrap gap-2">
-                  {provider.service_types.map(service => (
-                    <div key={service} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
-                      <span className="font-medium">{service}</span>
-                      <span className="text-sm ml-2">- {SERVICE_TYPE_LABELS[service]}</span>
+                <h2 className="text-xl font-semibold mb-3">245D Services Offered</h2>
+                
+                {/* Basic Services */}
+                {serviceCategories.basic.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-lg font-medium text-blue-600 mb-2">Basic Services</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {serviceCategories.basic.map(service => (
+                        <div key={service} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
+                          <span className="font-medium">{service}</span>
+                          <span className="text-sm ml-2">- {SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                )}
+
+                {/* Comprehensive Services */}
+                {serviceCategories.comprehensive.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-medium text-green-600 mb-2">Comprehensive Services</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {serviceCategories.comprehensive.map(service => (
+                        <div key={service} className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
+                          <span className="font-medium">
+                            {service === 'ADL_SUPPORT' ? 'ADLs Support' : 'Assisted Living'}
+                          </span>
+                          <span className="text-sm ml-2">- {SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Accepted Waivers */}
               <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-3">Accepted Waivers</h2>
+                <h2 className="text-xl font-semibold mb-3">Accepted Waiver Programs</h2>
                 <div className="flex flex-wrap gap-2">
                   {provider.accepted_waivers.map(waiver => (
-                    <div key={waiver} className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
-                      {WAIVER_TYPE_SHORT[waiver]}
+                    <div key={waiver} className="bg-purple-100 text-purple-800 px-4 py-2 rounded-lg">
+                      {WAIVER_TYPE_SHORT[waiver as keyof typeof WAIVER_TYPE_SHORT]}
                     </div>
                   ))}
                 </div>
@@ -310,7 +347,7 @@ export default function ProviderDetailPage() {
             </div>
           </div>
 
-          {/* Sidebar - rest of the component remains the same */}
+          {/* Sidebar */}
           <div className="lg:col-span-1">
             
             {/* Capacity Card */}
@@ -380,7 +417,7 @@ export default function ProviderDetailPage() {
                   <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  <span>Secure platform messaging</span>
+                  <span>All waiver programs accepted</span>
                 </li>
                 <li className="flex items-start">
                   <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -399,13 +436,6 @@ export default function ProviderDetailPage() {
           </div>
         </div>
       </div>
-
-      {/* Contact Form Modal - remains the same */}
-      {showContactForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-          {/* ... rest of modal code stays the same ... */}
-        </div>
-      )}
     </div>
   )
 }

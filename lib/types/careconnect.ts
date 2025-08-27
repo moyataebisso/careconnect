@@ -1,10 +1,18 @@
 // lib/types/careconnect.ts
 
-// Service Types for 245D
-export type ServiceType = 'FRS' | 'CRS' | 'ICS' | 'ADL' | 'Assisted_Living';
+// Service Types for 245D - Updated structure
+export type ServiceType = 
+  // Basic Services
+  | 'ICS'           // Integrated Community Services
+  | 'FRS'           // Family Residential Services  
+  | 'CRS'           // Community Residential Services
+  | 'DC_DM'         // Day Care/Day Services
+  // Comprehensive Services
+  | 'ADL_SUPPORT'   // ADLs Support
+  | 'ASSISTED_LIVING'; // Assisted Living
 
 // Waiver Types (NO private pay)
-export type WaiverType = 'CADI' | 'CAC' | 'DD' | 'BI' | 'Elderly';
+export type WaiverType = 'CADI' | 'DD' | 'BI' | 'ELDERLY';
 
 // Provider Status
 export type ProviderStatus = 'pending' | 'active' | 'inactive' | 'suspended';
@@ -131,31 +139,32 @@ export interface ReferralRequest {
   updated_at: string;
 }
 
-// Service Type Labels (for display)
+// Service Type Labels (for display) - Updated
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
+  // Basic Services
+  ICS: 'Integrated Community Services',
   FRS: 'Family Residential Services',
   CRS: 'Community Residential Services',
-  ICS: 'Integrated Community Services',
-  ADL: 'Activities of Daily Living',
-  Assisted_Living: 'Assisted Living'
+  DC_DM: 'Day Care/Day Services',
+  // Comprehensive Services  
+  ADL_SUPPORT: 'Activities of Daily Living Support',
+  ASSISTED_LIVING: 'Assisted Living (24/7 Care with ADLs)'
 };
 
-// Waiver Type Labels (for display)
+// Waiver Type Labels (for display) - Updated
 export const WAIVER_TYPE_LABELS: Record<WaiverType, string> = {
   CADI: 'Community Access for Disability Inclusion (18+)',
-  CAC: 'Community Alternative Care',
-  DD: 'Developmental Disabilities',
-  BI: 'Brain Injury',
-  Elderly: 'Elderly (65+)'
+  DD: 'Developmental Disabilities (All Ages)',
+  BI: 'Brain Injury (All Ages)',
+  ELDERLY: 'Elderly Waiver (65+)'
 };
 
 // Waiver Type Short Labels
 export const WAIVER_TYPE_SHORT: Record<WaiverType, string> = {
   CADI: 'CADI Waiver',
-  CAC: 'CAC Waiver',
   DD: 'DD Waiver',
-  BI: 'Brain Injury',
-  Elderly: 'Elderly'
+  BI: 'BI Waiver',
+  ELDERLY: 'Elderly Waiver'
 };
 
 // Search Filters Interface

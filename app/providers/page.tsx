@@ -168,7 +168,7 @@ export default function ProvidersPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-4 w-full md:w-auto">
-              <h1 className="text-2xl font-bold text-gray-900">Find Care</h1>
+              <h1 className="text-2xl font-bold text-gray-900">Find 245D Care</h1>
               <span className="text-gray-500">
                 {filteredProviders.length} providers found
               </span>
@@ -248,21 +248,44 @@ export default function ProvidersPage() {
                 </label>
               </div>
 
-              {/* Service Types */}
+              {/* 245D Service Types - Updated Structure */}
               <div className="mb-6">
-                <h3 className="font-medium mb-3">Service Types</h3>
-                <div className="space-y-2">
-                  {Object.entries(SERVICE_TYPE_LABELS).map(([key, label]) => (
-                    <label key={key} className="flex items-center text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selectedServices.includes(key as ServiceType)}
-                        onChange={() => toggleService(key as ServiceType)}
-                        className="mr-2"
-                      />
-                      <span>{label}</span>
-                    </label>
-                  ))}
+                <h3 className="font-medium mb-3">245D Service Types</h3>
+                
+                {/* Basic Services */}
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-blue-600 mb-2">Basic Services</h4>
+                  <div className="space-y-2 ml-2">
+                    {['ICS', 'FRS', 'CRS', 'DC_DM'].map(key => (
+                      <label key={key} className="flex items-center text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedServices.includes(key as ServiceType)}
+                          onChange={() => toggleService(key as ServiceType)}
+                          className="mr-2"
+                        />
+                        <span>{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Comprehensive Services */}
+                <div>
+                  <h4 className="text-sm font-medium text-green-600 mb-2">Comprehensive Services</h4>
+                  <div className="space-y-2 ml-2">
+                    {['ADL_SUPPORT', 'ASSISTED_LIVING'].map(key => (
+                      <label key={key} className="flex items-center text-sm">
+                        <input
+                          type="checkbox"
+                          checked={selectedServices.includes(key as ServiceType)}
+                          onChange={() => toggleService(key as ServiceType)}
+                          className="mr-2"
+                        />
+                        <span>{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -363,115 +386,133 @@ export default function ProvidersPage() {
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
-                {filteredProviders.map((provider) => (
-                  <div
-                    key={provider.id}
-                    className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer ${
-                      provider.is_at_capacity ? 'opacity-60' : ''
-                    }`}
-                    onClick={() => handleProviderClick(provider)}
-                  >
-                    {/* Provider Image */}
-                    <div className="h-48 bg-gray-200 rounded-t-lg relative">
-                      {provider.primary_photo_url ? (
-                        <img
-                          src={provider.primary_photo_url}
-                          alt={provider.business_name}
-                          className="w-full h-full object-cover rounded-t-lg"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <svg className="w-20 h-20 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-                          </svg>
+                {filteredProviders.map((provider) => {
+                  // Categorize services for display
+                  const basicServices = ['ICS', 'FRS', 'CRS', 'DC_DM']
+                  const comprehensiveServices = ['ADL_SUPPORT', 'ASSISTED_LIVING']
+                  const hasBasic = provider.service_types.some(s => basicServices.includes(s))
+                  const hasComprehensive = provider.service_types.some(s => comprehensiveServices.includes(s))
+
+                  return (
+                    <div
+                      key={provider.id}
+                      className={`bg-white rounded-lg shadow hover:shadow-lg transition-shadow cursor-pointer ${
+                        provider.is_at_capacity ? 'opacity-60' : ''
+                      }`}
+                      onClick={() => handleProviderClick(provider)}
+                    >
+                      {/* Provider Image */}
+                      <div className="h-48 bg-gray-200 rounded-t-lg relative">
+                        {provider.primary_photo_url ? (
+                          <img
+                            src={provider.primary_photo_url}
+                            alt={provider.business_name}
+                            className="w-full h-full object-cover rounded-t-lg"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-20 h-20 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                            </svg>
+                          </div>
+                        )}
+                        {provider.is_at_capacity && (
+                          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg">
+                            <span className="text-white font-semibold text-lg">At Capacity</span>
+                          </div>
+                        )}
+                        {provider.verified_245d && (
+                          <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
+                            ✓ Verified 245D
+                          </div>
+                        )}
+                        {userLocation && provider.latitude && provider.longitude && (
+                          <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-medium">
+                            {calculateDistance(
+                              userLocation.latitude,
+                              userLocation.longitude,
+                              provider.latitude,
+                              provider.longitude
+                            )} miles away
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Provider Info */}
+                      <div className="p-6">
+                        <h3 className="text-xl font-semibold mb-2">{provider.business_name}</h3>
+                        <p className="text-gray-600 mb-3">{provider.city}, MN {provider.zip_code}</p>
+
+                        {/* Services - Show category badges */}
+                        <div className="mb-3">
+                          <div className="flex flex-wrap gap-1">
+                            {hasBasic && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
+                                Basic Services
+                              </span>
+                            )}
+                            {hasComprehensive && (
+                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
+                                Comprehensive Care
+                              </span>
+                            )}
+                            {provider.service_types.slice(0, 2).map(service => (
+                              <span key={service} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                                {service}
+                              </span>
+                            ))}
+                            {provider.service_types.length > 2 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                +{provider.service_types.length - 2} more
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      {provider.is_at_capacity && (
-                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-t-lg">
-                          <span className="text-white font-semibold text-lg">At Capacity</span>
+
+                        {/* Waivers */}
+                        <div className="mb-4">
+                          <div className="flex flex-wrap gap-1">
+                            {provider.accepted_waivers.slice(0, 3).map(waiver => (
+                              <span key={waiver} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">
+                                {waiver}
+                              </span>
+                            ))}
+                            {provider.accepted_waivers.length > 3 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
+                                +{provider.accepted_waivers.length - 3} more
+                              </span>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      {provider.verified_245d && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                          ✓ Verified 245D
+
+                        {/* Capacity */}
+                        <div className="mb-4">
+                          <div className="text-sm text-gray-600">
+                            Capacity: {provider.total_capacity - provider.current_capacity} of {provider.total_capacity} available
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full"
+                              style={{ width: `${((provider.total_capacity - provider.current_capacity) / provider.total_capacity) * 100}%` }}
+                            ></div>
+                          </div>
                         </div>
-                      )}
-                      {userLocation && provider.latitude && provider.longitude && (
-                        <div className="absolute bottom-2 left-2 bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-medium">
-                          {calculateDistance(
-                            userLocation.latitude,
-                            userLocation.longitude,
-                            provider.latitude,
-                            provider.longitude
-                          )} miles away
-                        </div>
-                      )}
+
+                        {/* Contact Button */}
+                        <button
+                          disabled={provider.is_at_capacity}
+                          className={`w-full py-2 rounded-md font-medium transition-colors ${
+                            provider.is_at_capacity
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {provider.is_at_capacity ? 'Currently Full' : 'View Details & Contact'}
+                        </button>
+                      </div>
                     </div>
-
-                    {/* Provider Info */}
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold mb-2">{provider.business_name}</h3>
-                      <p className="text-gray-600 mb-3">{provider.city}, MN {provider.zip_code}</p>
-
-                      {/* Services */}
-                      <div className="mb-3">
-                        <div className="flex flex-wrap gap-1">
-                          {provider.service_types.slice(0, 3).map(service => (
-                            <span key={service} className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                              {service}
-                            </span>
-                          ))}
-                          {provider.service_types.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                              +{provider.service_types.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Waivers */}
-                      <div className="mb-4">
-                        <div className="flex flex-wrap gap-1">
-                          {provider.accepted_waivers.slice(0, 3).map(waiver => (
-                            <span key={waiver} className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                              {waiver}
-                            </span>
-                          ))}
-                          {provider.accepted_waivers.length > 3 && (
-                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                              +{provider.accepted_waivers.length - 3} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Capacity */}
-                      <div className="mb-4">
-                        <div className="text-sm text-gray-600">
-                          Capacity: {provider.total_capacity - provider.current_capacity} of {provider.total_capacity} available
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                          <div
-                            className="bg-blue-600 h-2 rounded-full"
-                            style={{ width: `${((provider.total_capacity - provider.current_capacity) / provider.total_capacity) * 100}%` }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Contact Button */}
-                      <button
-                        disabled={provider.is_at_capacity}
-                        className={`w-full py-2 rounded-md font-medium transition-colors ${
-                          provider.is_at_capacity
-                            ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700'
-                        }`}
-                      >
-                        {provider.is_at_capacity ? 'Currently Full' : 'View Details & Contact'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
