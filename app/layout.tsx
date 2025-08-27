@@ -93,7 +93,7 @@ export default async function RootLayout({
                   Our Services
                 </Link>
                 <Link href="/about" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                  About 245D
+                  About Us
                 </Link>
                 <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
                   Contact
