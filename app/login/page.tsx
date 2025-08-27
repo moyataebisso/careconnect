@@ -1,3 +1,4 @@
+// app/login/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -20,29 +21,63 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      // 1. Sign in the user
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) throw error
+      if (authError) throw authError
 
-      // Check if user is admin
-      if (data.user) {
-        const { data: adminUser } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', data.user.id)
-          .single()
-
-        if (adminUser) {
-          // Admin user - redirect to admin dashboard
-          router.push('/admin')
-        } else {
-          // Regular provider - redirect to provider dashboard
-          router.push('/dashboard')
-        }
+      if (!authData.user) {
+        throw new Error('Login failed')
       }
+
+      // 2. Check user role from user_roles table
+      const { data: userRole, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', authData.user.id)
+        .single()
+
+      if (roleError) {
+        console.error('Role check error:', roleError)
+        // If no role found, check if they're a legacy provider
+        const { data: provider } = await supabase
+          .from('providers')
+          .select('id')
+          .eq('user_id', authData.user.id)
+          .single()
+        
+        if (provider) {
+          // Legacy provider - add to user_roles and redirect
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: authData.user.id, role: 'provider' })
+          router.push('/dashboard')
+          return
+        }
+        
+        // No role found - might be a new user, redirect to role selection
+        router.push('/auth/select-role')
+        return
+      }
+
+      // 3. Route based on user role
+      switch (userRole.role) {
+        case 'admin':
+          router.push('/admin')
+          break
+        case 'provider':
+          router.push('/dashboard')
+          break
+        case 'care_seeker':
+          router.push('/care-seeker/dashboard')
+          break
+        default:
+          router.push('/dashboard')
+      }
+
     } catch (error) {
       console.error('Login error:', error)
       if (error instanceof Error) {
@@ -146,13 +181,19 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Register Link */}
-          <div className="mt-6">
+          {/* Register Options */}
+          <div className="mt-6 space-y-3">
             <Link
-              href="/register"
+              href="/auth/register-care-seeker"
+              className="w-full flex justify-center py-3 px-4 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+            >
+              I am Looking for Care
+            </Link>
+            <Link
+              href="/auth/register"
               className="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors"
             >
-              Create Provider Account
+              I am a Care Provider
             </Link>
           </div>
         </div>
