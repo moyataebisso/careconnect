@@ -15,7 +15,9 @@ export default function AdminDashboard() {
     totalProviders: 0,
     activeProviders: 0,
     totalMessages: 0,
-    unreadMessages: 0
+    unreadMessages: 0,
+    totalCareSeekers: 0,
+    activeCareSeekers: 0
   })
   
   const supabase = createClient()
@@ -89,13 +91,25 @@ export default function AdminDashboard() {
         .eq('is_read', false)
         .eq('sender_type', 'customer')
 
+      // Get care seeker stats
+      const { count: totalCareSeekers } = await supabase
+        .from('care_seekers')
+        .select('*', { count: 'exact', head: true })
+
+      const { count: activeCareSeekers } = await supabase
+        .from('care_seekers')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'active')
+
       setStats({
         totalBookings: totalBookings || 0,
         pendingBookings: pendingBookings || 0,
         totalProviders: totalProviders || 0,
         activeProviders: activeProviders || 0,
         totalMessages: totalMessages || 0,
-        unreadMessages: unreadMessages || 0
+        unreadMessages: unreadMessages || 0,
+        totalCareSeekers: totalCareSeekers || 0,
+        activeCareSeekers: activeCareSeekers || 0
       })
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -129,8 +143,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        {/* Stats Cards - Now 8 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-gray-900">{stats.totalBookings}</div>
             <div className="text-sm text-gray-600">Total Bookings</div>
@@ -147,6 +161,14 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold text-green-600">{stats.activeProviders}</div>
             <div className="text-sm text-gray-600">Active Providers</div>
           </div>
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-gray-900">{stats.totalCareSeekers}</div>
+            <div className="text-sm text-gray-600">Care Seekers</div>
+          </div>
+          <div className="bg-pink-50 rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-pink-600">{stats.activeCareSeekers}</div>
+            <div className="text-sm text-gray-600">Active Seekers</div>
+          </div>
           <div className="bg-blue-50 rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-blue-600">{stats.totalMessages}</div>
             <div className="text-sm text-gray-600">Total Messages</div>
@@ -157,7 +179,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Quick Actions - Now 4 columns instead of 3 */}
+        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Support Messages */}
           <Link href="/admin/messages" className="block">
@@ -214,7 +236,27 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
-          {/* Geocode Providers - NEW */}
+          {/* Manage Care Seekers */}
+          <Link href="/admin/care-seekers" className="block">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-pink-100 rounded-lg p-3">
+                  <svg className="w-8 h-8 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                {stats.totalCareSeekers > 0 && (
+                  <span className="bg-pink-500 text-white text-xs px-2 py-1 rounded-full">
+                    {stats.totalCareSeekers} TOTAL
+                  </span>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Manage Care Seekers</h3>
+              <p className="text-gray-600 text-sm">View and manage registered care seekers</p>
+            </div>
+          </Link>
+
+          {/* Geocode Providers */}
           <Link href="/admin/geocode-providers" className="block">
             <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
               <div className="flex items-center justify-between mb-4">
