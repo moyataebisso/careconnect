@@ -29,7 +29,7 @@ export default function PhotoUploadSection({
 
   const allPhotos = photos && photos.length > 0 
     ? photos 
-    : (primaryPhoto ? [primaryPhoto] : ['/placeholder-facility.jpg'])
+    : (primaryPhoto ? [primaryPhoto] : ['https://via.placeholder.com/800x600?text=No+Photos+Yet'])
 
   const nextPhoto = () => {
     if (allPhotos.length > 0) {
@@ -160,11 +160,11 @@ export default function PhotoUploadSection({
 
   return (
     <div className="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
-      <div className="relative h-96">
+      <div className="relative h-96 bg-gray-100">
         <img
           src={allPhotos[currentPhotoIndex]}
           alt={`Photo ${currentPhotoIndex + 1}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
         
         {allPhotos.length > 1 && (
@@ -219,7 +219,7 @@ export default function PhotoUploadSection({
                 />
               </label>
 
-              {allPhotos[currentPhotoIndex] !== '/placeholder-facility.jpg' && (
+              {allPhotos[currentPhotoIndex] !== 'https://via.placeholder.com/800x600?text=No+Photos+Yet' && (
                 <button
                   onClick={() => handleSetPrimary(allPhotos[currentPhotoIndex])}
                   className="bg-blue-500 bg-opacity-90 hover:bg-opacity-100 text-white px-4 py-2 rounded-lg shadow-lg"
@@ -230,7 +230,7 @@ export default function PhotoUploadSection({
               )}
             </div>
 
-            {allPhotos[currentPhotoIndex] !== '/placeholder-facility.jpg' && (
+            {allPhotos[currentPhotoIndex] !== 'https://via.placeholder.com/800x600?text=No+Photos+Yet' && (
               <button
                 onClick={() => handleDeletePhoto(allPhotos[currentPhotoIndex], currentPhotoIndex)}
                 className="absolute top-4 right-4 bg-red-500 bg-opacity-90 hover:bg-opacity-100 text-white p-2 rounded-full shadow-lg"
@@ -254,7 +254,7 @@ export default function PhotoUploadSection({
                 <img
                   src={photo}
                   alt={`Thumbnail ${index + 1}`}
-                  className="w-full h-16 object-cover rounded cursor-pointer"
+                  className="w-full h-16 object-contain bg-gray-100 rounded cursor-pointer"
                   onClick={() => setCurrentPhotoIndex(index)}
                 />
                 {photo === primaryPhoto && (
