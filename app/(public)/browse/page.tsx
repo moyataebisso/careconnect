@@ -292,6 +292,20 @@ export default function BrowseProvidersPage() {
     return provider.total_capacity - provider.current_capacity
   }
 
+  // Helper function to get the first photo
+  const getProviderPhoto = (provider: Provider) => {
+    // First try primary_photo_url
+    if (provider.primary_photo_url) {
+      return provider.primary_photo_url
+    }
+    // Then try first photo from photo_urls array
+    if (provider.photo_urls && provider.photo_urls.length > 0) {
+      return provider.photo_urls[0]
+    }
+    // Return null if no photos
+    return null
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -538,111 +552,131 @@ export default function BrowseProvidersPage() {
                 {filteredProviders.map((provider) => {
                   const availableSpots = getAvailableSpots(provider)
                   const isSaved = savedProviders.includes(provider.id)
+                  const providerPhoto = getProviderPhoto(provider)
                   
                   return (
                     <div key={provider.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
-                      <div className="p-6">
-                        <div className="flex justify-between items-start mb-4">
-                          <div>
-                            <h2 className="text-xl font-semibold text-gray-900 mb-1">
-                              {provider.business_name}
-                            </h2>
-                            <p className="text-gray-600">
-                              {provider.city}, {provider.state} {provider.zip_code}
-                            </p>
-                            {/* Only show contact info if logged in */}
-                            {user && provider.contact_phone && (
-                              <p className="text-sm text-gray-500 mt-1">
-                                Contact: {provider.contact_person}
+                      <div className="flex flex-col md:flex-row">
+                        {/* Photo Section - NEW */}
+                        {providerPhoto && (
+                          <div className="md:w-48 h-48 md:h-auto flex-shrink-0">
+                            <img
+                              src={providerPhoto}
+                              alt={provider.business_name}
+                              className="w-full h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
+                              onError={(e) => {
+                                // Hide image if it fails to load
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Content Section */}
+                        <div className="flex-1 p-6">
+                          <div className="flex justify-between items-start mb-4">
+                            <div>
+                              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                                {provider.business_name}
+                              </h2>
+                              <p className="text-gray-600">
+                                {provider.city}, {provider.state} {provider.zip_code}
                               </p>
-                            )}
+                              {/* Only show contact info if logged in */}
+                              {user && provider.contact_phone && (
+                                <p className="text-sm text-gray-500 mt-1">
+                                  Contact: {provider.contact_person}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {provider.verified_245d && (
+                                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                  ✓ 245D Verified
+                                </span>
+                              )}
+                              {availableSpots > 0 ? (
+                                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                                  {availableSpots} spots available
+                                </span>
+                              ) : (
+                                <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                  Full
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {provider.verified_245d && (
-                              <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                                ✓ 245D Verified
-                              </span>
-                            )}
-                            {availableSpots > 0 ? (
-                              <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                {availableSpots} spots available
-                              </span>
-                            ) : (
-                              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
-                                Full
-                              </span>
-                            )}
-                          </div>
-                        </div>
 
-                        {provider.description && (
-                          <p className="text-gray-700 mb-4 line-clamp-2">
-                            {provider.description}
-                          </p>
-                        )}
-
-                        <div className="mb-4">
-                          <div className="flex flex-wrap gap-2 mb-2">
-                            <span className="text-sm font-medium text-gray-600">Services:</span>
-                            {provider.service_types.map((service) => (
-                              <span key={service} className="text-sm bg-gray-100 px-2 py-1 rounded">
-                                {SERVICE_TYPE_LABELS[service] || service}
-                              </span>
-                            ))}
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2">
-                            <span className="text-sm font-medium text-gray-600">Accepts:</span>
-                            {provider.accepted_waivers.map((waiver) => (
-                              <span key={waiver} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                {WAIVER_TYPE_SHORT[waiver] || waiver}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        {provider.languages_spoken && provider.languages_spoken.length > 0 && (
-                          <div className="mb-4">
-                            <span className="text-sm font-medium text-gray-600">Languages: </span>
-                            <span className="text-sm text-gray-700">{provider.languages_spoken.join(', ')}</span>
-                          </div>
-                        )}
-
-                        <div className="flex gap-3">
-                          <Link
-                            href={`/providers/${provider.id}`}
-                            className="flex-1 text-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                          >
-                            View Details
-                          </Link>
-                          
-                          {user ? (
-                            <>
-                              <button
-                                onClick={() => handleSaveProvider(provider.id)}
-                                className={`py-2 px-4 rounded-lg transition-colors ${
-                                  isSaved 
-                                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
-                                    : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                                }`}
-                              >
-                                {isSaved ? '★ Saved' : '☆ Save'}
-                              </button>
-                              <button
-                                onClick={() => handleContact(provider.id)}
-                                className="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                              >
-                                Contact
-                              </button>
-                            </>
-                          ) : (
-                            <Link
-                              href="/auth/login"
-                              className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                            >
-                              Sign in to Contact
-                            </Link>
+                          {provider.description && (
+                            <p className="text-gray-700 mb-4 line-clamp-2">
+                              {provider.description}
+                            </p>
                           )}
+
+                          <div className="mb-4">
+                            <div className="flex flex-wrap gap-2 mb-2">
+                              <span className="text-sm font-medium text-gray-600">Services:</span>
+                              {provider.service_types.map((service) => (
+                                <span key={service} className="text-sm bg-gray-100 px-2 py-1 rounded">
+                                  {SERVICE_TYPE_LABELS[service] || service}
+                                </span>
+                              ))}
+                            </div>
+                            
+                            <div className="flex flex-wrap gap-2">
+                              <span className="text-sm font-medium text-gray-600">Accepts:</span>
+                              {provider.accepted_waivers.map((waiver) => (
+                                <span key={waiver} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                                  {WAIVER_TYPE_SHORT[waiver] || waiver}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          {provider.languages_spoken && provider.languages_spoken.length > 0 && (
+                            <div className="mb-4">
+                              <span className="text-sm font-medium text-gray-600">Languages: </span>
+                              <span className="text-sm text-gray-700">{provider.languages_spoken.join(', ')}</span>
+                            </div>
+                          )}
+
+                          <div className="flex gap-3">
+                            <Link
+                              href={`/providers/${provider.id}`}
+                              className="flex-1 text-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                              View Details
+                            </Link>
+                            
+                            {user ? (
+                              <>
+                                <button
+                                  onClick={() => handleSaveProvider(provider.id)}
+                                  className={`py-2 px-4 rounded-lg transition-colors ${
+                                    isSaved 
+                                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
+                                  }`}
+                                >
+                                  {isSaved ? '★ Saved' : '☆ Save'}
+                                </button>
+                                <button
+                                  onClick={() => handleContact(provider.id)}
+                                  className="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                >
+                                  Contact
+                                </button>
+                              </>
+                            ) : (
+                              <Link
+                                href="/auth/login"
+                                className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                              >
+                                Sign in to Contact
+                              </Link>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

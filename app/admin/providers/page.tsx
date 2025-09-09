@@ -316,6 +316,12 @@ export default function AdminProvidersPage() {
                         </button>
                       )}
                       <Link
+                        href={`/admin/providers/${provider.id}/edit`}
+                        className="text-green-600 hover:text-green-800 text-sm font-medium"
+                      >
+                        Edit
+                      </Link>
+                      <Link
                         href={`/providers/${provider.id}`}
                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                       >
