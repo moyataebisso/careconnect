@@ -123,14 +123,7 @@ export default function RegisterPage() {
         }
         break
       case 4:
-        if (formData.service_types.length === 0) {
-          setError('Please select at least one service type')
-          return false
-        }
-        if (formData.accepted_waivers.length === 0) {
-          setError('Please select at least one waiver type')
-          return false
-        }
+        // Services and waivers are now optional
         if (!formData.total_capacity) {
           setError('Please enter total capacity')
           return false
@@ -210,8 +203,8 @@ export default function RegisterPage() {
         city: formData.city,
         state: 'MN',
         zip_code: formData.zip_code,
-        service_types: formData.service_types,
-        accepted_waivers: formData.accepted_waivers,
+        service_types: formData.service_types.length > 0 ? formData.service_types : [],
+        accepted_waivers: formData.accepted_waivers.length > 0 ? formData.accepted_waivers : [],
         total_capacity: parseInt(formData.total_capacity) || 0,
         current_capacity: parseInt(formData.current_capacity) || 0,
         status: 'pending',
@@ -357,7 +350,7 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Provider Registration</h1>
-          <p className="text-gray-600">Join CareConnect network of quality 245D care providers</p>
+          <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
         </div>
 
         {/* Progress Bar */}
@@ -386,6 +379,12 @@ export default function RegisterPage() {
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
               {error}
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
+              Please agree to all terms to continue
             </div>
           )}
 
@@ -585,7 +584,7 @@ export default function RegisterPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Service Types Offered * (Select all that apply)
+                    Service Types Offered (Optional - can be added later)
                   </label>
                   <div className="space-y-2">
                     {(Object.keys(SERVICE_TYPE_LABELS) as ServiceType[]).map(service => (
@@ -606,7 +605,7 @@ export default function RegisterPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Accepted Waivers * (Select all that apply)
+                    Accepted Waivers (Optional - can be added later)
                   </label>
                   <div className="space-y-2">
                     {(Object.keys(WAIVER_TYPE_LABELS) as WaiverType[]).map(waiver => (
@@ -675,7 +674,7 @@ export default function RegisterPage() {
                     onChange={handleInputChange}
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Tell potential residents about your facility..."
+                    placeholder="Describe your 245D facility and services..."
                   />
                 </div>
 
@@ -733,7 +732,7 @@ export default function RegisterPage() {
                       className="mr-3 mt-1"
                     />
                     <span className="text-sm">
-                      I agree to CareConnect Terms of Service and authorize CareConnect to market my facility to qualified referral sources. I understand that CareConnect charges a 10% commission on successful placements. *
+                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. *
                     </span>
                   </label>
                 </div>

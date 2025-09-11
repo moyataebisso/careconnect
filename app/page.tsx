@@ -99,7 +99,7 @@ export default function HomePage() {
             {/* Quick Stats */}
             <div className="grid grid-cols-3 gap-8 mt-12">
               <div>
-                <div className="text-4xl font-bold">500+</div>
+                <div className="text-4xl font-bold">50+</div>
                 <div className="text-sm opacity-90">Licensed Providers</div>
               </div>
               <div>

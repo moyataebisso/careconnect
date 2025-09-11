@@ -220,7 +220,7 @@ export default async function RootLayout({
         </nav>
 
         {/* Main Content */}
-        <main className="min-h-screen bg-gray-50">
+        <main className="bg-gray-50">
           {children}
         </main>
 
@@ -273,7 +273,7 @@ export default async function RootLayout({
                 <h4 className="font-semibold mb-4">Support</h4>
                 <p className="text-gray-400 mb-2">
                   <a href="mailto:support@careconnect-mn.com" className="hover:text-white transition-colors">
-                    support@careconnect-mn.com
+                    careconnectmkting@gmail.com
                   </a>
                 </p>
                 <p className="text-gray-400 text-sm mb-4">
@@ -292,7 +292,7 @@ export default async function RootLayout({
             </div>
 
             <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-              <p>&copy; 2024 CareConnect Minnesota. All rights reserved.</p>
+              <p>&copy; 2025 CareConnect Minnesota. All rights reserved.</p>
               <p className="mt-2">
                 <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
                 <span className="mx-2">|</span>

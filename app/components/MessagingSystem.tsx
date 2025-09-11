@@ -211,12 +211,18 @@ export default function MessagingSystem({
 
     setSending(true)
     try {
+      // FIX: Determine sender_type based on who is actually sending the message
+      // If userType is 'customer', the message is from customer
+      // If userType is 'support', the message is from support
+      const messageSenderType = userType === 'customer' ? 'customer' : 'support'
+      const messageSenderId = userType === 'customer' ? customerId : CARECONNECT_SUPPORT_ID
+
       const { error } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversation.id,
-          sender_type: userType === 'support' ? 'support' : 'customer',
-          sender_id: userType === 'support' ? CARECONNECT_SUPPORT_ID : customerId,
+          sender_type: messageSenderType,
+          sender_id: messageSenderId,
           content: newMessage.trim(),
           is_flagged: false
         })
@@ -305,6 +311,7 @@ export default function MessagingSystem({
         ) : (
           <>
             {messages.map((message, index) => {
+              // FIX: Correctly determine if message is from current user
               const isOwn = (userType === 'customer' && message.sender_type === 'customer') ||
                            (userType === 'support' && message.sender_type === 'support')
               const showDateSeparator = index > 0 && 

@@ -23,7 +23,7 @@ const WAIVER_TYPES = {
   CADI: 'CADI - Community Access for Disability Inclusion (18+)',
   DD: 'DD - Developmental Disabilities (All Ages)',
   BI: 'BI - Brain Injury (All Ages)',
-  ELDERLY: 'Elderly Waiver (65+)'
+  Elderly: 'Elderly Waiver (65+)'
 } as const
 
 export default function RegisterPage() {
@@ -34,7 +34,7 @@ export default function RegisterPage() {
   
   const supabase = createClient()
 
-  // Form data
+  // Form data - removed agree_to_commission
   const [formData, setFormData] = useState({
     // Step 1: Account Info
     email: '',
@@ -66,8 +66,7 @@ export default function RegisterPage() {
     primary_photo_url: '',
     
     // Agreement
-    agree_to_terms: false,
-    agree_to_commission: false
+    agree_to_terms: false
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -128,22 +127,15 @@ export default function RegisterPage() {
         }
         break
       case 4:
-        if (formData.service_types.length === 0) {
-          setError('Please select at least one 245D service type')
-          return false
-        }
-        if (formData.accepted_waivers.length === 0) {
-          setError('Please select at least one waiver type')
-          return false
-        }
+        // Services and waivers are now OPTIONAL - no validation required
         if (!formData.total_capacity) {
           setError('Please enter total capacity')
           return false
         }
         break
       case 5:
-        if (!formData.agree_to_terms || !formData.agree_to_commission) {
-          setError('Please agree to all terms to continue')
+        if (!formData.agree_to_terms) {
+          setError('Please agree to the terms to continue')
           return false
         }
         break
@@ -190,13 +182,14 @@ export default function RegisterPage() {
 
       console.log('User created successfully:', authData.user.id)
 
-      // 2. Create provider record
+      // 2. Create provider record - REMOVED commission_percentage
       console.log('Creating provider record...')
       const { data: providerData, error: providerError } = await supabase
         .from('providers')
         .insert({
           user_id: authData.user.id,
           business_name: formData.business_name,
+          business_email: formData.email, // Use login email as business email
           license_number: formData.license_number,
           contact_person: formData.contact_person,
           contact_email: formData.email,
@@ -205,8 +198,8 @@ export default function RegisterPage() {
           city: formData.city,
           state: 'MN',
           zip_code: formData.zip_code,
-          service_types: formData.service_types,
-          accepted_waivers: formData.accepted_waivers,
+          service_types: formData.service_types.length > 0 ? formData.service_types : [], // Allow empty array
+          accepted_waivers: formData.accepted_waivers.length > 0 ? formData.accepted_waivers : [], // Allow empty array
           total_capacity: parseInt(formData.total_capacity),
           current_capacity: parseInt(formData.current_capacity),
           description: formData.description || null,
@@ -215,7 +208,7 @@ export default function RegisterPage() {
           years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
           primary_photo_url: formData.primary_photo_url || null,
           referral_agreement_signed: formData.agree_to_terms,
-          commission_percentage: 10.00,
+          // REMOVED: commission_percentage: 10.00,
           status: 'pending',
           verified_245d: false
         })
@@ -477,10 +470,10 @@ export default function RegisterPage() {
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold mb-4">245D Services & Waiver Programs</h2>
                 
-                {/* 245D Service Types */}
+                {/* 245D Service Types - NOW OPTIONAL */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    245D Service Types * (Select all that apply)
+                    245D Service Types (Optional - can be added later)
                   </label>
                   
                   {/* Basic Services */}
@@ -552,12 +545,12 @@ export default function RegisterPage() {
                   </div>
                 </div>
 
-                {/* Accepted Waivers */}
+                {/* Accepted Waivers - NOW OPTIONAL */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Accepted Waiver Programs * (Select all that apply)
+                    Accepted Waiver Programs (Optional - can be added later)
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Note: We only work with waiver-accepting providers, not private pay</p>
+                  <p className="text-xs text-gray-500 mb-3">Note: We work with waiver-accepting providers</p>
                   <div className="space-y-2">
                     <label className="flex items-start">
                       <input
@@ -595,8 +588,8 @@ export default function RegisterPage() {
                     <label className="flex items-start">
                       <input
                         type="checkbox"
-                        checked={formData.accepted_waivers.includes('ELDERLY')}
-                        onChange={() => handleWaiverChange('ELDERLY')}
+                        checked={formData.accepted_waivers.includes('Elderly')}
+                        onChange={() => handleWaiverChange('Elderly')}
                         className="mr-3 mt-1"
                       />
                       <span>
@@ -715,19 +708,6 @@ export default function RegisterPage() {
                     />
                     <span className="text-sm">
                       I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. *
-                    </span>
-                  </label>
-
-                  <label className="flex items-start">
-                    <input
-                      type="checkbox"
-                      name="agree_to_commission"
-                      checked={formData.agree_to_commission}
-                      onChange={handleInputChange}
-                      className="mr-3 mt-1"
-                    />
-                    <span className="text-sm">
-                      I understand that CareConnect charges a 10% commission on successful waiver-based placements made through the platform. *
                     </span>
                   </label>
                 </div>

@@ -461,8 +461,8 @@ export default function BrowseProvidersPage() {
               <div className="mb-6">
                 <h3 className="font-medium mb-3">Accepted Waivers</h3>
                 <div className="space-y-2">
-                  {Object.entries(WAIVER_TYPE_SHORT).map(([key, label]) => (
-                    <label key={key} className="flex items-center text-sm">
+                  {Object.entries(WAIVER_TYPE_SHORT).map(([key, label], index) => (
+                    <label key={`${key}-${index}`} className="flex items-center text-sm">
                       <input
                         type="checkbox"
                         checked={selectedWaivers.includes(key as WaiverType)}
@@ -549,13 +549,13 @@ export default function BrowseProvidersPage() {
               </div>
             ) : (
               <div className="grid gap-6">
-                {filteredProviders.map((provider) => {
+                {filteredProviders.map((provider, index) => {
                   const availableSpots = getAvailableSpots(provider)
                   const isSaved = savedProviders.includes(provider.id)
                   const providerPhoto = getProviderPhoto(provider)
                   
                   return (
-                    <div key={provider.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+                    <div key={`${provider.id}-${index}`} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
                       <div className="flex flex-col md:flex-row">
                         {/* Photo Section - NEW */}
                         {providerPhoto && (
@@ -617,8 +617,8 @@ export default function BrowseProvidersPage() {
                           <div className="mb-4">
                             <div className="flex flex-wrap gap-2 mb-2">
                               <span className="text-sm font-medium text-gray-600">Services:</span>
-                              {provider.service_types.map((service) => (
-                                <span key={service} className="text-sm bg-gray-100 px-2 py-1 rounded">
+                              {provider.service_types.map((service, serviceIndex) => (
+                                <span key={`${provider.id}-service-${service}-${serviceIndex}`} className="text-sm bg-gray-100 px-2 py-1 rounded">
                                   {SERVICE_TYPE_LABELS[service] || service}
                                 </span>
                               ))}
@@ -626,8 +626,8 @@ export default function BrowseProvidersPage() {
                             
                             <div className="flex flex-wrap gap-2">
                               <span className="text-sm font-medium text-gray-600">Accepts:</span>
-                              {provider.accepted_waivers.map((waiver) => (
-                                <span key={waiver} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                              {provider.accepted_waivers.map((waiver, waiverIndex) => (
+                                <span key={`${provider.id}-waiver-${waiver}-${waiverIndex}`} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
                                   {WAIVER_TYPE_SHORT[waiver] || waiver}
                                 </span>
                               ))}
