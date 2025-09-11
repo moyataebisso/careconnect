@@ -38,16 +38,18 @@ interface SavedProvider {
   }
 }
 
-interface Inquiry {
+interface Booking {
   id: string
   provider_id: string
-  subject: string
-  message: string
+  customer_name: string
+  date: string
+  time: string
   status: string
-  provider_response?: string
   created_at: string
-  providers: {
+  providers?: {
     business_name: string
+    city: string
+    state: string
   }
 }
 
@@ -56,11 +58,11 @@ export default function CareSeekerDashboard() {
   const [loading, setLoading] = useState(true)
   const [profile, setProfile] = useState<CareSeeker | null>(null)
   const [savedProviders, setSavedProviders] = useState<SavedProvider[]>([])
-  const [recentInquiries, setRecentInquiries] = useState<Inquiry[]>([])
+  const [recentBookings, setRecentBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState({
     savedCount: 0,
-    inquiriesCount: 0,
-    newResponses: 0
+    bookingsCount: 0,
+    confirmedBookings: 0
   })
   
   const supabase = createClient()
@@ -97,91 +99,132 @@ export default function CareSeekerDashboard() {
         return
       }
 
-      await loadDashboardData(user.id)
+      await loadDashboardData(user.id, user.email)
     } catch (error) {
       console.error('Auth check error:', error)
-      router.push('/auth/login')
+      // Don't redirect on error, try to load data anyway
+      await loadDashboardData(null, null)
     }
   }
 
-  const loadDashboardData = async (userId: string) => {
+  const loadDashboardData = async (userId: string | null, userEmail: string | null | undefined) => {
     try {
-      // Load care seeker profile
-      const { data: profileData, error: profileError } = await supabase
-        .from('care_seekers')
-        .select('*')
-        .eq('user_id', userId)
-        .single()
+      // First try to load care seeker profile if userId exists
+      let profileData = null
+      if (userId) {
+        const { data } = await supabase
+          .from('care_seekers')
+          .select('*')
+          .eq('user_id', userId)
+          .single()
+        
+        profileData = data
+      }
 
-      if (profileError || !profileData) {
-        console.error('Profile error:', profileError)
-        // No profile yet, redirect to create one
-        router.push('/care-seeker/complete-profile')
-        return
+      // If no profile found and we have userEmail, create a basic profile
+      if (!profileData && userEmail) {
+        // Create a minimal profile - user can complete it later
+        profileData = {
+          id: userId || 'temp-' + Date.now(),
+          first_name: userEmail.split('@')[0],
+          last_name: '',
+          email: userEmail,
+          relationship_to_patient: 'self',
+          care_needs: 'Not specified yet',
+          urgency: 'planning_ahead',
+          created_at: new Date().toISOString()
+        }
+      }
+
+      if (!profileData) {
+        // If still no profile, just use placeholder data
+        profileData = {
+          id: 'temp',
+          first_name: 'User',
+          last_name: '',
+          email: '',
+          relationship_to_patient: 'self',
+          care_needs: 'Not specified yet',
+          urgency: 'planning_ahead',
+          created_at: new Date().toISOString()
+        }
       }
 
       setProfile(profileData)
 
-      // Load saved providers
-      const { data: savedData } = await supabase
-        .from('saved_providers')
-        .select(`
-          *,
-          providers (
-            id,
-            business_name,
-            city,
-            state,
-            service_types,
-            accepted_waivers,
-            total_capacity,
-            current_capacity
-          )
-        `)
-        .eq('care_seeker_id', profileData.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
+      // Load saved providers if we have a real profile ID
+      if (profileData.id && !profileData.id.startsWith('temp')) {
+        const { data: savedData } = await supabase
+          .from('saved_providers')
+          .select(`
+            *,
+            providers (
+              id,
+              business_name,
+              city,
+              state,
+              service_types,
+              accepted_waivers,
+              total_capacity,
+              current_capacity
+            )
+          `)
+          .eq('care_seeker_id', profileData.id)
+          .order('created_at', { ascending: false })
+          .limit(5)
 
-      setSavedProviders(savedData || [])
+        setSavedProviders(savedData || [])
+      }
 
-      // Load recent inquiries
-      const { data: inquiriesData } = await supabase
-        .from('provider_inquiries')
-        .select(`
-          *,
-          providers (
-            business_name
-          )
-        `)
-        .eq('care_seeker_id', profileData.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
+      // Load recent bookings by email
+      if (userEmail) {
+        const { data: bookingsData } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            providers (
+              business_name,
+              city,
+              state
+            )
+          `)
+          .eq('customer_email', userEmail)
+          .order('created_at', { ascending: false })
+          .limit(5)
 
-      setRecentInquiries(inquiriesData || [])
+        setRecentBookings(bookingsData || [])
 
-      // Calculate stats
-      const { count: savedCount } = await supabase
-        .from('saved_providers')
-        .select('*', { count: 'exact', head: true })
-        .eq('care_seeker_id', profileData.id)
+        // Calculate stats
+        const { count: bookingsCount } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_email', userEmail)
 
-      const { count: inquiriesCount } = await supabase
-        .from('provider_inquiries')
-        .select('*', { count: 'exact', head: true })
-        .eq('care_seeker_id', profileData.id)
+        const { count: confirmedCount } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_email', userEmail)
+          .eq('status', 'confirmed')
 
-      const { count: newResponses } = await supabase
-        .from('provider_inquiries')
-        .select('*', { count: 'exact', head: true })
-        .eq('care_seeker_id', profileData.id)
-        .eq('status', 'responded')
-        .not('provider_response', 'is', null)
+        setStats(prev => ({
+          ...prev,
+          bookingsCount: bookingsCount || 0,
+          confirmedBookings: confirmedCount || 0
+        }))
+      }
 
-      setStats({
-        savedCount: savedCount || 0,
-        inquiriesCount: inquiriesCount || 0,
-        newResponses: newResponses || 0
-      })
+      // Calculate saved count if we have profile ID
+      if (profileData.id && !profileData.id.startsWith('temp')) {
+        const { count: savedCount } = await supabase
+          .from('saved_providers')
+          .select('*', { count: 'exact', head: true })
+          .eq('care_seeker_id', profileData.id)
+
+        setStats(prev => ({
+          ...prev,
+          savedCount: savedCount || 0
+        }))
+      }
 
     } catch (error) {
       console.error('Error loading dashboard:', error)
@@ -201,9 +244,9 @@ export default function CareSeekerDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'responded': return 'text-green-600 bg-green-50'
-      case 'read': return 'text-blue-600 bg-blue-50'
-      case 'pending': return 'text-gray-600 bg-gray-50'
+      case 'confirmed': return 'text-green-600 bg-green-50'
+      case 'pending': return 'text-yellow-600 bg-yellow-50'
+      case 'cancelled': return 'text-red-600 bg-red-50'
       default: return 'text-gray-600 bg-gray-50'
     }
   }
@@ -236,6 +279,12 @@ export default function CareSeekerDashboard() {
             </div>
             <div className="flex gap-3">
               <Link 
+                href="/my-bookings"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                My Bookings
+              </Link>
+              <Link 
                 href="/browse"
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
               >
@@ -260,12 +309,12 @@ export default function CareSeekerDashboard() {
             <div className="text-sm text-gray-600">Saved Providers</div>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-gray-900">{stats.inquiriesCount}</div>
-            <div className="text-sm text-gray-600">Inquiries Sent</div>
+            <div className="text-2xl font-bold text-gray-900">{stats.bookingsCount}</div>
+            <div className="text-sm text-gray-600">Total Bookings</div>
           </div>
           <div className="bg-green-50 rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-green-600">{stats.newResponses}</div>
-            <div className="text-sm text-gray-600">New Responses</div>
+            <div className="text-2xl font-bold text-green-600">{stats.confirmedBookings}</div>
+            <div className="text-sm text-gray-600">Confirmed Bookings</div>
           </div>
           <div className={`rounded-lg shadow p-6 ${getUrgencyColor(profile.urgency)}`}>
             <div className="text-lg font-bold capitalize">{profile.urgency.replace('_', ' ')}</div>
@@ -302,6 +351,54 @@ export default function CareSeekerDashboard() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
+          {/* Recent Bookings */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-lg font-semibold">Recent Bookings</h2>
+                <Link href="/my-bookings" className="text-green-600 hover:text-green-700 text-sm font-medium">
+                  View All →
+                </Link>
+              </div>
+            </div>
+            <div className="divide-y">
+              {recentBookings.length > 0 ? (
+                recentBookings.map((booking) => (
+                  <div key={booking.id} className="p-4 hover:bg-gray-50">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <p className="font-medium text-gray-900">
+                          {booking.providers?.business_name || 'Provider'}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {new Date(booking.date).toLocaleDateString()} at {booking.time}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </span>
+                        </div>
+                      </div>
+                      <Link
+                        href={`/booking-confirmation/${booking.id}`}
+                        className="text-sm px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-6 text-center text-gray-500">
+                  <p>No bookings yet</p>
+                  <Link href="/browse" className="text-green-600 hover:text-green-700 text-sm font-medium mt-2 inline-block">
+                    Browse Providers →
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Recent Saved Providers */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-6 border-b">
@@ -338,10 +435,10 @@ export default function CareSeekerDashboard() {
                         </div>
                       </div>
                       <Link
-                        href={`/care-seeker/contact/${saved.provider_id}`}
+                        href={`/booking?provider=${saved.provider_id}`}
                         className="text-sm px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700"
                       >
-                        Contact
+                        Book Now
                       </Link>
                     </div>
                   </div>
@@ -356,88 +453,43 @@ export default function CareSeekerDashboard() {
               )}
             </div>
           </div>
-
-          {/* Recent Inquiries */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Recent Inquiries</h2>
-                <Link href="/care-seeker/inquiries" className="text-green-600 hover:text-green-700 text-sm font-medium">
-                  View All →
-                </Link>
-              </div>
-            </div>
-            <div className="divide-y">
-              {recentInquiries.length > 0 ? (
-                recentInquiries.map((inquiry) => (
-                  <div key={inquiry.id} className="p-4 hover:bg-gray-50">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900">
-                          {inquiry.providers.business_name}
-                        </p>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {inquiry.subject}
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(inquiry.status)}`}>
-                            {inquiry.status}
-                          </span>
-                          <span className="text-xs text-gray-500">
-                            {new Date(inquiry.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-                      {inquiry.status === 'responded' && (
-                        <Link
-                          href={`/care-seeker/inquiries/${inquiry.id}`}
-                          className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
-                        >
-                          View Reply
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-6 text-center text-gray-500">
-                  <p>No inquiries sent yet</p>
-                  <Link href="/browse" className="text-green-600 hover:text-green-700 text-sm font-medium mt-2 inline-block">
-                    Contact Providers →
-                  </Link>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
 
         {/* Quick Actions */}
         <div className="mt-8 bg-green-50 rounded-lg p-6">
-          <h3 className="font-semibold text-gray-900 mb-4">Need Help?</h3>
-          <div className="grid md:grid-cols-3 gap-4">
+          <h3 className="font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid md:grid-cols-4 gap-4">
             <Link 
-              href="/resources"
+              href="/browse"
               className="bg-white p-4 rounded-lg text-center hover:shadow-md transition-shadow"
             >
-              <div className="text-green-600 mb-2">📚</div>
-              <p className="font-medium">Care Resources</p>
-              <p className="text-sm text-gray-600 mt-1">Learn about waiver programs</p>
+              <div className="text-green-600 mb-2">🔍</div>
+              <p className="font-medium">Find Providers</p>
+              <p className="text-sm text-gray-600 mt-1">Search for care facilities</p>
+            </Link>
+            <Link 
+              href="/my-bookings"
+              className="bg-white p-4 rounded-lg text-center hover:shadow-md transition-shadow"
+            >
+              <div className="text-green-600 mb-2">📅</div>
+              <p className="font-medium">My Bookings</p>
+              <p className="text-sm text-gray-600 mt-1">View all appointments</p>
+            </Link>
+            <Link 
+              href="/care-seeker/saved"
+              className="bg-white p-4 rounded-lg text-center hover:shadow-md transition-shadow"
+            >
+              <div className="text-green-600 mb-2">⭐</div>
+              <p className="font-medium">Saved Providers</p>
+              <p className="text-sm text-gray-600 mt-1">Your favorites list</p>
             </Link>
             <Link 
               href="/contact"
               className="bg-white p-4 rounded-lg text-center hover:shadow-md transition-shadow"
             >
               <div className="text-green-600 mb-2">💬</div>
-              <p className="font-medium">Contact Support</p>
-              <p className="text-sm text-gray-600 mt-1">Get help finding care</p>
-            </Link>
-            <Link 
-              href="/faq"
-              className="bg-white p-4 rounded-lg text-center hover:shadow-md transition-shadow"
-            >
-              <div className="text-green-600 mb-2">❓</div>
-              <p className="font-medium">FAQs</p>
-              <p className="text-sm text-gray-600 mt-1">Common questions answered</p>
+              <p className="font-medium">Get Help</p>
+              <p className="text-sm text-gray-600 mt-1">Contact support</p>
             </Link>
           </div>
         </div>

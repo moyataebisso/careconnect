@@ -109,17 +109,36 @@ export default async function RootLayout({
               <div className="hidden md:flex items-center space-x-4">
                 {user ? (
                   <>
+                    {/* DEBUG PANEL - Remove after testing */}
+                    <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50 border-2 border-blue-500">
+                      <p className="text-xs font-bold mb-2 text-red-600">DEBUG INFO (Remove Later)</p>
+                      <p className="text-xs">User: {user.email}</p>
+                      <p className="text-xs">Role: {userRole || 'Not set'}</p>
+                      <p className="text-xs mb-2">ID: {user.id.substring(0, 8)}...</p>
+                      <div className="flex flex-col gap-1">
+                        <Link href="/care-seeker/dashboard" className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700">
+                          → Care Dashboard
+                        </Link>
+                        <Link href="/my-bookings" className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">
+                          → My Bookings
+                        </Link>
+                        <Link href="/care-seeker/saved" className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">
+                          → Saved
+                        </Link>
+                      </div>
+                    </div>
+                    
                     {/* Show different options based on user role */}
                     {userRole === 'care_seeker' && (
                       <>
                         <Link href="/care-seeker/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                          My Dashboard
+                          Dashboard
+                        </Link>
+                        <Link href="/my-bookings" className="text-gray-700 hover:text-blue-600 font-medium">
+                          My Bookings
                         </Link>
                         <Link href="/care-seeker/saved" className="text-gray-700 hover:text-blue-600 font-medium">
                           Saved
-                        </Link>
-                        <Link href="/care-seeker/inquiries" className="text-gray-700 hover:text-blue-600 font-medium">
-                          Messages
                         </Link>
                       </>
                     )}
@@ -186,9 +205,9 @@ export default async function RootLayout({
                   <>
                     {userRole === 'care_seeker' && (
                       <>
-                        <Link href="/care-seeker/dashboard" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">My Dashboard</Link>
+                        <Link href="/care-seeker/dashboard" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Dashboard</Link>
+                        <Link href="/my-bookings" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">My Bookings</Link>
                         <Link href="/care-seeker/saved" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Saved Providers</Link>
-                        <Link href="/care-seeker/inquiries" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">My Messages</Link>
                       </>
                     )}
                     {userRole === 'provider' && (

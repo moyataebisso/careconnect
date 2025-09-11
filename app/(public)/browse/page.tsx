@@ -281,7 +281,8 @@ export default function BrowseProvidersPage() {
       router.push('/auth/login')
       return
     }
-    router.push(`/care-seeker/contact/${providerId}`)
+    // Changed to route to booking page with provider ID
+    router.push(`/booking?provider=${providerId}`)
   }
 
   const handleProviderClick = (provider: Provider) => {
@@ -665,7 +666,7 @@ export default function BrowseProvidersPage() {
                                   onClick={() => handleContact(provider.id)}
                                   className="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                                 >
-                                  Contact
+                                  Book Service
                                 </button>
                               </>
                             ) : (
@@ -673,7 +674,7 @@ export default function BrowseProvidersPage() {
                                 href="/auth/login"
                                 className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                               >
-                                Sign in to Contact
+                                Sign in to Book
                               </Link>
                             )}
                           </div>
