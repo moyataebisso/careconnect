@@ -109,25 +109,6 @@ export default async function RootLayout({
               <div className="hidden md:flex items-center space-x-4">
                 {user ? (
                   <>
-                    {/* DEBUG PANEL - Remove after testing */}
-                    <div className="fixed bottom-4 right-4 bg-white shadow-lg rounded-lg p-4 z-50 border-2 border-blue-500">
-                      <p className="text-xs font-bold mb-2 text-red-600">DEBUG INFO (Remove Later)</p>
-                      <p className="text-xs">User: {user.email}</p>
-                      <p className="text-xs">Role: {userRole || 'Not set'}</p>
-                      <p className="text-xs mb-2">ID: {user.id.substring(0, 8)}...</p>
-                      <div className="flex flex-col gap-1">
-                        <Link href="/care-seeker/dashboard" className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700">
-                          → Care Dashboard
-                        </Link>
-                        <Link href="/my-bookings" className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700">
-                          → My Bookings
-                        </Link>
-                        <Link href="/care-seeker/saved" className="text-xs bg-purple-600 text-white px-2 py-1 rounded hover:bg-purple-700">
-                          → Saved
-                        </Link>
-                      </div>
-                    </div>
-                    
                     {/* Show different options based on user role */}
                     {userRole === 'care_seeker' && (
                       <>
@@ -165,9 +146,6 @@ export default async function RootLayout({
                   </>
                 ) : (
                   <>
-                    <Link href="/browse" className="text-gray-700 hover:text-blue-600 font-medium">
-                      Browse Providers
-                    </Link>
                     <Link href="/auth/login" className="text-gray-700 hover:text-blue-600 font-medium">
                       Sign In
                     </Link>
