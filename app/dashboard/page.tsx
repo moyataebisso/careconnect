@@ -39,7 +39,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 pt-8">
       <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
       
       {/* Welcome Section */}
@@ -104,7 +104,7 @@ export default async function DashboardPage() {
 
       {/* Provider Details */}
       {provider && (
-        <div className="bg-white rounded-lg shadow">
+        <div className="bg-white rounded-lg shadow mb-8">
           <div className="p-6 border-b">
             <h2 className="text-xl font-semibold">Your Listing Details</h2>
           </div>
@@ -167,7 +167,7 @@ export default async function DashboardPage() {
       )}
 
       {!provider && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center mb-8">
           <h3 className="text-lg font-semibold mb-2">No Provider Listing Yet</h3>
           <p className="text-gray-700 mb-4">
             You have not created a provider listing yet. Set up your profile to start receiving referrals.
