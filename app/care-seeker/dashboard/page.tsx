@@ -1,4 +1,3 @@
-// app/care-seeker/dashboard/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -20,6 +19,7 @@ interface CareSeeker {
   preferred_zip?: string
   urgency: string
   created_at: string
+  user_id?: string
 }
 
 interface SavedProvider {
@@ -42,8 +42,10 @@ interface Booking {
   id: string
   provider_id: string
   customer_name: string
-  date: string
-  time: string
+  customer_email: string
+  customer_phone?: string
+  date?: string
+  time?: string
   status: string
   created_at: string
   providers?: {
@@ -56,13 +58,15 @@ interface Booking {
 export default function CareSeekerDashboard() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [profile, setProfile] = useState<CareSeeker | null>(null)
   const [savedProviders, setSavedProviders] = useState<SavedProvider[]>([])
   const [recentBookings, setRecentBookings] = useState<Booking[]>([])
   const [stats, setStats] = useState({
     savedCount: 0,
     bookingsCount: 0,
-    confirmedBookings: 0
+    confirmedBookings: 0,
+    pendingBookings: 0
   })
   
   const supabase = createClient()
@@ -70,6 +74,32 @@ export default function CareSeekerDashboard() {
   useEffect(() => {
     checkAuth()
   }, [])
+
+  // Real-time subscription for booking updates
+  useEffect(() => {
+    if (!profile?.email) return
+    
+    const subscription = supabase
+      .channel('bookings-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'bookings',
+          filter: `customer_email=eq.${profile.email}`
+        },
+        (payload) => {
+          // Reload dashboard data when bookings change
+          loadDashboardData(profile.user_id || null, profile.email)
+        }
+      )
+      .subscribe()
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [profile?.email, profile?.user_id])
 
   const checkAuth = async () => {
     try {
@@ -123,7 +153,6 @@ export default function CareSeekerDashboard() {
 
       // If no profile found and we have userEmail, create a basic profile
       if (!profileData && userEmail) {
-        // Create a minimal profile - user can complete it later
         profileData = {
           id: userId || 'temp-' + Date.now(),
           first_name: userEmail.split('@')[0],
@@ -131,13 +160,13 @@ export default function CareSeekerDashboard() {
           email: userEmail,
           relationship_to_patient: 'self',
           care_needs: 'Not specified yet',
-          urgency: 'planning_ahead',
-          created_at: new Date().toISOString()
+          urgency: 'within_week',
+          created_at: new Date().toISOString(),
+          user_id: userId
         }
       }
 
       if (!profileData) {
-        // If still no profile, just use placeholder data
         profileData = {
           id: 'temp',
           first_name: 'User',
@@ -174,47 +203,8 @@ export default function CareSeekerDashboard() {
           .limit(5)
 
         setSavedProviders(savedData || [])
-      }
-
-      // Load recent bookings by email
-      if (userEmail) {
-        const { data: bookingsData } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            providers (
-              business_name,
-              city,
-              state
-            )
-          `)
-          .eq('customer_email', userEmail)
-          .order('created_at', { ascending: false })
-          .limit(5)
-
-        setRecentBookings(bookingsData || [])
-
-        // Calculate stats
-        const { count: bookingsCount } = await supabase
-          .from('bookings')
-          .select('*', { count: 'exact', head: true })
-          .eq('customer_email', userEmail)
-
-        const { count: confirmedCount } = await supabase
-          .from('bookings')
-          .select('*', { count: 'exact', head: true })
-          .eq('customer_email', userEmail)
-          .eq('status', 'confirmed')
-
-        setStats(prev => ({
-          ...prev,
-          bookingsCount: bookingsCount || 0,
-          confirmedBookings: confirmedCount || 0
-        }))
-      }
-
-      // Calculate saved count if we have profile ID
-      if (profileData.id && !profileData.id.startsWith('temp')) {
+        
+        // Get saved count
         const { count: savedCount } = await supabase
           .from('saved_providers')
           .select('*', { count: 'exact', head: true })
@@ -226,11 +216,71 @@ export default function CareSeekerDashboard() {
         }))
       }
 
+      // Load ALL bookings and stats
+      if (userEmail) {
+        // Load recent bookings with provider info
+        const { data: bookingsData, error } = await supabase
+          .from('bookings')
+          .select(`
+            *,
+            provider:providers!provider_id(
+              business_name,
+              city,
+              state
+            )
+          `)
+          .eq('customer_email', userEmail)
+          .order('created_at', { ascending: false })
+          .limit(5)
+
+        if (!error) {
+          // Transform the data to match expected structure
+          const transformedBookings = (bookingsData || []).map(booking => ({
+            ...booking,
+            providers: booking.provider
+          }))
+          setRecentBookings(transformedBookings)
+        }
+
+        // Get accurate counts
+        const { count: totalCount } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_email', userEmail)
+
+        // Count confirmed bookings
+        const { count: confirmedCount } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_email', userEmail)
+          .eq('status', 'confirmed')
+
+        // Count pending bookings
+        const { count: pendingCount } = await supabase
+          .from('bookings')
+          .select('*', { count: 'exact', head: true })
+          .eq('customer_email', userEmail)
+          .eq('status', 'pending')
+
+        setStats(prev => ({
+          ...prev,
+          bookingsCount: totalCount || 0,
+          confirmedBookings: confirmedCount || 0,
+          pendingBookings: pendingCount || 0
+        }))
+      }
+
     } catch (error) {
       console.error('Error loading dashboard:', error)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }
+
+  const handleRefresh = async () => {
+    setRefreshing(true)
+    await loadDashboardData(profile?.user_id || null, profile?.email || null)
   }
 
   const getUrgencyColor = (urgency: string) => {
@@ -244,10 +294,23 @@ export default function CareSeekerDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'text-green-600 bg-green-50'
-      case 'pending': return 'text-yellow-600 bg-yellow-50'
-      case 'cancelled': return 'text-red-600 bg-red-50'
-      default: return 'text-gray-600 bg-gray-50'
+      case 'confirmed':
+        return 'text-green-600 bg-green-50'
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-50'
+      case 'cancelled':
+        return 'text-red-600 bg-red-50'
+      default:
+        return 'text-gray-600 bg-gray-50'
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'pending': return 'Pending'
+      case 'confirmed': return 'Confirmed'
+      case 'cancelled': return 'Cancelled'
+      default: return status || 'Unknown'
     }
   }
 
@@ -278,6 +341,21 @@ export default function CareSeekerDashboard() {
               </p>
             </div>
             <div className="flex gap-3">
+              <button 
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+              >
+                <svg 
+                  className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
               <Link 
                 href="/my-bookings"
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -303,7 +381,7 @@ export default function CareSeekerDashboard() {
 
       <div className="container mx-auto px-4 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-gray-900">{stats.savedCount}</div>
             <div className="text-sm text-gray-600">Saved Providers</div>
@@ -312,12 +390,16 @@ export default function CareSeekerDashboard() {
             <div className="text-2xl font-bold text-gray-900">{stats.bookingsCount}</div>
             <div className="text-sm text-gray-600">Total Bookings</div>
           </div>
+          <div className="bg-yellow-50 rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-yellow-600">{stats.pendingBookings}</div>
+            <div className="text-sm text-gray-600">Pending</div>
+          </div>
           <div className="bg-green-50 rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-green-600">{stats.confirmedBookings}</div>
-            <div className="text-sm text-gray-600">Confirmed Bookings</div>
+            <div className="text-sm text-gray-600">Confirmed</div>
           </div>
           <div className={`rounded-lg shadow p-6 ${getUrgencyColor(profile.urgency)}`}>
-            <div className="text-lg font-bold capitalize">{profile.urgency.replace('_', ' ')}</div>
+            <div className="text-lg font-bold capitalize">{profile.urgency.replace(/_/g, ' ')}</div>
             <div className="text-sm">Care Timeline</div>
           </div>
         </div>
@@ -357,7 +439,7 @@ export default function CareSeekerDashboard() {
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold">Recent Bookings</h2>
                 <Link href="/my-bookings" className="text-green-600 hover:text-green-700 text-sm font-medium">
-                  View All →
+                  View All ({stats.bookingsCount}) →
                 </Link>
               </div>
             </div>
@@ -371,11 +453,14 @@ export default function CareSeekerDashboard() {
                           {booking.providers?.business_name || 'Provider'}
                         </p>
                         <p className="text-sm text-gray-600 mt-1">
-                          {new Date(booking.date).toLocaleDateString()} at {booking.time}
+                          {booking.date && booking.time ? 
+                            `${new Date(booking.date).toLocaleDateString()} at ${booking.time}` :
+                            `Submitted: ${new Date(booking.created_at).toLocaleDateString()}`
+                          }
                         </p>
                         <div className="flex items-center gap-2 mt-2">
                           <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(booking.status)}`}>
-                            {booking.status}
+                            {getStatusLabel(booking.status)}
                           </span>
                         </div>
                       </div>

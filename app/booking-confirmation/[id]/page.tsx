@@ -32,19 +32,24 @@ export default function BookingConfirmationPage() {
   const [booking, setBooking] = useState<Booking | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentUserType, setCurrentUserType] = useState<'provider' | 'customer'>('customer')
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
     if (params.id) {
-      loadBooking(params.id as string)
+      loadBookingAndUserType(params.id as string)
     }
   }, [params.id])
 
-  const loadBooking = async (bookingId: string) => {
+  const loadBookingAndUserType = async (bookingId: string) => {
     try {
       setLoading(true)
       
-      // First try to get the booking
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      // First get the booking
       const { data: bookingData, error: bookingError } = await supabase
         .from('bookings')
         .select('*')
@@ -55,10 +60,10 @@ export default function BookingConfirmationPage() {
         throw bookingError
       }
 
-      // Then get provider data
+      // Get provider data
       const { data: providerData } = await supabase
         .from('providers')
-        .select('id, business_name, address, city, zip_code')
+        .select('id, business_name, address, city, zip_code, user_id')
         .eq('id', bookingData.provider_id)
         .single()
 
@@ -68,6 +73,37 @@ export default function BookingConfirmationPage() {
       }
 
       setBooking(fullBooking)
+
+      // Determine user type
+      if (user) {
+        setCurrentUserId(user.id)
+        
+        // Check if current user is the provider
+        if (providerData?.user_id === user.id) {
+          setCurrentUserType('provider')
+        } 
+        // Check if current user is the customer (by email)
+        else if (user.email === bookingData.customer_email) {
+          setCurrentUserType('customer')
+        }
+        // Check if user is a provider (but not THIS provider)
+        else {
+          const { data: providerCheck } = await supabase
+            .from('providers')
+            .select('id')
+            .eq('user_id', user.id)
+            .single()
+          
+          if (providerCheck) {
+            setCurrentUserType('provider')
+          } else {
+            setCurrentUserType('customer')
+          }
+        }
+      } else {
+        setCurrentUserType('customer')
+      }
+
     } catch (err) {
       console.error('Error loading booking:', err)
       setError('Failed to load booking details')
@@ -257,7 +293,7 @@ export default function BookingConfirmationPage() {
                   <svg className="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  Your Information
+                  {currentUserType === 'provider' ? 'Customer' : 'Your'} Information
                 </h2>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -315,13 +351,15 @@ export default function BookingConfirmationPage() {
             {/* Right Column - Messaging */}
             <div className="lg:col-span-1">
               <div className="sticky top-4">
-                <h2 className="text-xl font-semibold mb-4">Message Your Provider</h2>
+                <h2 className="text-xl font-semibold mb-4">
+                  Message {currentUserType === 'provider' ? 'Your Customer' : 'Your Provider'}
+                </h2>
                 {booking.provider && (
                   <MessagingSystem
                     providerId={booking.provider_id}
-                    customerId={booking.customer_email} // Using email as customer identifier
+                    customerId={booking.customer_email}
                     bookingId={booking.id}
-                    userType="customer"
+                    userType={currentUserType}  // Now dynamic!
                     providerName={booking.provider.business_name}
                     customerName={booking.customer_name}
                   />

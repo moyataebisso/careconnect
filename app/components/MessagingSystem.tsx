@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 interface Message {
   id: string
   content: string
-  sender_type: 'support' | 'customer'
+  sender_type: 'provider' | 'customer'
   sender_id: string
   created_at: string
   is_read: boolean
@@ -28,18 +28,14 @@ interface MessagingSystemProps {
   providerId: string
   customerId: string  // Customer email
   bookingId?: string
-  userType: 'support' | 'customer'
+  userType: 'provider' | 'customer'
   providerName?: string
   customerName?: string
 }
 
-// CareConnect Support User ID
-const CARECONNECT_SUPPORT_ID = 'e5fde3a3-46f8-4df9-a48e-edfed098ede0'
-const CARECONNECT_SUPPORT_EMAIL = 'careconnectmkting@gmail.com'
-
 export default function MessagingSystem({ 
   providerId, 
-  customerId,  // Customer email
+  customerId,
   bookingId,
   userType,
   providerName,
@@ -77,9 +73,11 @@ export default function MessagingSystem({
 
   const initializeConversation = async () => {
     try {
-      console.log('Initializing CareConnect support conversation for:', {
+      console.log('Initializing conversation between provider and customer:', {
+        providerId,
         customerId,
         bookingId,
+        userType,
         providerName,
         customerName
       });
@@ -91,19 +89,19 @@ export default function MessagingSystem({
           *,
           provider:providers(business_name)
         `)
+        .eq('provider_id', providerId)
         .eq('customer_email', customerId)
         .eq('booking_id', bookingId || null)
 
       let existingConv = existingConvs && existingConvs.length > 0 ? existingConvs[0] : null
 
       if (!existingConv) {
-        console.log('Creating new support conversation...');
+        console.log('Creating new conversation...');
         // Create new conversation
-        // Store the actual provider_id but messages will go to support
         const { data: newConv, error } = await supabase
           .from('conversations')
           .insert({
-            provider_id: providerId, // Store which provider they're interested in
+            provider_id: providerId,
             customer_email: customerId,
             booking_id: bookingId,
             status: 'active'
@@ -119,15 +117,15 @@ export default function MessagingSystem({
           throw error
         }
         
-        // Send automatic welcome message from CareConnect
-        if (newConv) {
+        // Send automatic welcome message from provider
+        if (newConv && userType === 'provider') {
           await supabase
             .from('messages')
             .insert({
               conversation_id: newConv.id,
-              sender_type: 'support',
-              sender_id: CARECONNECT_SUPPORT_ID,
-              content: `Hello ${customerName}! Welcome to CareConnect Support. We've received your booking inquiry for ${providerName}. How can we help you today?`,
+              sender_type: 'provider',
+              sender_id: providerId,
+              content: `Hello ${customerName || 'there'}! This is ${providerName}. Thank you for your booking inquiry. How can I help you today?`,
               is_flagged: false
             })
         }
@@ -158,17 +156,20 @@ export default function MessagingSystem({
     
     if (data) {
       setMessages(data)
+      // Mark messages as read based on who's viewing
       if (userType === 'customer') {
-        markMessagesAsRead(data)
+        markMessagesAsRead(data.filter(m => m.sender_type === 'provider'))
+      } else if (userType === 'provider') {
+        markMessagesAsRead(data.filter(m => m.sender_type === 'customer'))
       }
     } else if (error) {
       console.error('Error loading messages:', error)
     }
   }
 
-  const markMessagesAsRead = async (messages: Message[]) => {
-    const unreadIds = messages
-      .filter(m => !m.is_read && m.sender_type === 'support')
+  const markMessagesAsRead = async (messagesToMark: Message[]) => {
+    const unreadIds = messagesToMark
+      .filter(m => !m.is_read)
       .map(m => m.id)
 
     if (unreadIds.length > 0) {
@@ -195,8 +196,17 @@ export default function MessagingSystem({
         (payload) => {
           console.log('New message received:', payload);
           const newMsg = payload.new as Message
-          setMessages(prev => [...prev, newMsg])
-          if (newMsg.sender_type === 'support' && userType === 'customer') {
+          
+          // Check if message already exists to prevent duplicates
+          setMessages(prev => {
+            const exists = prev.some(m => m.id === newMsg.id)
+            if (exists) return prev
+            return [...prev, newMsg]
+          })
+          
+          // Mark as read if it's from the other party
+          if ((newMsg.sender_type === 'provider' && userType === 'customer') ||
+              (newMsg.sender_type === 'customer' && userType === 'provider')) {
             markMessagesAsRead([newMsg])
           }
         }
@@ -210,28 +220,53 @@ export default function MessagingSystem({
     if (!newMessage.trim() || !conversation) return
 
     setSending(true)
+    const messageContent = newMessage.trim()
+    setNewMessage('') // Clear input immediately for better UX
+    
     try {
-      // FIX: Determine sender_type based on who is actually sending the message
-      // If userType is 'customer', the message is from customer
-      // If userType is 'support', the message is from support
-      const messageSenderType = userType === 'customer' ? 'customer' : 'support'
-      const messageSenderId = userType === 'customer' ? customerId : CARECONNECT_SUPPORT_ID
+      // Determine sender type and ID based on current user
+      const messageSenderType: 'provider' | 'customer' = userType
+      const messageSenderId = userType === 'customer' ? customerId : providerId
 
-      const { error } = await supabase
+      // Create a temporary message ID for optimistic update
+      const tempId = `temp-${Date.now()}`
+      const tempMessage: Message = {
+        id: tempId,
+        content: messageContent,
+        sender_type: messageSenderType,
+        sender_id: messageSenderId,
+        created_at: new Date().toISOString(),
+        is_read: false,
+        is_flagged: false
+      }
+
+      // Optimistically add the message to the UI
+      setMessages(prev => [...prev, tempMessage])
+
+      const { data, error } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversation.id,
           sender_type: messageSenderType,
           sender_id: messageSenderId,
-          content: newMessage.trim(),
+          content: messageContent,
           is_flagged: false
         })
+        .select()
+        .single()
 
       if (error) throw error
-      setNewMessage('')
+
+      // Replace temp message with real one
+      if (data) {
+        setMessages(prev => prev.map(m => m.id === tempId ? data : m))
+      }
     } catch (error) {
       console.error('Error sending message:', error)
       alert('Failed to send message. Please try again.')
+      setNewMessage(messageContent) // Restore message on error
+      // Remove temp message on error
+      setMessages(prev => prev.filter(m => !m.id.startsWith('temp-')))
     } finally {
       setSending(false)
     }
@@ -271,7 +306,10 @@ export default function MessagingSystem({
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-semibold text-lg">
-              Chat with {providerName || 'CareConnect'}
+              {userType === 'customer' 
+                ? `Chat with ${providerName || 'Provider'}`
+                : `Chat with ${customerName || 'Customer'}`
+              }
             </h3>
             <p className="text-sm opacity-90">Secure Platform Messaging</p>
           </div>
@@ -311,9 +349,8 @@ export default function MessagingSystem({
         ) : (
           <>
             {messages.map((message, index) => {
-              // FIX: Correctly determine if message is from current user
-              const isOwn = (userType === 'customer' && message.sender_type === 'customer') ||
-                           (userType === 'support' && message.sender_type === 'support')
+              // Customer messages always on right (blue), Provider messages always on left (gray)
+              const isCustomerMessage = message.sender_type === 'customer'
               const showDateSeparator = index > 0 && 
                 new Date(message.created_at).toDateString() !== 
                 new Date(messages[index - 1].created_at).toDateString()
@@ -328,26 +365,32 @@ export default function MessagingSystem({
                     </div>
                   )}
                   
-                  <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] ${isOwn ? 'order-2' : 'order-1'}`}>
-                      {!isOwn && (
+                  <div className={`flex ${isCustomerMessage ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[70%]`}>
+                      {/* Show sender name */}
+                      {!isCustomerMessage && (
                         <p className="text-xs text-gray-500 mb-1 px-1">
-                          {message.sender_type === 'support' ? 'CareConnect Support' : customerName}
+                          {providerName || 'Provider'}
+                        </p>
+                      )}
+                      {isCustomerMessage && userType === 'provider' && (
+                        <p className="text-xs text-gray-500 mb-1 px-1 text-right">
+                          {customerName || 'Customer'}
                         </p>
                       )}
                       <div
                         className={`rounded-2xl px-4 py-2 ${
-                          isOwn
-                            ? 'bg-blue-600 text-white rounded-br-sm'
-                            : 'bg-white text-gray-800 shadow-sm rounded-bl-sm'
+                          isCustomerMessage
+                            ? 'bg-blue-600 text-white rounded-br-sm' // Customer messages: Blue, right side
+                            : 'bg-gray-200 text-gray-800 shadow-sm rounded-bl-sm' // Provider messages: Gray, left side
                         }`}
                       >
                         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                         <p className={`text-xs mt-1 ${
-                          isOwn ? 'text-blue-100' : 'text-gray-400'
+                          isCustomerMessage ? 'text-blue-100' : 'text-gray-500'
                         }`}>
                           {formatTime(message.created_at)}
-                          {isOwn && message.is_read && (
+                          {message.is_read && (
                             <span className="ml-1">✓✓</span>
                           )}
                         </p>

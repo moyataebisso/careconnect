@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import Navigation from '@/components/Navigation'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,9 +22,8 @@ export default async function RootLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   
-  // Check user role
+  // Check user role for initial state
   let userRole: 'admin' | 'provider' | 'care_seeker' | null = null
-  let isAdmin = false
   
   if (user) {
     // Check user_roles table first (new system)
@@ -35,7 +35,6 @@ export default async function RootLayout({
     
     if (roleData) {
       userRole = roleData.role as 'admin' | 'provider' | 'care_seeker'
-      isAdmin = roleData.role === 'admin'
     } else {
       // Fallback: Check admin_users table (legacy)
       const { data: adminUser } = await supabase
@@ -46,7 +45,6 @@ export default async function RootLayout({
       
       if (adminUser) {
         userRole = 'admin'
-        isAdmin = true
       } else {
         // Check if they're a provider (legacy)
         const { data: provider } = await supabase
@@ -64,6 +62,9 @@ export default async function RootLayout({
     
   return (
     <html lang="en">
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      </head>
       <body className={inter.className}>
         {/* Navigation */}
         <nav className="bg-white shadow-lg sticky top-0 z-50">
@@ -84,82 +85,8 @@ export default async function RootLayout({
                 </div>
               </Link>
 
-              {/* Main Navigation */}
-              <div className="hidden md:flex items-center space-x-8">
-                <Link href="/browse" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                  Browse Providers
-                </Link>
-                <Link href="/services" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                  Our Services
-                </Link>
-                <Link href="/about" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                  About Us
-                </Link>
-                <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                  Contact
-                </Link>
-                {isAdmin && (
-                  <Link href="/admin" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
-                    Admin
-                  </Link>
-                )}
-              </div>
-
-              {/* Auth Buttons */}
-              <div className="hidden md:flex items-center space-x-4">
-                {user ? (
-                  <>
-                    {/* Show different options based on user role */}
-                    {userRole === 'care_seeker' && (
-                      <>
-                        <Link href="/care-seeker/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                          Dashboard
-                        </Link>
-                        <Link href="/my-bookings" className="text-gray-700 hover:text-blue-600 font-medium">
-                          My Bookings
-                        </Link>
-                        <Link href="/care-seeker/saved" className="text-gray-700 hover:text-blue-600 font-medium">
-                          Saved
-                        </Link>
-                      </>
-                    )}
-                    {userRole === 'provider' && (
-                      <>
-                        <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                          Provider Dashboard
-                        </Link>
-                        <Link href="/dashboard/inquiries" className="text-gray-700 hover:text-blue-600 font-medium">
-                          Inquiries
-                        </Link>
-                      </>
-                    )}
-                    {userRole === 'admin' && (
-                      <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                        Dashboard
-                      </Link>
-                    )}
-                    <form action="/auth/logout" method="POST">
-                      <button className="text-gray-700 hover:text-blue-600 font-medium">
-                        Sign Out
-                      </button>
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/auth/login" className="text-gray-700 hover:text-blue-600 font-medium">
-                      Sign In
-                    </Link>
-                    <div className="flex items-center space-x-2">
-                      <Link href="/auth/register-care-seeker" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
-                        Find Care
-                      </Link>
-                      <Link href="/auth/register" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                        List Your Facility
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </div>
+              {/* Client-side Navigation Component */}
+              <Navigation initialUser={user} initialRole={userRole} />
 
               {/* Mobile Menu Button */}
               <button className="md:hidden mobile-menu-button">
@@ -169,31 +96,16 @@ export default async function RootLayout({
               </button>
             </div>
 
-            {/* Mobile Menu */}
+            {/* Mobile Menu - Also needs to be dynamic but keeping simple for now */}
             <div className="mobile-menu hidden md:hidden pb-4">
               <Link href="/browse" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Browse Providers</Link>
               <Link href="/services" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Our Services</Link>
               <Link href="/about" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">About 245D</Link>
               <Link href="/contact" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Contact</Link>
-              {isAdmin && (
-                <Link href="/admin" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Admin</Link>
-              )}
               <div className="border-t border-gray-200 mt-2 pt-2">
                 {user ? (
                   <>
-                    {userRole === 'care_seeker' && (
-                      <>
-                        <Link href="/care-seeker/dashboard" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Dashboard</Link>
-                        <Link href="/my-bookings" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">My Bookings</Link>
-                        <Link href="/care-seeker/saved" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Saved Providers</Link>
-                      </>
-                    )}
-                    {userRole === 'provider' && (
-                      <>
-                        <Link href="/dashboard" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Provider Dashboard</Link>
-                        <Link href="/dashboard/inquiries" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Inquiries</Link>
-                      </>
-                    )}
+                    <Link href="/dashboard" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Dashboard</Link>
                     <form action="/auth/logout" method="POST">
                       <button className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100">
                         Sign Out
@@ -217,7 +129,7 @@ export default async function RootLayout({
         </nav>
 
         {/* Main Content */}
-        <main className="bg-gray-50">
+        <main>
           {children}
         </main>
 

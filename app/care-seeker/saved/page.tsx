@@ -369,7 +369,7 @@ export default function SavedProvidersPage() {
                       />
                     </div>
 
-                    {/* Action Buttons */}
+                    {/* Action Buttons - UPDATED THIS SECTION */}
                     <div className="flex gap-3">
                       <Link
                         href={`/providers/${saved.provider_id}`}
@@ -378,10 +378,10 @@ export default function SavedProvidersPage() {
                         View Full Details
                       </Link>
                       <Link
-                        href={`/care-seeker/contact/${saved.provider_id}`}
+                        href={`/booking?provider=${saved.provider_id}`}
                         className="flex-1 text-center py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                       >
-                        Contact Provider
+                        Book Service
                       </Link>
                       <button
                         onClick={() => handleRemoveSaved(saved.id)}
