@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -11,21 +12,56 @@ export default function ContactPage() {
     role: '',
     message: ''
   })
+  const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: Connect to Supabase to save contact request
-    console.log('Contact form submitted:', formData)
-    alert('Thank you for contacting us! We will respond within 24 hours.')
-    // Reset form
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      organization: '',
-      role: '',
-      message: ''
-    })
+    setSubmitting(true)
+    
+    // Debug: Log what we're trying to save
+    console.log('Submitting form data:', formData)
+    
+    try {
+      const supabase = createClient()
+      
+      // Save to contact_submissions table
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          organization: formData.organization || null,
+          role: formData.role || null,
+          message: formData.message,
+          status: 'new'
+        })
+        .select()
+      
+      if (error) {
+        console.error('Supabase error:', error)
+        throw error
+      }
+      
+      console.log('Successfully saved:', data)
+      
+      alert('Thank you for contacting us! We will respond within 24 hours.')
+      
+      // Reset form
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        organization: '',
+        role: '',
+        message: ''
+      })
+    } catch (error) {
+      console.error('Error submitting form:', error)
+      alert('Sorry, there was an error sending your message. Please try again or call us directly at 763-321-4542.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -149,7 +185,8 @@ export default function ContactPage() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      disabled={submitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                     />
                   </div>
 
@@ -164,7 +201,8 @@ export default function ContactPage() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      disabled={submitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                     />
                   </div>
 
@@ -178,7 +216,8 @@ export default function ContactPage() {
                       name="phone"
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      disabled={submitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                     />
                   </div>
 
@@ -192,7 +231,8 @@ export default function ContactPage() {
                       name="organization"
                       value={formData.organization}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      disabled={submitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                     />
                   </div>
 
@@ -205,7 +245,8 @@ export default function ContactPage() {
                       name="role"
                       value={formData.role}
                       onChange={handleChange}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      disabled={submitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                     >
                       <option value="">Select your role</option>
                       <option value="provider">Care Provider</option>
@@ -228,16 +269,18 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       rows={4}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      disabled={submitting}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
                       placeholder="How can we help you?"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-blue-700 transition-colors"
+                    disabled={submitting}
+                    className="w-full bg-blue-600 text-white py-3 px-6 rounded-md font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Send Message
+                    {submitting ? 'Sending...' : 'Send Message'}
                   </button>
                 </form>
               </div>

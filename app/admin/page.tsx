@@ -14,8 +14,8 @@ export default function AdminDashboard() {
     pendingBookings: 0,
     totalProviders: 0,
     activeProviders: 0,
-    totalMessages: 0,
-    unreadMessages: 0,
+    totalContactSubmissions: 0,
+    unreadContactSubmissions: 0,
     totalCareSeekers: 0,
     activeCareSeekers: 0
   })
@@ -80,16 +80,15 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active')
 
-      // Get message stats
-      const { count: totalMessages } = await supabase
-        .from('messages')
+      // Get contact submission stats (changed from messages)
+      const { count: totalContactSubmissions } = await supabase
+        .from('contact_submissions')
         .select('*', { count: 'exact', head: true })
 
-      const { count: unreadMessages } = await supabase
-        .from('messages')
+      const { count: unreadContactSubmissions } = await supabase
+        .from('contact_submissions')
         .select('*', { count: 'exact', head: true })
-        .eq('is_read', false)
-        .eq('sender_type', 'customer')
+        .or('status.eq.new,status.is.null')
 
       // Get care seeker stats
       const { count: totalCareSeekers } = await supabase
@@ -106,8 +105,8 @@ export default function AdminDashboard() {
         pendingBookings: pendingBookings || 0,
         totalProviders: totalProviders || 0,
         activeProviders: activeProviders || 0,
-        totalMessages: totalMessages || 0,
-        unreadMessages: unreadMessages || 0,
+        totalContactSubmissions: totalContactSubmissions || 0,
+        unreadContactSubmissions: unreadContactSubmissions || 0,
         totalCareSeekers: totalCareSeekers || 0,
         activeCareSeekers: activeCareSeekers || 0
       })
@@ -170,34 +169,34 @@ export default function AdminDashboard() {
             <div className="text-sm text-gray-600">Active Seekers</div>
           </div>
           <div className="bg-blue-50 rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-blue-600">{stats.totalMessages}</div>
-            <div className="text-sm text-gray-600">Total Messages</div>
+            <div className="text-2xl font-bold text-blue-600">{stats.totalContactSubmissions}</div>
+            <div className="text-sm text-gray-600">Contact Forms</div>
           </div>
           <div className="bg-red-50 rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-red-600">{stats.unreadMessages}</div>
-            <div className="text-sm text-gray-600">Unread Messages</div>
+            <div className="text-2xl font-bold text-red-600">{stats.unreadContactSubmissions}</div>
+            <div className="text-sm text-gray-600">Unread Forms</div>
           </div>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Support Messages */}
+          {/* Contact Form Messages */}
           <Link href="/admin/messages" className="block">
             <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
               <div className="flex items-center justify-between mb-4">
                 <div className="bg-blue-100 rounded-lg p-3">
                   <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                {stats.unreadMessages > 0 && (
+                {stats.unreadContactSubmissions > 0 && (
                   <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                    {stats.unreadMessages} NEW
+                    {stats.unreadContactSubmissions} NEW
                   </span>
                 )}
               </div>
-              <h3 className="font-semibold text-lg mb-2">Support Messages</h3>
-              <p className="text-gray-600 text-sm">View and respond to customer messages</p>
+              <h3 className="font-semibold text-lg mb-2">Contact Messages</h3>
+              <p className="text-gray-600 text-sm">View contact form submissions</p>
             </div>
           </Link>
 

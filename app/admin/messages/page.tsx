@@ -3,220 +3,174 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
-interface Conversation {
+interface ContactSubmission {
   id: string
-  customer_email: string
-  provider_id: string
-  booking_id: string
-  status: string
+  name: string
+  email: string
+  phone?: string
+  organization?: string
+  role?: string
+  message: string
+  status?: string
   created_at: string
-  provider?: {
-    business_name: string
-  }
-  last_message?: {
-    content: string
-    created_at: string
-    sender_type: string
-  }
-  unread_count?: number
+  responded_at?: string
+  response_notes?: string
 }
 
-interface Message {
-  id: string
-  content: string
-  sender_type: 'support' | 'customer'
-  sender_id: string
-  created_at: string
-  is_read: boolean
-}
-
-export default function SupportMessagesPage() {
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [newMessage, setNewMessage] = useState('')
+export default function AdminMessagesPage() {
+  const [submissions, setSubmissions] = useState<ContactSubmission[]>([])
+  const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null)
   const [loading, setLoading] = useState(true)
-  const [sending, setSending] = useState(false)
+  const [filterStatus, setFilterStatus] = useState<'all' | 'new' | 'responded' | 'archived'>('all')
+  const [responseNotes, setResponseNotes] = useState('')
+  const [updating, setUpdating] = useState(false)
   const supabase = createClient()
-
-  const SUPPORT_USER_ID = 'e5fde3a3-46f8-4df9-a48e-edfed098ede0'
+  const router = useRouter()
 
   useEffect(() => {
-    checkAdminAndLoadConversations()
+    checkAdminAndLoadSubmissions()
   }, [])
 
-  useEffect(() => {
-    if (selectedConversation) {
-      loadMessages(selectedConversation.id)
-      const subscription = subscribeToMessages(selectedConversation.id)
-      return () => {
-        subscription?.unsubscribe()
-      }
-    }
-  }, [selectedConversation])
-
-  const checkAdminAndLoadConversations = async () => {
+  const checkAdminAndLoadSubmissions = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       
-      if (!user || user.id !== SUPPORT_USER_ID) {
-        // Check if user is admin
-        const { data: adminUser } = await supabase
-          .from('admin_users')
-          .select('role')
-          .eq('user_id', user?.id)
-          .single()
-
-        if (!adminUser) {
-          alert('Access denied. Admin privileges required.')
-          window.location.href = '/dashboard'
-          return
-        }
+      if (!user) {
+        router.push('/auth/login')
+        return
       }
 
-      await loadConversations()
+      // Check if user is admin
+      const { data: adminUser } = await supabase
+        .from('admin_users')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!adminUser) {
+        alert('Access denied. Admin privileges required.')
+        router.push('/dashboard')
+        return
+      }
+
+      await loadSubmissions()
     } catch (error) {
       console.error('Error:', error)
+      router.push('/dashboard')
     } finally {
       setLoading(false)
     }
   }
 
-  const loadConversations = async () => {
-    try {
-      // Get all conversations with last message and unread count
-      const { data: convs, error } = await supabase
-        .from('conversations')
-        .select(`
-          *,
-          provider:providers(business_name)
-        `)
-        .order('updated_at', { ascending: false })
-
-      if (error) throw error
-
-      // Get last message and unread count for each conversation
-      const conversationsWithDetails = await Promise.all(
-        (convs || []).map(async (conv) => {
-          // Get last message
-          const { data: lastMsg } = await supabase
-            .from('messages')
-            .select('content, created_at, sender_type')
-            .eq('conversation_id', conv.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
-
-          // Get unread count
-          const { count } = await supabase
-            .from('messages')
-            .select('*', { count: 'exact', head: true })
-            .eq('conversation_id', conv.id)
-            .eq('is_read', false)
-            .eq('sender_type', 'customer')
-
-          return {
-            ...conv,
-            last_message: lastMsg,
-            unread_count: count || 0
-          }
-        })
-      )
-
-      setConversations(conversationsWithDetails)
-    } catch (error) {
-      console.error('Error loading conversations:', error)
-    }
-  }
-
-  const loadMessages = async (conversationId: string) => {
+  const loadSubmissions = async () => {
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('contact_submissions')
         .select('*')
-        .eq('conversation_id', conversationId)
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: false })
 
       if (error) throw error
-      
-      setMessages(data || [])
-      
-      // Mark messages as read
-      await supabase
-        .from('messages')
-        .update({ is_read: true })
-        .eq('conversation_id', conversationId)
-        .eq('sender_type', 'customer')
-        .eq('is_read', false)
+      setSubmissions(data || [])
     } catch (error) {
-      console.error('Error loading messages:', error)
+      console.error('Error loading submissions:', error)
     }
   }
 
-  const subscribeToMessages = (conversationId: string) => {
-    return supabase
-      .channel(`support-messages:${conversationId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        },
-        (payload) => {
-          const newMsg = payload.new as Message
-          setMessages(prev => [...prev, newMsg])
-          if (newMsg.sender_type === 'customer') {
-            // Update unread count
-            loadConversations()
-          }
-        }
-      )
-      .subscribe()
+  const updateStatus = async (id: string, newStatus: string) => {
+    setUpdating(true)
+    try {
+      interface UpdateData {
+        status: string
+        updated_at: string
+        responded_at?: string
+        response_notes?: string
+      }
+      
+      const updateData: UpdateData = { 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      }
+      
+      if (newStatus === 'responded' && responseNotes.trim()) {
+        updateData.responded_at = new Date().toISOString()
+        updateData.response_notes = responseNotes.trim()
+      }
+
+      const { error } = await supabase
+        .from('contact_submissions')
+        .update(updateData)
+        .eq('id', id)
+
+      if (error) throw error
+
+      await loadSubmissions()
+      setResponseNotes('')
+      alert('Status updated successfully')
+    } catch (error) {
+      console.error('Error updating status:', error)
+      alert('Failed to update status')
+    } finally {
+      setUpdating(false)
+    }
   }
 
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedConversation) return
-
-    setSending(true)
+  const deleteSubmission = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this submission?')) return
+    
     try {
       const { error } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: selectedConversation.id,
-          sender_type: 'support',
-          sender_id: SUPPORT_USER_ID,
-          content: newMessage.trim(),
-          is_flagged: false
-        })
+        .from('contact_submissions')
+        .delete()
+        .eq('id', id)
 
       if (error) throw error
       
-      setNewMessage('')
-      await loadConversations() // Refresh to update last message
+      await loadSubmissions()
+      setSelectedSubmission(null)
+      alert('Submission deleted successfully')
     } catch (error) {
-      console.error('Error sending message:', error)
-      alert('Failed to send message')
-    } finally {
-      setSending(false)
+      console.error('Error deleting submission:', error)
+      alert('Failed to delete submission')
     }
   }
 
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffMs = now.getTime() - date.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMs / 3600000)
-    const diffDays = Math.floor(diffMs / 86400000)
+  const filteredSubmissions = submissions.filter(sub => {
+    if (filterStatus === 'all') return true
+    return sub.status === filterStatus
+  })
 
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return date.toLocaleDateString()
+  const getStatusColor = (status?: string) => {
+    switch(status) {
+      case 'new': return 'bg-yellow-100 text-yellow-800'
+      case 'responded': return 'bg-green-100 text-green-800'
+      case 'archived': return 'bg-gray-100 text-gray-800'
+      default: return 'bg-yellow-100 text-yellow-800'
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    })
+  }
+
+  const getRoleLabel = (role?: string) => {
+    switch(role) {
+      case 'provider': return 'Care Provider'
+      case 'case_manager': return 'Case Manager'
+      case 'social_worker': return 'Social Worker'
+      case 'discharge_planner': return 'Discharge Planner'
+      case 'family': return 'Family Member'
+      case 'other': return 'Other'
+      default: return 'Not specified'
+    }
   }
 
   if (loading) {
@@ -232,7 +186,7 @@ export default function SupportMessagesPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Support Messages</h1>
+            <h1 className="text-2xl font-bold">Contact Form Messages</h1>
             <Link href="/admin" className="text-blue-600 hover:text-blue-800">
               ← Back to Admin
             </Link>
@@ -241,122 +195,226 @@ export default function SupportMessagesPage() {
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        <div className="grid grid-cols-12 gap-6 h-[calc(100vh-140px)]">
-          {/* Conversations List */}
-          <div className="col-span-4 bg-white rounded-lg shadow overflow-hidden">
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="text-2xl font-bold">{submissions.length}</div>
+            <div className="text-sm text-gray-600">Total Messages</div>
+          </div>
+          <div className="bg-yellow-50 rounded-lg shadow p-4">
+            <div className="text-2xl font-bold text-yellow-600">
+              {submissions.filter(s => s.status === 'new' || !s.status).length}
+            </div>
+            <div className="text-sm text-gray-600">New</div>
+          </div>
+          <div className="bg-green-50 rounded-lg shadow p-4">
+            <div className="text-2xl font-bold text-green-600">
+              {submissions.filter(s => s.status === 'responded').length}
+            </div>
+            <div className="text-sm text-gray-600">Responded</div>
+          </div>
+          <div className="bg-gray-100 rounded-lg shadow p-4">
+            <div className="text-2xl font-bold text-gray-600">
+              {submissions.filter(s => s.status === 'archived').length}
+            </div>
+            <div className="text-sm text-gray-600">Archived</div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-lg shadow mb-6 p-4">
+          <div className="flex gap-2">
+            <button
+              onClick={() => setFilterStatus('all')}
+              className={`px-4 py-2 rounded ${
+                filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'
+              }`}
+            >
+              All ({submissions.length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('new')}
+              className={`px-4 py-2 rounded ${
+                filterStatus === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-100'
+              }`}
+            >
+              New ({submissions.filter(s => s.status === 'new' || !s.status).length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('responded')}
+              className={`px-4 py-2 rounded ${
+                filterStatus === 'responded' ? 'bg-blue-600 text-white' : 'bg-gray-100'
+              }`}
+            >
+              Responded ({submissions.filter(s => s.status === 'responded').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('archived')}
+              className={`px-4 py-2 rounded ${
+                filterStatus === 'archived' ? 'bg-blue-600 text-white' : 'bg-gray-100'
+              }`}
+            >
+              Archived ({submissions.filter(s => s.status === 'archived').length})
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-12 gap-6">
+          {/* Messages List */}
+          <div className="col-span-5 bg-white rounded-lg shadow overflow-hidden">
             <div className="border-b p-4">
-              <h2 className="font-semibold">Conversations</h2>
+              <h2 className="font-semibold">Contact Submissions</h2>
               <p className="text-sm text-gray-600 mt-1">
-                {conversations.filter(c => (c.unread_count || 0) > 0).length} unread
+                {submissions.filter(s => s.status === 'new' || !s.status).length} unread messages
               </p>
             </div>
-            <div className="overflow-y-auto h-full">
-              {conversations.length === 0 ? (
+            <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 320px)' }}>
+              {filteredSubmissions.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">
-                  No conversations yet
+                  No messages found
                 </div>
               ) : (
-                conversations.map((conv) => (
+                filteredSubmissions.map((submission) => (
                   <div
-                    key={conv.id}
-                    onClick={() => setSelectedConversation(conv)}
+                    key={submission.id}
+                    onClick={() => setSelectedSubmission(submission)}
                     className={`p-4 border-b cursor-pointer hover:bg-gray-50 ${
-                      selectedConversation?.id === conv.id ? 'bg-blue-50' : ''
+                      selectedSubmission?.id === submission.id ? 'bg-blue-50' : ''
                     }`}
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <div className="font-medium">{conv.customer_email}</div>
-                      {(conv.unread_count || 0) > 0 && (
-                        <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                          {conv.unread_count}
-                        </span>
-                      )}
+                      <div className="font-medium">{submission.name}</div>
+                      <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(submission.status)}`}>
+                        {submission.status || 'new'}
+                      </span>
                     </div>
-                    <div className="text-sm text-gray-600 mb-1">
-                      Provider: {conv.provider?.business_name || 'Unknown'}
+                    <div className="text-sm text-gray-600 mb-1">{submission.email}</div>
+                    <div className="text-sm text-gray-700 truncate">{submission.message}</div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {formatDate(submission.created_at)}
                     </div>
-                    {conv.last_message && (
-                      <>
-                        <div className="text-sm text-gray-700 truncate">
-                          {conv.last_message.sender_type === 'support' && '✓ '}
-                          {conv.last_message.content}
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {formatTime(conv.last_message.created_at)}
-                        </div>
-                      </>
-                    )}
                   </div>
                 ))
               )}
             </div>
           </div>
 
-          {/* Messages Area */}
-          <div className="col-span-8 bg-white rounded-lg shadow flex flex-col">
-            {selectedConversation ? (
-              <>
+          {/* Message Details */}
+          <div className="col-span-7 bg-white rounded-lg shadow">
+            {selectedSubmission ? (
+              <div className="h-full flex flex-col">
                 {/* Header */}
                 <div className="border-b p-4">
-                  <h3 className="font-semibold">{selectedConversation.customer_email}</h3>
-                  <p className="text-sm text-gray-600">
-                    Booking ID: {selectedConversation.booking_id || 'N/A'} | 
-                    Provider: {selectedConversation.provider?.business_name}
-                  </p>
-                </div>
-
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4">
-                  {messages.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={`mb-4 ${
-                        msg.sender_type === 'support' ? 'text-right' : 'text-left'
-                      }`}
-                    >
-                      <div
-                        className={`inline-block max-w-[70%] p-3 rounded-lg ${
-                          msg.sender_type === 'support'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        <p>{msg.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          msg.sender_type === 'support' ? 'text-blue-100' : 'text-gray-500'
-                        }`}>
-                          {formatTime(msg.created_at)}
-                        </p>
-                      </div>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-lg">{selectedSubmission.name}</h3>
+                      <p className="text-sm text-gray-600">{selectedSubmission.email}</p>
+                      {selectedSubmission.phone && (
+                        <p className="text-sm text-gray-600">{selectedSubmission.phone}</p>
+                      )}
                     </div>
-                  ))}
-                </div>
-
-                {/* Input */}
-                <div className="border-t p-4">
-                  <div className="flex space-x-2">
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                      placeholder="Type a message..."
-                      className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={sending}
-                    />
-                    <button
-                      onClick={sendMessage}
-                      disabled={sending || !newMessage.trim()}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                    >
-                      Send
-                    </button>
+                    <span className={`text-sm px-3 py-1 rounded-full ${getStatusColor(selectedSubmission.status)}`}>
+                      {selectedSubmission.status || 'new'}
+                    </span>
                   </div>
                 </div>
-              </>
+
+                {/* Content */}
+                <div className="flex-1 p-6 overflow-y-auto">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Organization</label>
+                      <p className="text-gray-900">{selectedSubmission.organization || 'Not specified'}</p>
+                    </div>
+                    
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Role</label>
+                      <p className="text-gray-900">{getRoleLabel(selectedSubmission.role)}</p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Message</label>
+                      <p className="text-gray-900 whitespace-pre-wrap mt-2 bg-gray-50 p-4 rounded">
+                        {selectedSubmission.message}
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Submitted</label>
+                      <p className="text-gray-900">{formatDate(selectedSubmission.created_at)}</p>
+                    </div>
+
+                    {selectedSubmission.responded_at && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Responded</label>
+                        <p className="text-gray-900">{formatDate(selectedSubmission.responded_at)}</p>
+                      </div>
+                    )}
+
+                    {selectedSubmission.response_notes && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-500">Response Notes</label>
+                        <p className="text-gray-900 mt-1 bg-blue-50 p-3 rounded">
+                          {selectedSubmission.response_notes}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="border-t p-4 space-y-3">
+                  {selectedSubmission.status !== 'responded' && (
+                    <div>
+                      <textarea
+                        placeholder="Add response notes (optional)..."
+                        value={responseNotes}
+                        onChange={(e) => setResponseNotes(e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        rows={2}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => updateStatus(selectedSubmission.id, 'responded')}
+                      disabled={updating || selectedSubmission.status === 'responded'}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Mark as Responded
+                    </button>
+                    <button
+                      onClick={() => updateStatus(selectedSubmission.id, 'archived')}
+                      disabled={updating}
+                      className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 disabled:opacity-50"
+                    >
+                      Archive
+                    </button>
+                    <button
+                      onClick={() => deleteSubmission(selectedSubmission.id)}
+                      disabled={updating}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                    <a
+                      href={`mailto:${selectedSubmission.email}`}
+                      className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 inline-block text-center"
+                    >
+                      Send Email
+                    </a>
+                  </div>
+                </div>
+              </div>
             ) : (
-              <div className="flex-1 flex items-center justify-center text-gray-500">
-                Select a conversation to view messages
+              <div className="h-full flex items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <svg className="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <p>Select a message to view details</p>
+                </div>
               </div>
             )}
           </div>
