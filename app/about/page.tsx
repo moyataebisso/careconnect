@@ -38,7 +38,7 @@ export default function AboutPage() {
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
-                    Filter by services and waiver types
+                    Filter by services and payment types
                   </li>
                   <li className="flex items-start">
                     <span className="text-green-500 mr-2">✓</span>
@@ -116,27 +116,6 @@ export default function AboutPage() {
             </p>
           </div>
 
-          
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">100%</div>
-              <div className="text-gray-600">Verified Providers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">6</div>
-              <div className="text-gray-600">Service Types</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">5</div>
-              <div className="text-gray-600">Payment Options</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">24/7</div>
-              <div className="text-gray-600">Online Access</div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -148,13 +127,13 @@ export default function AboutPage() {
           <div className="flex gap-4 justify-center">
             <a 
               href="/browse" 
-              className="inline-block bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+              className="inline-block bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors"
             >
               Find Care
             </a>
             <a 
               href="/auth/register" 
-              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors"
             >
               List Your Facility
             </a>
