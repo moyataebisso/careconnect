@@ -1,4 +1,3 @@
-// app/auth/register-care-seeker/page.tsx
 'use client'
 
 import { useState } from 'react'
@@ -49,8 +48,8 @@ export default function RegisterCareSeekerPage() {
     { value: 'ICS', label: 'Integrated Community Services' },
     { value: 'FRS', label: 'Family Residential Services' },
     { value: 'CRS', label: 'Community Residential Services' },
-    { value: 'DC_DM', label: 'Day Care/Day Services' },
-    { value: 'ADL_SUPPORT', label: 'ADLs Support' },
+    { value: 'DC_DM', label: 'Adult Day Services' },
+    { value: 'ADL_SUPPORT', label: 'Respite Support' },
     { value: 'ASSISTED_LIVING', label: 'Assisted Living (24/7)' },
   ]
 
@@ -149,7 +148,6 @@ export default function RegisterCareSeekerPage() {
       if (authError) {
         console.error('Auth error details:', authError)
         
-        // Check for duplicate user error
         if (authError.message?.includes('already registered') || 
             authError.message?.includes('duplicate') ||
             authError.message?.includes('already exists')) {
@@ -176,7 +174,6 @@ export default function RegisterCareSeekerPage() {
 
         if (roleError) {
           console.log('Role creation skipped:', roleError.message)
-          // Don't throw - this is non-critical
         } else {
           console.log('User role created successfully')
         }
@@ -184,14 +181,12 @@ export default function RegisterCareSeekerPage() {
         console.log('User roles table may not exist, skipping role creation')
       }
 
-      // 3. Create care seeker profile - FIXED VERSION
+      // 3. Create care seeker profile
       console.log('Creating care seeker profile...')
       
-      // Build the care seeker data to match your database schema exactly
       const careSeekerData = {
-        // Don't include 'id' - let the database generate it with gen_random_uuid()
         user_id: authData.user.id,
-        email: formData.email, // ADD this - it was missing!
+        email: formData.email,
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone || null,
@@ -199,7 +194,7 @@ export default function RegisterCareSeekerPage() {
         patient_name: formData.relationship_to_patient !== 'self' ? formData.patient_name : null,
         patient_age: formData.patient_age ? parseInt(formData.patient_age) : null,
         care_type: formData.care_type || null,
-        service_types_needed: formData.service_types_needed, // This should work as ARRAY
+        service_types_needed: formData.service_types_needed,
         care_needs: formData.care_needs,
         preferred_city: formData.preferred_city || null,
         preferred_zip: formData.preferred_zip || null,
@@ -210,8 +205,7 @@ export default function RegisterCareSeekerPage() {
         budget_max: formData.budget_max ? parseFloat(formData.budget_max) : null,
         urgency: formData.urgency,
         move_in_date: formData.move_in_date || null,
-        is_active: true, // Set to true by default
-        // created_at and updated_at will be set automatically
+        is_active: true,
       }
 
       console.log('Care seeker data to insert:', careSeekerData)
@@ -230,8 +224,7 @@ export default function RegisterCareSeekerPage() {
         })
         console.error('Care seeker data that failed:', careSeekerData)
         
-        // Better error messages for common issues
-        if (profileError.code === '23505') { // Unique violation
+        if (profileError.code === '23505') {
           if (profileError.message.includes('email')) {
             throw new Error('A care seeker account with this email already exists.')
           }
@@ -241,11 +234,11 @@ export default function RegisterCareSeekerPage() {
           throw new Error('This care seeker information already exists.')
         }
         
-        if (profileError.code === '23503') { // Foreign key violation
+        if (profileError.code === '23503') {
           throw new Error('User registration failed. Please try again.')
         }
         
-        if (profileError.code === '42501') { // Permission denied
+        if (profileError.code === '42501') {
           throw new Error('Permission denied. Please check your account permissions.')
         }
         
@@ -256,7 +249,6 @@ export default function RegisterCareSeekerPage() {
 
       // 4. Try to update or create profile in profiles table if it exists (optional)
       try {
-        // First try to insert the profile
         const { error: profileInsertError } = await supabase
           .from('profiles')
           .insert({
@@ -268,7 +260,6 @@ export default function RegisterCareSeekerPage() {
           })
 
         if (profileInsertError) {
-          // If insert fails (profile might already exist from trigger), try update
           const { error: profileUpdateError } = await supabase
             .from('profiles')
             .update({
@@ -288,7 +279,6 @@ export default function RegisterCareSeekerPage() {
         }
       } catch (profileErr) {
         console.log('Profile table operation skipped:', profileErr)
-        // Don't throw - profile table operations are non-critical
       }
 
       // Success!
@@ -520,6 +510,7 @@ export default function RegisterCareSeekerPage() {
                     <option value="DD">DD - Developmental Disabilities</option>
                     <option value="BI">BI - Brain Injury</option>
                     <option value="ELDERLY">Elderly Care (65+)</option>
+                    <option value="private_pay">Private Pay</option>
                     <option value="other">Other/Not Sure</option>
                   </select>
                 </div>
@@ -560,7 +551,7 @@ export default function RegisterCareSeekerPage() {
               </div>
             )}
 
-            {/* Step 4: Location & Budget */}
+            {/* Step 4: Location & Budget - UPDATED */}
             {step === 4 && (
               <div className="space-y-4">
                 <h2 className="text-xl font-semibold mb-4">Location & Budget Preferences</h2>
@@ -622,7 +613,7 @@ export default function RegisterCareSeekerPage() {
                       onChange={handleInputChange}
                       className="mr-3"
                     />
-                    <span className="font-medium">I have or am eligible for a waiver program</span>
+                    <span className="font-medium">I have a waiver program or will pay privately</span>
                   </label>
 
                   {formData.has_waiver && (
@@ -633,11 +624,12 @@ export default function RegisterCareSeekerPage() {
                         onChange={handleInputChange}
                         className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
                       >
-                        <option value="">Select waiver type...</option>
+                        <option value="">Select payment type...</option>
                         <option value="CADI">CADI Waiver</option>
                         <option value="DD">DD Waiver</option>
                         <option value="BI">BI Waiver</option>
                         <option value="ELDERLY">Elderly Waiver</option>
+                        <option value="private_pay">Private Pay</option>
                       </select>
                     </div>
                   )}

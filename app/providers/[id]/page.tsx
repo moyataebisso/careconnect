@@ -1,3 +1,4 @@
+// app/providers/[id]/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -37,11 +38,9 @@ export default function ProviderDetailPage() {
 
   const fetchProviderAndCheckOwnership = async () => {
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
       
-      // Fetch provider
       const { data: providerData, error } = await supabase
         .from('providers')
         .select('*')
@@ -51,7 +50,6 @@ export default function ProviderDetailPage() {
       if (providerData) {
         setProvider(providerData)
         
-        // Check ownership: user must be logged in AND own this provider
         if (user && providerData.user_id === user.id) {
           console.log('User owns this provider')
           setIsOwner(true)
@@ -77,7 +75,6 @@ export default function ProviderDetailPage() {
     if (data) {
       setProvider(data)
       
-      // Re-check ownership when provider data is refreshed
       if (user && data.user_id === user.id) {
         setIsOwner(true)
       } else {
@@ -134,7 +131,6 @@ export default function ProviderDetailPage() {
     })
   }
 
-  // Helper function to categorize services
   const categorizeServices = (services: string[]) => {
     const basicServices = ['ICS', 'FRS', 'CRS', 'DC_DM']
     const comprehensiveServices = ['ADL_SUPPORT', 'ASSISTED_LIVING']
@@ -274,8 +270,7 @@ export default function ProviderDetailPage() {
                     <div className="flex flex-wrap gap-2">
                       {serviceCategories.basic.map(service => (
                         <div key={service} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
-                          <span className="font-medium">{service}</span>
-                          <span className="text-sm ml-2">- {SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                          <span className="font-medium">{SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}</span>
                         </div>
                       ))}
                     </div>
@@ -290,9 +285,8 @@ export default function ProviderDetailPage() {
                       {serviceCategories.comprehensive.map(service => (
                         <div key={service} className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
                           <span className="font-medium">
-                            {service === 'ADL_SUPPORT' ? 'ADLs Support' : 'Assisted Living'}
+                            {SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}
                           </span>
-                          <span className="text-sm ml-2">- {SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}</span>
                         </div>
                       ))}
                     </div>
@@ -300,7 +294,7 @@ export default function ProviderDetailPage() {
                 )}
               </div>
 
-              {/* Accepted Waivers */}
+              {/* Accepted Waivers - KEEPING THIS */}
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-3">Accepted Waiver Programs</h2>
                 <div className="flex flex-wrap gap-2">

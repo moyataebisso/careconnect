@@ -4,8 +4,7 @@
 export type ServiceType = 'FRS' | 'CRS' | 'ICS' | 'DC_DM' | 'ADL_SUPPORT' | 'ASSISTED_LIVING';
 
 // Waiver Types (NO private pay)
-export type WaiverType = 'CADI' | 'CAC' | 'DD' | 'BI' | 'Elderly';
-
+export type WaiverType = 'CADI' | 'private_pay' | 'DD' | 'BI' | 'Elderly';
 // Provider Status
 export type ProviderStatus = 'pending' | 'active' | 'inactive' | 'suspended';
 
@@ -131,29 +130,29 @@ export interface ReferralRequest {
   updated_at: string;
 }
 
-// Service Type Labels (for display) - Updated to match keys
+// Service Type Labels (for display) - UPDATED LABELS ONLY
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
   FRS: 'Family Residential Services',
   CRS: 'Community Residential Services',
   ICS: 'Integrated Community Services',
-  DC_DM: 'Day Care/Day Services',
-  ADL_SUPPORT: 'ADL Support',
+  DC_DM: 'Adult Day Services', // CHANGED from 'Day Care/Day Services'
+  ADL_SUPPORT: 'Respite Support', // CHANGED from 'ADL Support'
   ASSISTED_LIVING: 'Assisted Living'
 };
 
-// Waiver Type Labels (for display)
+// Waiver Type Labels (for display) - KEEPING ALL WAIVERS
 export const WAIVER_TYPE_LABELS: Record<WaiverType, string> = {
   CADI: 'Community Access for Disability Inclusion (18+)',
-  CAC: 'Community Alternative Care',
+  private_pay: 'Private Pay', // Changed from CAC
   DD: 'Developmental Disabilities',
   BI: 'Brain Injury',
   Elderly: 'Elderly (65+)'
 };
 
-// Waiver Type Short Labels
+// Waiver Type Short Labels - KEEPING ALL WAIVERS
 export const WAIVER_TYPE_SHORT: Record<WaiverType, string> = {
   CADI: 'CADI Waiver',
-  CAC: 'CAC Waiver',
+  private_pay: 'Private Pay', // Changed from CAC
   DD: 'DD Waiver',
   BI: 'Brain Injury',
   Elderly: 'Elderly'

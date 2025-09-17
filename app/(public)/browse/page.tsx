@@ -1,4 +1,3 @@
-// app/(public)/browse/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -19,6 +18,15 @@ const MapComponent = dynamic(() => import('@/components/MapComponent'), {
   )
 })
 
+// Add this helper function after the imports
+function getWaiverLabel(waiver: string): string {
+  if (waiver === 'CAC' || waiver === 'private_pay') {
+    return 'Private Pay';
+  }
+  // Use the WAIVER_TYPE_SHORT from imports
+  return WAIVER_TYPE_SHORT[waiver as WaiverType] || waiver;
+}
+
 interface User {
   id: string
   email?: string
@@ -34,7 +42,7 @@ export default function BrowseProvidersPage() {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   
-  // Filters
+  // Filters - KEEPING WAIVER FILTERS
   const [selectedServices, setSelectedServices] = useState<ServiceType[]>([])
   const [selectedWaivers, setSelectedWaivers] = useState<WaiverType[]>([])
   const [selectedCity, setSelectedCity] = useState('')
@@ -67,8 +75,6 @@ export default function BrowseProvidersPage() {
 
   const loadProviders = async () => {
     try {
-      // For public browsing, we'll select limited fields
-      // Protected info like contact details won't be included for non-logged users
       const query = supabase
         .from('providers')
         .select('*')
@@ -80,11 +86,9 @@ export default function BrowseProvidersPage() {
 
       if (error) throw error
 
-      // Process data to ensure it matches Provider type
       const processedData = (data || []).map(provider => {
         const processedProvider: Provider = {
           ...provider,
-          // Ensure all required fields have defaults
           service_types: provider.service_types || [],
           accepted_waivers: provider.accepted_waivers || [],
           status: provider.status || 'active',
@@ -98,7 +102,6 @@ export default function BrowseProvidersPage() {
           updated_at: provider.updated_at || new Date().toISOString()
         }
 
-        // If user is not logged in, remove sensitive information
         if (!user) {
           delete processedProvider.contact_phone
           delete processedProvider.contact_email
@@ -121,7 +124,6 @@ export default function BrowseProvidersPage() {
     if (!user) return
     
     try {
-      // Get care seeker id
       const { data: careSeeker } = await supabase
         .from('care_seekers')
         .select('id')
@@ -141,11 +143,9 @@ export default function BrowseProvidersPage() {
     }
   }
 
-  // Apply filters function
   const applyFilters = () => {
     let filtered = [...providers]
 
-    // Filter by search query
     if (searchQuery && searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase().trim()
       filtered = filtered.filter(p => {
@@ -157,7 +157,6 @@ export default function BrowseProvidersPage() {
       })
     }
 
-    // Filter by availability
     if (showAvailableOnly) {
       filtered = filtered.filter(p => {
         const hasAvailability = p.current_capacity < p.total_capacity
@@ -165,7 +164,6 @@ export default function BrowseProvidersPage() {
       })
     }
 
-    // Filter by services
     if (selectedServices.length > 0) {
       filtered = filtered.filter(p => 
         p.service_types && Array.isArray(p.service_types) && 
@@ -173,15 +171,22 @@ export default function BrowseProvidersPage() {
       )
     }
 
-    // Filter by waivers
+    // KEEPING WAIVER FILTER - handle both CAC and private_pay
     if (selectedWaivers.length > 0) {
-      filtered = filtered.filter(p => 
-        p.accepted_waivers && Array.isArray(p.accepted_waivers) && 
-        selectedWaivers.some(waiver => p.accepted_waivers.includes(waiver))
-      )
+  filtered = filtered.filter(p => {
+    if (!p.accepted_waivers || !Array.isArray(p.accepted_waivers)) return false
+    
+    return selectedWaivers.some(selectedWaiver => {
+      // If user selects private_pay, match both CAC and private_pay in the database
+      if (selectedWaiver === 'private_pay') {
+        return p.accepted_waivers.some(w => w === 'private_pay')
+      }
+      return p.accepted_waivers.includes(selectedWaiver)
+
+        })
+      })
     }
 
-    // Filter by city
     if (selectedCity && selectedCity.trim() !== '') {
       const cityQuery = selectedCity.toLowerCase().trim()
       filtered = filtered.filter(p => 
@@ -189,7 +194,6 @@ export default function BrowseProvidersPage() {
       )
     }
 
-    // Filter by distance if user location is available
     if (userLocation && maxDistance < 200 && providers.some(p => p.latitude && p.longitude)) {
       filtered = filtered.filter(p => {
         if (p.latitude && p.longitude) {
@@ -208,7 +212,6 @@ export default function BrowseProvidersPage() {
     setFilteredProviders(filtered)
   }
 
-  // Apply filters when filter criteria change
   useEffect(() => {
     if (providers.length > 0) {
       applyFilters()
@@ -238,7 +241,6 @@ export default function BrowseProvidersPage() {
     }
 
     try {
-      // Get care seeker id
       const { data: careSeeker } = await supabase
         .from('care_seekers')
         .select('id')
@@ -252,7 +254,6 @@ export default function BrowseProvidersPage() {
       }
 
       if (savedProviders.includes(providerId)) {
-        // Remove from saved
         await supabase
           .from('saved_providers')
           .delete()
@@ -261,7 +262,6 @@ export default function BrowseProvidersPage() {
         
         setSavedProviders(prev => prev.filter(id => id !== providerId))
       } else {
-        // Add to saved
         await supabase
           .from('saved_providers')
           .insert({
@@ -281,7 +281,6 @@ export default function BrowseProvidersPage() {
       router.push('/auth/login')
       return
     }
-    // Changed to route to booking page with provider ID
     router.push(`/booking?provider=${providerId}`)
   }
 
@@ -293,17 +292,13 @@ export default function BrowseProvidersPage() {
     return provider.total_capacity - provider.current_capacity
   }
 
-  // Helper function to get the first photo
   const getProviderPhoto = (provider: Provider) => {
-    // First try primary_photo_url
     if (provider.primary_photo_url) {
       return provider.primary_photo_url
     }
-    // Then try first photo from photo_urls array
     if (provider.photo_urls && provider.photo_urls.length > 0) {
       return provider.photo_urls[0]
     }
-    // Return null if no photos
     return null
   }
 
@@ -458,9 +453,9 @@ export default function BrowseProvidersPage() {
                 </div>
               </div>
 
-              {/* Waiver Types */}
+              {/* Payment Types - Updated to show Private Pay */}
               <div className="mb-6">
-                <h3 className="font-medium mb-3">Accepted Waivers</h3>
+                <h3 className="font-medium mb-3">Accepted Payment Types</h3>
                 <div className="space-y-2">
                   {Object.entries(WAIVER_TYPE_SHORT).map(([key, label], index) => (
                     <label key={`${key}-${index}`} className="flex items-center text-sm">
@@ -558,7 +553,7 @@ export default function BrowseProvidersPage() {
                   return (
                     <div key={`${provider.id}-${index}`} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
                       <div className="flex flex-col md:flex-row">
-                        {/* Photo Section - NEW */}
+                        {/* Photo Section */}
                         {providerPhoto && (
                           <div className="md:w-48 h-48 md:h-auto flex-shrink-0">
                             <img
@@ -566,7 +561,6 @@ export default function BrowseProvidersPage() {
                               alt={provider.business_name}
                               className="w-full h-full object-cover rounded-t-lg md:rounded-l-lg md:rounded-t-none"
                               onError={(e) => {
-                                // Hide image if it fails to load
                                 const target = e.target as HTMLImageElement
                                 target.style.display = 'none'
                               }}
@@ -584,7 +578,6 @@ export default function BrowseProvidersPage() {
                               <p className="text-gray-600">
                                 {provider.city}, {provider.state} {provider.zip_code}
                               </p>
-                              {/* Only show contact info if logged in */}
                               {user && provider.contact_phone && (
                                 <p className="text-sm text-gray-500 mt-1">
                                   Contact: {provider.contact_person}
@@ -625,11 +618,12 @@ export default function BrowseProvidersPage() {
                               ))}
                             </div>
                             
+                            {/* Updated waiver display using helper function */}
                             <div className="flex flex-wrap gap-2">
                               <span className="text-sm font-medium text-gray-600">Accepts:</span>
                               {provider.accepted_waivers.map((waiver, waiverIndex) => (
                                 <span key={`${provider.id}-waiver-${waiver}-${waiverIndex}`} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                  {WAIVER_TYPE_SHORT[waiver] || waiver}
+                                  {getWaiverLabel(waiver)}
                                 </span>
                               ))}
                             </div>

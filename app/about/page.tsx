@@ -4,8 +4,8 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-16">
         <div className="container mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-4">About CareConnect Marketing Agency</h1>
-          <p className="text-xl opacity-90">Building Bridges Between Quality Care and Those Who Need It</p>
+          <h1 className="text-4xl font-bold mb-4">About CareConnect</h1>
+          <p className="text-xl opacity-90">Minnesota Trusted 245D Provider Directory</p>
         </div>
       </section>
 
@@ -15,54 +15,93 @@ export default function AboutPage() {
           <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
             <h2 className="text-2xl font-bold mb-6 text-blue-900">Who We Are</h2>
             <p className="text-gray-700 leading-relaxed mb-6">
-              CareConnect Marketing is a specialized agency that connects licensed home care providers 
-              with social workers, discharge planners, and case managers who are actively seeking 
-              quality housing solutions for their clients.
+              CareConnect is a comprehensive online directory that connects Minnesota families and case 
+              managers with verified 245D licensed care providers. Our platform simplifies the process 
+              of finding appropriate residential care that accepts various waiver programs.
             </p>
             <p className="text-gray-700 leading-relaxed">
-              We use targeted marketing, professional branding, and referral-driven outreach to help 
-              home care businesses grow their client base reliably and compliantly.
+              We provide a searchable database of active 245D providers, allowing care seekers to filter 
+              by location, services offered, accepted payment types, and current availability.
             </p>
           </div>
 
-          {/* Why Choose Us Section */}
+          {/* What We Offer Section */}
           <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <h2 className="text-2xl font-bold mb-6 text-blue-900">Why Choose CareConnect?</h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold mb-2">Quality Leads</h3>
-                <p className="text-gray-600 text-sm">
-                  We generate consistent, high-quality leads from case managers
-                </p>
+            <h2 className="text-2xl font-bold mb-6 text-blue-900">What We Offer</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-3 text-lg">For Care Seekers</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    Browse verified 245D providers
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    Filter by services and waiver types
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    Check real-time availability
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    Save favorite providers
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    Direct booking requests
+                  </li>
+                </ul>
               </div>
 
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold mb-2">Network Visibility</h3>
-                <p className="text-gray-600 text-sm">
-                  We create visibility for home care providers in referral networks
-                </p>
+              <div>
+                <h3 className="font-semibold mb-3 text-lg">For Providers</h3>
+                <ul className="space-y-2 text-gray-700">
+                  <li className="flex items-start">
+                    <span className="text-blue-500 mr-2">✓</span>
+                    Create detailed facility profiles
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-500 mr-2">✓</span>
+                    Showcase services and amenities
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-500 mr-2">✓</span>
+                    Update availability in real-time
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-500 mr-2">✓</span>
+                    Receive booking inquiries
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-blue-500 mr-2">✓</span>
+                    Connect with case managers
+                  </li>
+                </ul>
               </div>
+            </div>
+          </div>
 
-              <div className="text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <h3 className="font-semibold mb-2">Trusted Partner</h3>
-                <p className="text-gray-600 text-sm">
-                  We position clients as trusted, reliable housing solutions
-                </p>
+          {/* Services We Support */}
+          <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 className="text-2xl font-bold mb-6 text-blue-900">245D Services We List</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <h4 className="font-semibold text-blue-600 mb-2">Basic Services</h4>
+                <ul className="text-gray-700 space-y-1 text-sm">
+                  <li>• Integrated Community Services (ICS)</li>
+                  <li>• Family Residential Services (FRS)</li>
+                  <li>• Community Residential Services (CRS)</li>
+                  <li>• Adult Day Services</li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-semibold text-green-600 mb-2">Comprehensive Services</h4>
+                <ul className="text-gray-700 space-y-1 text-sm">
+                  <li>• Respite Support</li>
+                  <li>• Assisted Living (24/7 Care)</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -71,29 +110,31 @@ export default function AboutPage() {
           <div className="bg-blue-50 rounded-lg p-8 border-l-4 border-blue-600">
             <h2 className="text-2xl font-bold mb-4 text-blue-900">Our Mission</h2>
             <p className="text-gray-700 italic">
-              To bridge the gap between quality 245D care providers and the families who need them, 
-              ensuring every Minnesotan has access to appropriate, compassionate care that matches 
-              their unique needs and waiver programs.
+              To provide a simple, accessible platform that connects Minnesota families with verified 
+              245D care providers, making it easier to find appropriate care that accepts their waiver 
+              program or payment method.
             </p>
           </div>
+
+          
 
           {/* Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">50+</div>
-              <div className="text-gray-600">Providers Listed</div>
+              <div className="text-3xl font-bold text-blue-600">100%</div>
+              <div className="text-gray-600">Verified Providers</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">87</div>
-              <div className="text-gray-600">Counties Served</div>
+              <div className="text-3xl font-bold text-blue-600">6</div>
+              <div className="text-gray-600">Service Types</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600">4</div>
-              <div className="text-gray-600">Waiver Types</div>
+              <div className="text-3xl font-bold text-blue-600">5</div>
+              <div className="text-gray-600">Payment Options</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600">24/7</div>
-              <div className="text-gray-600">Support Available</div>
+              <div className="text-gray-600">Online Access</div>
             </div>
           </div>
         </div>
@@ -102,14 +143,22 @@ export default function AboutPage() {
       {/* CTA Section */}
       <section className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold mb-4">Ready to Grow Your Care Business?</h2>
-          <p className="mb-6">Join our network of trusted 245D providers</p>
-          <a 
-            href="/register" 
-            className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Get Started Today
-          </a>
+          <h2 className="text-2xl font-bold mb-4">Ready to Find or List Care Services?</h2>
+          <p className="mb-6">Join this Minnesota trusted 245D provider network</p>
+          <div className="flex gap-4 justify-center">
+            <a 
+              href="/browse" 
+              className="inline-block bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors"
+            >
+              Find Care
+            </a>
+            <a 
+              href="/auth/register" 
+              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+            >
+              List Your Facility
+            </a>
+          </div>
         </div>
       </section>
     </div>

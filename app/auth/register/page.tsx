@@ -6,35 +6,35 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ServiceType, WaiverType } from '@/lib/types/careconnect'
 
-// Updated service types for 245D programs
+// Updated service types for 245D programs with label changes
 const SERVICE_TYPES_245D = {
   // Basic Services
   ICS: 'Integrated Community Services',
   FRS: 'Family Residential Services', 
   CRS: 'Community Residential Services',
-  DC_DM: 'Day Care/Day Services',
+  DC_DM: 'Adult Day Services', // CHANGED from Day Care/Day Services
   // Comprehensive Services
-  ADL_SUPPORT: 'ADLs Support (Activities of Daily Living)',
-  ASSISTED_LIVING: 'Assisted Living (24/7 Care with ADLs)'
+  ADL_SUPPORT: 'Respite Support', // CHANGED from ADLs Support
+  ASSISTED_LIVING: 'Assisted Living (24/7 Care)'
 } as const
 
-// Updated waiver types - removed private pay
+// Updated waiver types to include Private Pay
 const WAIVER_TYPES = {
   CADI: 'CADI - Community Access for Disability Inclusion (18+)',
   DD: 'DD - Developmental Disabilities (All Ages)',
   BI: 'BI - Brain Injury (All Ages)',
-  Elderly: 'Elderly Waiver (65+)'
+  Elderly: 'Elderly Waiver (65+)',
+  private_pay: 'Private Pay - Self-funded care'
 } as const
 
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [step, setStep] = useState(1) // Multi-step form
+  const [step, setStep] = useState(1)
   
   const supabase = createClient()
 
-  // Form data - removed agree_to_commission
   const [formData, setFormData] = useState({
     // Step 1: Account Info
     email: '',
@@ -127,7 +127,6 @@ export default function RegisterPage() {
         }
         break
       case 4:
-        // Services and waivers are now OPTIONAL - no validation required
         if (!formData.total_capacity) {
           setError('Please enter total capacity')
           return false
@@ -182,14 +181,14 @@ export default function RegisterPage() {
 
       console.log('User created successfully:', authData.user.id)
 
-      // 2. Create provider record - REMOVED commission_percentage
+      // 2. Create provider record
       console.log('Creating provider record...')
       const { data: providerData, error: providerError } = await supabase
         .from('providers')
         .insert({
           user_id: authData.user.id,
           business_name: formData.business_name,
-          business_email: formData.email, // Use login email as business email
+          business_email: formData.email,
           license_number: formData.license_number,
           contact_person: formData.contact_person,
           contact_email: formData.email,
@@ -198,8 +197,8 @@ export default function RegisterPage() {
           city: formData.city,
           state: 'MN',
           zip_code: formData.zip_code,
-          service_types: formData.service_types.length > 0 ? formData.service_types : [], // Allow empty array
-          accepted_waivers: formData.accepted_waivers.length > 0 ? formData.accepted_waivers : [], // Allow empty array
+          service_types: formData.service_types.length > 0 ? formData.service_types : [],
+          accepted_waivers: formData.accepted_waivers.length > 0 ? formData.accepted_waivers : [],
           total_capacity: parseInt(formData.total_capacity),
           current_capacity: parseInt(formData.current_capacity),
           description: formData.description || null,
@@ -208,7 +207,6 @@ export default function RegisterPage() {
           years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
           primary_photo_url: formData.primary_photo_url || null,
           referral_agreement_signed: formData.agree_to_terms,
-          // REMOVED: commission_percentage: 10.00,
           status: 'pending',
           verified_245d: false
         })
@@ -232,7 +230,6 @@ export default function RegisterPage() {
 
       if (profileError) {
         console.log('Profile update skipped (table may not exist):', profileError)
-        // Don't throw - profile table might not exist yet
       }
 
       // Success!
@@ -259,7 +256,7 @@ export default function RegisterPage() {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">245D Provider Registration</h1>
-          <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
+          <p className="text-gray-600">Join CareConnect network of licensed 245D providers</p>
         </div>
 
         {/* Progress Bar */}
@@ -465,12 +462,12 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 4: Services & Capacity */}
+            {/* Step 4: Services & Payment Types - UPDATED */}
             {step === 4 && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold mb-4">245D Services & Waiver Programs</h2>
+                <h2 className="text-xl font-semibold mb-4">245D Services & Payment Types</h2>
                 
-                {/* 245D Service Types - NOW OPTIONAL */}
+                {/* 245D Service Types */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
                     245D Service Types (Optional - can be added later)
@@ -514,7 +511,7 @@ export default function RegisterPage() {
                           onChange={() => handleServiceTypeChange('DC_DM')}
                           className="mr-3"
                         />
-                        <span><strong>DC/DM</strong> - Day Care/Day Services</span>
+                        <span><strong>DC/DM</strong> - Adult Day Services</span>
                       </label>
                     </div>
                   </div>
@@ -530,7 +527,7 @@ export default function RegisterPage() {
                           onChange={() => handleServiceTypeChange('ADL_SUPPORT')}
                           className="mr-3"
                         />
-                        <span><strong>ADLs Support</strong> - Activities of Daily Living assistance</span>
+                        <span><strong>Respite Support</strong> - Temporary relief care services</span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -539,18 +536,18 @@ export default function RegisterPage() {
                           onChange={() => handleServiceTypeChange('ASSISTED_LIVING')}
                           className="mr-3"
                         />
-                        <span><strong>Assisted Living</strong> - 24/7 Care with full ADL support</span>
+                        <span><strong>Assisted Living</strong> - 24/7 Care with full support</span>
                       </label>
                     </div>
                   </div>
                 </div>
 
-                {/* Accepted Waivers - NOW OPTIONAL */}
+                {/* Accepted Payment Types - UPDATED */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Accepted Waiver Programs (Optional - can be added later)
+                    Accepted Payment Types (Optional - can be added later)
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Note: We work with waiver-accepting providers</p>
+                  <p className="text-xs text-gray-500 mb-3">Select all payment methods you accept</p>
                   <div className="space-y-2">
                     <label className="flex items-start">
                       <input
@@ -594,6 +591,17 @@ export default function RegisterPage() {
                       />
                       <span>
                         <strong>Elderly</strong> - Elderly Waiver (Ages 65+)
+                      </span>
+                    </label>
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        checked={formData.accepted_waivers.includes('private_pay')}
+                        onChange={() => handleWaiverChange('private_pay')}
+                        className="mr-3 mt-1"
+                      />
+                      <span>
+                        <strong>Private Pay</strong> - Self-funded care
                       </span>
                     </label>
                   </div>

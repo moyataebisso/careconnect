@@ -58,13 +58,13 @@ export default function CareSeekerProfilePage() {
   const supabase = createClient()
 
   const serviceTypes = [
-    { value: 'ICS', label: 'Integrated Community Services' },
-    { value: 'FRS', label: 'Family Residential Services' },
-    { value: 'CRS', label: 'Community Residential Services' },
-    { value: 'DC_DM', label: 'Day Care/Day Services' },
-    { value: 'ADL_SUPPORT', label: 'ADLs Support' },
-    { value: 'ASSISTED_LIVING', label: 'Assisted Living (24/7)' },
-  ]
+  { value: 'ICS', label: 'Integrated Community Services' },
+  { value: 'FRS', label: 'Family Residential Services' },
+  { value: 'CRS', label: 'Community Residential Services' },
+  { value: 'DC_DM', label: 'Adult Day Services' }, // CHANGED
+  { value: 'ADL_SUPPORT', label: 'Respite Support' }, // CHANGED
+  { value: 'ASSISTED_LIVING', label: 'Assisted Living (24/7)' },
+]
 
   useEffect(() => {
     loadProfile()

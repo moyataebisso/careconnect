@@ -109,7 +109,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-3 md:grid-cols-3 gap-8 text-center">
             <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-600">50+</div>
+              <div className="text-3xl md:text-4xl font-bold text-blue-600">100%</div>
               <div className="text-sm text-gray-600">Licensed Providers</div>
             </div>
             <div>
@@ -173,8 +173,8 @@ export default function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">DC/DM</h4>
-                  <p className="text-sm text-gray-600">Day Care/Day Services - Daily programs and activities</p>
+                  <h4 className="text-lg font-semibold mb-2">Adult Day Services</h4>
+                  <p className="text-sm text-gray-600">Day programs and activities for adults</p>
                 </div>
               </div>
             </div>
@@ -189,8 +189,8 @@ export default function HomePage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">ADLs Support</h4>
-                  <p className="text-sm text-gray-600">Activities of Daily Living - Personal care assistance including bathing, dressing, medication management</p>
+                  <h4 className="text-lg font-semibold mb-2">Respite Support</h4>
+                  <p className="text-sm text-gray-600">Temporary relief care for primary caregivers, providing short-term support and assistance</p>
                 </div>
 
                 <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
@@ -253,45 +253,6 @@ export default function HomePage() {
                 <p className="text-sm">Engaging activities and programs</p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Waiver Programs Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">Accepted Waiver Programs</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
-            We work with providers that accept Minnesota waiver programs to ensure coverage for your care needs
-          </p>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-            <div className="bg-white border-l-4 border-blue-600 rounded-lg shadow-md p-6 hover:shadow-xl transition-all">
-              <h3 className="font-bold text-lg mb-2 text-blue-700">CADI Waiver</h3>
-              <p className="text-sm text-gray-700 font-medium mb-1">Ages 18+</p>
-              <p className="text-sm text-gray-600">Community Access for Disability Inclusion</p>
-            </div>
-            <div className="bg-white border-l-4 border-green-600 rounded-lg shadow-md p-6 hover:shadow-xl transition-all">
-              <h3 className="font-bold text-lg mb-2 text-green-700">DD Waiver</h3>
-              <p className="text-sm text-gray-700 font-medium mb-1">All Ages</p>
-              <p className="text-sm text-gray-600">Developmental Disabilities comprehensive care</p>
-            </div>
-            <div className="bg-white border-l-4 border-purple-600 rounded-lg shadow-md p-6 hover:shadow-xl transition-all">
-              <h3 className="font-bold text-lg mb-2 text-purple-700">BI Waiver</h3>
-              <p className="text-sm text-gray-700 font-medium mb-1">All Ages</p>
-              <p className="text-sm text-gray-600">Brain Injury specialized support services</p>
-            </div>
-            <div className="bg-white border-l-4 border-orange-600 rounded-lg shadow-md p-6 hover:shadow-xl transition-all">
-              <h3 className="font-bold text-lg mb-2 text-orange-700">Elderly Waiver</h3>
-              <p className="text-sm text-gray-700 font-medium mb-1">Ages 65+</p>
-              <p className="text-sm text-gray-600">Support for seniors to remain in community settings</p>
-            </div>
-          </div>
-          
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500 italic">
-              Note: We do not currently work with providers accepting private pay clients
-            </p>
           </div>
         </div>
       </section>
