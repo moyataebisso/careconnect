@@ -1,4 +1,3 @@
-// app/providers/[id]/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -17,7 +16,6 @@ export default function ProviderDetailPage() {
   const [user, setUser] = useState<User | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   
-  // Contact form state
   const [formData, setFormData] = useState({
     client_name: '',
     client_email: '',
@@ -51,10 +49,8 @@ export default function ProviderDetailPage() {
         setProvider(providerData)
         
         if (user && providerData.user_id === user.id) {
-          console.log('User owns this provider')
           setIsOwner(true)
         } else {
-          console.log('User does not own this provider')
           setIsOwner(false)
         }
       }
@@ -107,7 +103,6 @@ export default function ProviderDetailPage() {
       console.error('Detailed error:', error)
       alert(`Error: ${error.message}. Check console for details.`)
     } else {
-      console.log('Success! Submitted:', data)
       alert('Thank you for your inquiry! CareConnect will contact you within 24 hours to assist with placement.')
       setShowContactForm(false)
       setFormData({
@@ -166,7 +161,6 @@ export default function ProviderDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Breadcrumb */}
       <div className="bg-white border-b">
         <div className="container mx-auto px-4 py-3">
           <nav className="text-sm">
@@ -181,11 +175,7 @@ export default function ProviderDetailPage() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-3 gap-8">
-          
-          {/* Main Content */}
           <div className="lg:col-span-2">
-            
-            {/* Photo Gallery with Upload - Only editable by owner */}
             <PhotoUploadSection
               providerId={provider.id}
               photos={provider.photo_urls || []}
@@ -194,7 +184,6 @@ export default function ProviderDetailPage() {
               isOwner={isOwner}
             />
             
-            {/* Show edit link only for owner */}
             {isOwner && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
                 <p className="text-sm text-yellow-800">
@@ -206,7 +195,6 @@ export default function ProviderDetailPage() {
               </div>
             )}
 
-            {/* Provider Details */}
             <div className="bg-white rounded-lg shadow-lg p-8 mb-8">
               <div className="flex justify-between items-start mb-2">
                 <h1 className="text-3xl font-bold">{provider.business_name}</h1>
@@ -232,7 +220,6 @@ export default function ProviderDetailPage() {
                 </div>
               )}
 
-              {/* Contact Information - Protected unless owner */}
               <div className="bg-gray-50 p-4 rounded-lg mb-6">
                 <h2 className="text-xl font-semibold mb-3">Contact Information</h2>
                 {isOwner ? (
@@ -259,11 +246,9 @@ export default function ProviderDetailPage() {
                 )}
               </div>
 
-              {/* 245D Services Offered */}
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-3">245D Services Offered</h2>
                 
-                {/* Basic Services */}
                 {serviceCategories.basic.length > 0 && (
                   <div className="mb-4">
                     <h3 className="text-lg font-medium text-blue-600 mb-2">Basic Services</h3>
@@ -277,7 +262,6 @@ export default function ProviderDetailPage() {
                   </div>
                 )}
 
-                {/* Comprehensive Services */}
                 {serviceCategories.comprehensive.length > 0 && (
                   <div>
                     <h3 className="text-lg font-medium text-green-600 mb-2">Comprehensive Services</h3>
@@ -294,7 +278,6 @@ export default function ProviderDetailPage() {
                 )}
               </div>
 
-              {/* Accepted Waivers - KEEPING THIS */}
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-3">Accepted Waiver Programs</h2>
                 <div className="flex flex-wrap gap-2">
@@ -306,7 +289,6 @@ export default function ProviderDetailPage() {
                 </div>
               </div>
 
-              {/* Amenities */}
               {provider.amenities && provider.amenities.length > 0 && (
                 <div className="mb-6">
                   <h2 className="text-xl font-semibold mb-3">Amenities & Features</h2>
@@ -323,7 +305,6 @@ export default function ProviderDetailPage() {
                 </div>
               )}
 
-              {/* Additional Info */}
               <div className="grid md:grid-cols-2 gap-6">
                 {provider.years_in_business && (
                   <div>
@@ -341,10 +322,7 @@ export default function ProviderDetailPage() {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-1">
-            
-            {/* Capacity Card */}
             <div className="bg-white rounded-lg shadow-lg p-6 mb-6 sticky top-4">
               <h3 className="text-lg font-semibold mb-4">Availability</h3>
               
@@ -397,7 +375,6 @@ export default function ProviderDetailPage() {
               </p>
             </div>
 
-            {/* Quick Info Card */}
             <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
               <h3 className="font-semibold mb-3 text-blue-900">Why Choose CareConnect?</h3>
               <ul className="space-y-2 text-sm text-blue-800">

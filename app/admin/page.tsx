@@ -216,7 +216,7 @@ export default function AdminDashboard() {
                 )}
               </div>
               <h3 className="font-semibold text-lg mb-2">Manage Bookings</h3>
-              <p className="text-gray-600 text-sm">Review and manage ALL customer bookings</p>
+              <p className="text-gray-600 text-sm">Review and manage ALL care-seeker bookings</p>
             </div>
           </Link>
 

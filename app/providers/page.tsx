@@ -25,7 +25,6 @@ export default function ProvidersPage() {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   
-  // Filters
   const [selectedServices, setSelectedServices] = useState<ServiceType[]>([])
   const [selectedWaivers, setSelectedWaivers] = useState<WaiverType[]>([])
   const [selectedCity, setSelectedCity] = useState('')
@@ -35,7 +34,6 @@ export default function ProvidersPage() {
   const supabase = createClient()
   const router = useRouter()
 
-  // Define fetchProviders function
   const fetchProviders = async () => {
     try {
       const { data, error } = await supabase
@@ -57,7 +55,6 @@ export default function ProvidersPage() {
     }
   }
 
-  // Only fetch providers once on mount
   useEffect(() => {
     fetchProviders()
     getUserLocation().then(location => {
@@ -67,11 +64,9 @@ export default function ProvidersPage() {
     })
   }, [])
 
-  // Apply filters function
   const applyFilters = () => {
     let filtered = [...providers]
 
-    // Filter by search query
     if (searchQuery && searchQuery.trim() !== '') {
       const query = searchQuery.toLowerCase().trim()
       filtered = filtered.filter(p => {
@@ -83,7 +78,6 @@ export default function ProvidersPage() {
       })
     }
 
-    // Filter by availability
     if (showAvailableOnly) {
       filtered = filtered.filter(p => {
         const hasAvailability = p.current_capacity < p.total_capacity
@@ -91,7 +85,6 @@ export default function ProvidersPage() {
       })
     }
 
-    // Filter by services
     if (selectedServices.length > 0) {
       filtered = filtered.filter(p => 
         p.service_types && Array.isArray(p.service_types) && 
@@ -99,7 +92,6 @@ export default function ProvidersPage() {
       )
     }
 
-    // Filter by waivers
     if (selectedWaivers.length > 0) {
       filtered = filtered.filter(p => 
         p.accepted_waivers && Array.isArray(p.accepted_waivers) && 
@@ -107,7 +99,6 @@ export default function ProvidersPage() {
       )
     }
 
-    // Filter by city
     if (selectedCity && selectedCity.trim() !== '') {
       const cityQuery = selectedCity.toLowerCase().trim()
       filtered = filtered.filter(p => 
@@ -115,7 +106,6 @@ export default function ProvidersPage() {
       )
     }
 
-    // Filter by distance if user location is available
     if (userLocation && maxDistance < 200 && providers.some(p => p.latitude && p.longitude)) {
       filtered = filtered.filter(p => {
         if (p.latitude && p.longitude) {
@@ -134,7 +124,6 @@ export default function ProvidersPage() {
     setFilteredProviders(filtered)
   }
 
-  // Apply filters when filter criteria change
   useEffect(() => {
     if (providers.length > 0) {
       applyFilters()
@@ -174,7 +163,6 @@ export default function ProvidersPage() {
               </span>
             </div>
             
-            {/* Search Bar */}
             <div className="flex-1 max-w-xl">
               <div className="relative">
                 <input
@@ -195,7 +183,6 @@ export default function ProvidersPage() {
               </div>
             </div>
 
-            {/* View Toggle */}
             <div className="flex bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setViewMode('grid')}
@@ -234,8 +221,7 @@ export default function ProvidersPage() {
           <div className="lg:w-1/4">
             <div className="bg-white rounded-lg shadow p-6 sticky top-24">
               <h2 className="text-lg font-semibold mb-4">Filters</h2>
-
-              {/* Availability Filter */}
+              
               <div className="mb-6">
                 <label className="flex items-center">
                   <input
@@ -248,11 +234,8 @@ export default function ProvidersPage() {
                 </label>
               </div>
 
-              {/* 245D Service Types - Updated Structure */}
               <div className="mb-6">
                 <h3 className="font-medium mb-3">245D Service Types</h3>
-                
-                {/* Basic Services */}
                 <div className="mb-3">
                   <h4 className="text-sm font-medium text-blue-600 mb-2">Basic Services</h4>
                   <div className="space-y-2 ml-2">
@@ -269,8 +252,6 @@ export default function ProvidersPage() {
                     ))}
                   </div>
                 </div>
-
-                {/* Comprehensive Services */}
                 <div>
                   <h4 className="text-sm font-medium text-green-600 mb-2">Comprehensive Services</h4>
                   <div className="space-y-2 ml-2">
@@ -289,7 +270,6 @@ export default function ProvidersPage() {
                 </div>
               </div>
 
-              {/* Waiver Types */}
               <div className="mb-6">
                 <h3 className="font-medium mb-3">Accepted Waivers</h3>
                 <div className="space-y-2">
@@ -307,7 +287,6 @@ export default function ProvidersPage() {
                 </div>
               </div>
 
-              {/* Location */}
               <div className="mb-6">
                 <h3 className="font-medium mb-3">Location</h3>
                 <input
@@ -335,7 +314,6 @@ export default function ProvidersPage() {
                 )}
               </div>
 
-              {/* Clear Filters */}
               <button
                 onClick={() => {
                   setSelectedServices([])
@@ -387,7 +365,6 @@ export default function ProvidersPage() {
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredProviders.map((provider) => {
-                  // Categorize services for display
                   const basicServices = ['ICS', 'FRS', 'CRS', 'DC_DM']
                   const comprehensiveServices = ['ADL_SUPPORT', 'ASSISTED_LIVING']
                   const hasBasic = provider.service_types.some(s => basicServices.includes(s))
@@ -401,7 +378,6 @@ export default function ProvidersPage() {
                       }`}
                       onClick={() => handleProviderClick(provider)}
                     >
-                      {/* Provider Image */}
                       <div className="h-48 bg-gray-200 rounded-t-lg relative">
                         {provider.primary_photo_url ? (
                           <img
@@ -437,13 +413,10 @@ export default function ProvidersPage() {
                           </div>
                         )}
                       </div>
-
-                      {/* Provider Info */}
                       <div className="p-6">
                         <h3 className="text-xl font-semibold mb-2">{provider.business_name}</h3>
                         <p className="text-gray-600 mb-3">{provider.city}, MN {provider.zip_code}</p>
-
-                        {/* Services - Show category badges */}
+                        
                         <div className="mb-3">
                           <div className="flex flex-wrap gap-1">
                             {hasBasic && (
@@ -469,7 +442,6 @@ export default function ProvidersPage() {
                           </div>
                         </div>
 
-                        {/* Waivers */}
                         <div className="mb-4">
                           <div className="flex flex-wrap gap-1">
                             {provider.accepted_waivers.slice(0, 3).map(waiver => (
@@ -485,7 +457,6 @@ export default function ProvidersPage() {
                           </div>
                         </div>
 
-                        {/* Capacity */}
                         <div className="mb-4">
                           <div className="text-sm text-gray-600">
                             Capacity: {provider.total_capacity - provider.current_capacity} of {provider.total_capacity} available
@@ -498,7 +469,6 @@ export default function ProvidersPage() {
                           </div>
                         </div>
 
-                        {/* Contact Button */}
                         <button
                           disabled={provider.is_at_capacity}
                           className={`w-full py-2 rounded-md font-medium transition-colors ${
