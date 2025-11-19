@@ -1,15 +1,24 @@
 // app/api/stripe/portal/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import Stripe from 'stripe'
-
-// Initialize Stripe with proper typing
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-})
 
 export async function POST(request: Request) {
   try {
+    // Check for Stripe key at runtime
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('Stripe secret key not configured')
+      return NextResponse.json(
+        { error: 'Payment system not configured' },
+        { status: 500 }
+      )
+    }
+
+    // Dynamic import Stripe
+    const Stripe = (await import('stripe')).default
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: '2025-10-29.clover',
+    })
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
