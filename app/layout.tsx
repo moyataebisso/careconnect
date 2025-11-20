@@ -166,12 +166,11 @@ export default async function RootLayout({
                 </ul>
               </div>
 
-              {/* For Providers */}
+              {/* For Providers - WITHOUT Benefits link */}
               <div>
                 <h4 className="font-semibold mb-4">For Providers</h4>
                 <ul className="space-y-2 text-gray-400">
                   <li><Link href="/auth/register" className="hover:text-white transition-colors">Join Network</Link></li>
-                  <li><Link href="/providers/benefits" className="hover:text-white transition-colors">Benefits</Link></li>
                   <li><Link href="/providers/requirements" className="hover:text-white transition-colors">Requirements</Link></li>
                   <li><Link href="/dashboard" className="hover:text-white transition-colors">Provider Login</Link></li>
                 </ul>
@@ -181,7 +180,7 @@ export default async function RootLayout({
               <div>
                 <h4 className="font-semibold mb-4">Support</h4>
                 <p className="text-gray-400 mb-2">
-                  <a href="mailto:support@careconnect-mn.com" className="hover:text-white transition-colors">
+                  <a href="mailto:careconnectmkting@gmail.com" className="hover:text-white transition-colors">
                     careconnectmkting@gmail.com
                   </a>
                 </p>
