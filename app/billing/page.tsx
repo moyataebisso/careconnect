@@ -81,6 +81,13 @@ export default function BillingPage() {
   }
 
   const handleManageBilling = async () => {
+    // Check if provider has Stripe customer ID
+    if (!provider?.stripe_customer_id) {
+      alert('You need to complete your subscription through Stripe first. Redirecting to subscription page...')
+      router.push('/subscribe')
+      return
+    }
+
     setLoading(true)
     
     try {
@@ -95,6 +102,11 @@ export default function BillingPage() {
       
       if (data.url) {
         window.location.href = data.url
+      } else if (data.error) {
+        alert(data.error)
+        if (data.error.includes('subscribe first')) {
+          router.push('/subscribe')
+        }
       } else {
         throw new Error('Failed to create portal session')
       }
@@ -112,9 +124,29 @@ export default function BillingPage() {
     return year > 2090
   }
 
+  // Check if this is a trial account without Stripe
+  const isTrialWithoutStripe = provider?.subscription_status === 'trial' && !provider?.stripe_customer_id
+
   return (
     <div className="container mx-auto px-4 pt-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">Billing & Subscription</h1>
+      
+      {/* Show warning if trial without Stripe */}
+      {isTrialWithoutStripe && (
+        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-yellow-800 mb-2">⏰ Trial Account</h2>
+          <p className="text-yellow-700 mb-4">
+            You are currently on a free trial. To continue using CareConnect after your trial ends, 
+            you will need to subscribe through Stripe.
+          </p>
+          <Link
+            href="/subscribe"
+            className="inline-block bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 font-semibold"
+          >
+            Subscribe Now →
+          </Link>
+        </div>
+      )}
       
       <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
         <h2 className="text-xl font-semibold mb-4">Current Subscription</h2>
@@ -148,7 +180,7 @@ export default function BillingPage() {
               </>
             )}
             
-            {provider.subscription_end_date && !isGrandfathered(provider.subscription_end_date) && (
+            {!isTrialWithoutStripe && provider.subscription_end_date && !isGrandfathered(provider.subscription_end_date) && (
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Next Billing Date</span>
                 <span className="font-medium">
@@ -164,38 +196,87 @@ export default function BillingPage() {
                 </p>
               </div>
             )}
+
+            {provider.stripe_customer_id && (
+              <div className="flex justify-between py-2 border-b">
+                <span className="text-gray-600">Stripe Customer</span>
+                <span className="text-xs text-gray-500 font-mono">
+                  {provider.stripe_customer_id}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
       
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Manage Your Subscription</h2>
-        
-        <p className="text-gray-600 mb-6">
-          Access the Stripe customer portal to:
-        </p>
-        
-        <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
-          <li>View payment history and download invoices</li>
-          <li>Update your payment method</li>
-          <li>Change your subscription plan</li>
-          <li>Cancel your subscription</li>
-        </ul>
-        
-        <button
-          onClick={handleManageBilling}
-          disabled={loading}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Opening Portal...' : 'Manage Billing in Stripe'}
-        </button>
-        
-        <div className="mt-6 pt-6 border-t">
-          <Link href="/dashboard" className="text-blue-600 hover:underline">
-            ← Back to Dashboard
-          </Link>
+      {/* Only show billing portal for accounts with Stripe */}
+      {!isTrialWithoutStripe && provider?.stripe_customer_id && (
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Manage Your Subscription</h2>
+          
+          <p className="text-gray-600 mb-6">
+            Access the Stripe customer portal to:
+          </p>
+          
+          <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
+            <li>View payment history and download invoices</li>
+            <li>Update your payment method</li>
+            <li>Change your subscription plan</li>
+            <li>Cancel your subscription</li>
+          </ul>
+          
+          <button
+            onClick={handleManageBilling}
+            disabled={loading}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Opening Portal...' : 'Manage Billing in Stripe'}
+          </button>
+          
+          <div className="mt-6 pt-6 border-t">
+            <Link href="/dashboard" className="text-blue-600 hover:underline">
+              ← Back to Dashboard
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Show subscribe option for trial accounts */}
+      {isTrialWithoutStripe && (
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <h2 className="text-xl font-semibold mb-4">Ready to Subscribe?</h2>
+          
+          <p className="text-gray-600 mb-6">
+            Choose a subscription plan to continue accessing CareConnect after your trial ends.
+          </p>
+          
+          <div className="space-y-4 mb-6">
+            <div className="border rounded-lg p-4">
+              <h3 className="font-semibold text-lg">Basic Plan</h3>
+              <p className="text-3xl font-bold text-blue-600 my-2">$99.99<span className="text-sm text-gray-600">/month</span></p>
+              <ul className="text-sm text-gray-600 space-y-1">
+                <li>✓ Full listing visibility</li>
+                <li>✓ Receive referral requests</li>
+                <li>✓ Messaging system</li>
+                <li>✓ Profile management</li>
+              </ul>
+            </div>
+          </div>
+          
+          <Link
+            href="/subscribe"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 font-semibold w-full text-center"
+          >
+            Subscribe Now →
+          </Link>
+          
+          <div className="mt-6 pt-6 border-t">
+            <Link href="/dashboard" className="text-blue-600 hover:underline">
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
+      )}
       
       <div className="mt-6 bg-gray-50 rounded-lg p-6">
         <h3 className="font-semibold mb-2">Need Help?</h3>

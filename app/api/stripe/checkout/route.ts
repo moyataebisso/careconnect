@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     if (!process.env.STRIPE_SECRET_KEY) {
       console.error('Stripe secret key not configured')
       return NextResponse.json(
-        { error: 'Payment system not configured' },
+        { error: 'Payment system not configured. Please contact support.' },
         { status: 500 }
       )
     }
@@ -29,13 +29,14 @@ export async function POST(request: Request) {
     }
 
     // Get provider details
-    const { data: provider } = await supabase
+    const { data: provider, error: providerError } = await supabase
       .from('providers')
-      .select('id, business_name, contact_email, stripe_customer_id')
+      .select('id, business_name, contact_email, stripe_customer_id, subscription_plan_id')
       .eq('user_id', user.id)
       .single()
 
-    if (!provider) {
+    if (providerError || !provider) {
+      console.error('Provider not found:', providerError)
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 })
     }
 
@@ -59,6 +60,8 @@ export async function POST(request: Request) {
         .from('providers')
         .update({ stripe_customer_id: customerId })
         .eq('id', provider.id)
+      
+      console.log('Created Stripe customer:', customerId)
     }
 
     // Get price ID based on plan
@@ -67,6 +70,7 @@ export async function POST(request: Request) {
       : process.env.STRIPE_BASIC_PRICE_ID
 
     if (!priceId) {
+      console.error('Missing price ID for plan:', planId)
       return NextResponse.json({ error: 'Price configuration missing' }, { status: 500 })
     }
 
@@ -81,24 +85,36 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&subscription_success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe?canceled=true`,
       subscription_data: {
         trial_period_days: 7,
         metadata: {
           provider_id: provider.id,
-          user_id: user.id
+          user_id: user.id,
+          plan: planId
         }
       },
       metadata: {
         provider_id: provider.id,
-        user_id: user.id
+        user_id: user.id,
+        plan: planId
       }
     })
 
+    console.log('Created checkout session:', session.id)
     return NextResponse.json({ url: session.url })
+    
   } catch (error) {
     console.error('Stripe checkout error:', error)
+    
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: `Checkout failed: ${error.message}` },
+        { status: 500 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

@@ -3,17 +3,9 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { SUBSCRIPTION_CONFIG } from '@/lib/subscription/config'
 import { checkProviderSubscription, SubscriptionCheck } from '@/lib/subscription/middleware'
 import Link from 'next/link'
 import { User } from '@supabase/supabase-js'
-
-interface SubscriptionPlan {
-  id: string
-  name: string
-  slug: string
-  price: number
-}
 
 export default function SubscribePage() {
   const router = useRouter()
@@ -22,8 +14,8 @@ export default function SubscribePage() {
   const [selectedPlan, setSelectedPlan] = useState<'basic' | 'premium'>('basic')
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionCheck | null>(null)
   const [user, setUser] = useState<User | null>(null)
-  const [showManualPayment, setShowManualPayment] = useState(false)
   const [isProvider, setIsProvider] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   const supabase = createClient()
 
@@ -65,58 +57,48 @@ export default function SubscribePage() {
       }
     } catch (error) {
       console.error('Error checking subscription:', error)
+      setError('Failed to load subscription status')
     } finally {
       setLoading(false)
     }
   }
 
   const handleSubscribe = async () => {
+    if (selectedPlan === 'premium') {
+      alert('Premium plan coming soon!')
+      return
+    }
+
     setProcessingPayment(true)
+    setError(null)
     
     try {
-      setShowManualPayment(true)
+      // Call Stripe checkout API
+      const response = await fetch('/api/stripe/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId: selectedPlan })
+      })
+      
+      const data = await response.json()
+      
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url
+      } else if (data.error) {
+        setError(data.error)
+        alert(`Error: ${data.error}`)
+      } else {
+        throw new Error('No checkout URL received')
+      }
     } catch (error) {
       console.error('Payment error:', error)
+      setError('Payment processing failed. Please try again.')
       alert('Payment processing failed. Please try again.')
     } finally {
       setProcessingPayment(false)
-    }
-  }
-
-  const handleManualActivation = async () => {
-    if (!user || !isProvider) return
-    
-    try {
-      const { data: plan } = await supabase
-        .from('subscription_plans')
-        .select('id')
-        .eq('slug', selectedPlan)
-        .single()
-      
-      if (!plan) {
-        alert('Plan not found')
-        return
-      }
-
-      const { error } = await supabase
-        .from('providers')
-        .update({
-          subscription_status: 'active',
-          subscription_plan_id: plan.id,
-          subscription_start_date: new Date().toISOString(),
-          subscription_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-        })
-        .eq('user_id', user.id)
-      
-      if (!error) {
-        alert('Subscription activated!')
-        router.push('/dashboard')
-      } else {
-        alert('Error activating subscription: ' + error.message)
-      }
-    } catch (error) {
-      console.error('Activation error:', error)
-      alert('Failed to activate subscription')
     }
   }
 
@@ -164,9 +146,16 @@ export default function SubscribePage() {
               </p>
             </div>
           )}
+
+          {error && (
+            <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
+              <p className="text-red-800">{error}</p>
+            </div>
+          )}
         </div>
 
         <div className="grid md:grid-cols-2 gap-8 mb-12">
+          {/* Basic Plan */}
           <div 
             className={`bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer transition-all ${
               selectedPlan === 'basic' ? 'ring-4 ring-blue-500 transform scale-105' : 'hover:shadow-xl'
@@ -179,6 +168,7 @@ export default function SubscribePage() {
                 <span className="text-4xl font-bold">$99.99</span>
                 <span className="ml-2 text-blue-200">/month</span>
               </div>
+              <p className="text-sm text-blue-100 mt-2">7-day free trial included</p>
             </div>
             
             <div className="p-6">
@@ -223,9 +213,10 @@ export default function SubscribePage() {
             </div>
           </div>
 
+          {/* Premium Plan */}
           <div 
             className={`bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer transition-all relative ${
-              selectedPlan === 'premium' ? 'ring-4 ring-green-500 transform scale-105' : 'hover:shadow-xl'
+              selectedPlan === 'premium' ? 'ring-4 ring-green-500 transform scale-105' : 'hover:shadow-xl opacity-75'
             }`}
             onClick={() => setSelectedPlan('premium')}
           >
@@ -239,6 +230,7 @@ export default function SubscribePage() {
                 <span className="text-4xl font-bold">$199.99</span>
                 <span className="ml-2 text-green-200">/month</span>
               </div>
+              <p className="text-sm text-green-100 mt-2">7-day free trial included</p>
             </div>
             
             <div className="p-6">
@@ -291,53 +283,36 @@ export default function SubscribePage() {
             className={`w-full py-4 rounded-lg font-semibold text-lg transition-colors ${
               selectedPlan === 'premium' 
                 ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50'
+                : processingPayment
+                ? 'bg-blue-400 text-white cursor-wait'
+                : 'bg-blue-600 text-white hover:bg-blue-700'
             }`}
           >
             {processingPayment 
-              ? 'Processing...' 
+              ? 'Redirecting to checkout...' 
               : selectedPlan === 'premium'
               ? 'Premium Plan Coming Soon'
               : `Subscribe to Basic Plan - $99.99/mo`
             }
           </button>
           
-          <p className="text-center text-sm text-gray-600 mt-4">
-            7-day free trial included. Cancel anytime.
-          </p>
-        </div>
-
-        {showManualPayment && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-lg font-semibold mb-4">Complete Your Subscription</h3>
-              <p className="text-gray-600 mb-4">
-                Payment processing will be set up soon. For testing, you can activate manually.
+          <div className="text-center mt-4">
+            <p className="text-sm text-gray-600">
+              ✓ 7-day free trial • ✓ Cancel anytime • ✓ Secure payment via Stripe
+            </p>
+            {subscriptionStatus?.status === 'trial' && (
+              <p className="text-xs text-blue-600 mt-2">
+                Your trial will end on {new Date(Date.now() + (subscriptionStatus.trialDaysLeft * 24 * 60 * 60 * 1000)).toLocaleDateString()}
               </p>
-              <div className="bg-gray-50 p-4 rounded mb-4">
-                <p className="text-sm font-mono">
-                  Plan: Basic Provider Plan<br/>
-                  Price: $99.99/month<br/>
-                  Trial: 7 days free
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleManualActivation}
-                  className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700"
-                >
-                  Activate (Test Mode)
-                </button>
-                <button
-                  onClick={() => setShowManualPayment(false)}
-                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+            )}
           </div>
-        )}
+
+          <div className="mt-8 text-center">
+            <Link href="/dashboard" className="text-blue-600 hover:underline">
+              ← Back to Dashboard
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   )

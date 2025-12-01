@@ -17,7 +17,9 @@ export default function AdminDashboard() {
     totalContactSubmissions: 0,
     unreadContactSubmissions: 0,
     totalCareSeekers: 0,
-    activeCareSeekers: 0
+    activeCareSeekers: 0,
+    activeSubscriptions: 0,
+    trialSubscriptions: 0
   })
   
   const supabase = createClient()
@@ -80,7 +82,18 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active')
 
-      // Get contact submission stats (changed from messages)
+      // Get subscription stats
+      const { count: activeSubscriptions } = await supabase
+        .from('providers')
+        .select('*', { count: 'exact', head: true })
+        .eq('subscription_status', 'active')
+
+      const { count: trialSubscriptions } = await supabase
+        .from('providers')
+        .select('*', { count: 'exact', head: true })
+        .eq('subscription_status', 'trial')
+
+      // Get contact submission stats
       const { count: totalContactSubmissions } = await supabase
         .from('contact_submissions')
         .select('*', { count: 'exact', head: true })
@@ -108,7 +121,9 @@ export default function AdminDashboard() {
         totalContactSubmissions: totalContactSubmissions || 0,
         unreadContactSubmissions: unreadContactSubmissions || 0,
         totalCareSeekers: totalCareSeekers || 0,
-        activeCareSeekers: activeCareSeekers || 0
+        activeCareSeekers: activeCareSeekers || 0,
+        activeSubscriptions: activeSubscriptions || 0,
+        trialSubscriptions: trialSubscriptions || 0
       })
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -142,8 +157,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Stats Cards - Now 8 cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
+        {/* Stats Cards - Now 10 cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-10 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-gray-900">{stats.totalBookings}</div>
             <div className="text-sm text-gray-600">Total Bookings</div>
@@ -175,6 +190,14 @@ export default function AdminDashboard() {
           <div className="bg-red-50 rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-red-600">{stats.unreadContactSubmissions}</div>
             <div className="text-sm text-gray-600">Unread Forms</div>
+          </div>
+          <div className="bg-indigo-50 rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-indigo-600">{stats.activeSubscriptions}</div>
+            <div className="text-sm text-gray-600">Active Subs</div>
+          </div>
+          <div className="bg-purple-50 rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-purple-600">{stats.trialSubscriptions}</div>
+            <div className="text-sm text-gray-600">Trial Subs</div>
           </div>
         </div>
 
@@ -232,6 +255,26 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-semibold text-lg mb-2">Manage Providers</h3>
               <p className="text-gray-600 text-sm">Approve and manage provider listings</p>
+            </div>
+          </Link>
+
+          {/* Manage Subscriptions - NEW */}
+          <Link href="/admin/subscriptions" className="block">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-indigo-100 rounded-lg p-3">
+                  <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                </div>
+                {stats.activeSubscriptions > 0 && (
+                  <span className="bg-indigo-500 text-white text-xs px-2 py-1 rounded-full">
+                    {stats.activeSubscriptions} ACTIVE
+                  </span>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Manage Subscriptions</h3>
+              <p className="text-gray-600 text-sm">View and manage provider subscriptions</p>
             </div>
           </Link>
 
@@ -298,20 +341,6 @@ export default function AdminDashboard() {
             </div>
             <h3 className="font-semibold text-lg mb-2">Settings</h3>
             <p className="text-gray-600 text-sm">Configure platform settings</p>
-          </div>
-
-          {/* Email Templates */}
-          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer opacity-50">
-            <div className="flex items-center justify-between mb-4">
-              <div className="bg-indigo-100 rounded-lg p-3">
-                <svg className="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <span className="text-xs text-gray-500">Coming Soon</span>
-            </div>
-            <h3 className="font-semibold text-lg mb-2">Email Templates</h3>
-            <p className="text-gray-600 text-sm">Manage automated email templates</p>
           </div>
         </div>
       </div>
