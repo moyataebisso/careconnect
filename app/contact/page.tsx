@@ -18,14 +18,13 @@ export default function ContactPage() {
     e.preventDefault()
     setSubmitting(true)
     
-    // Debug: Log what we're trying to save
     console.log('Submitting form data:', formData)
     
     try {
       const supabase = createClient()
       
       // Save to contact_submissions table
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('contact_submissions')
         .insert({
           name: formData.name,
@@ -36,14 +35,13 @@ export default function ContactPage() {
           message: formData.message,
           status: 'new'
         })
-        .select()
       
       if (error) {
         console.error('Supabase error:', error)
         throw error
       }
       
-      console.log('Successfully saved:', data)
+      console.log('Form submitted successfully')
       
       alert('Thank you for contacting us! We will respond within 24 hours.')
       

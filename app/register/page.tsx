@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'  // ADD useEffect HERE
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -217,6 +217,8 @@ export default function RegisterPage() {
         languages_spoken: formData.languages_spoken ? formData.languages_spoken.split(',').map(l => l.trim()) : [],
         years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
         primary_photo_url: formData.primary_photo_url || null,
+        // Subscription fields - new providers start without subscription (pending approval)
+        subscription_status: 'pending',
         // These fields have defaults in DB, so we don't need to set them:
         // is_featured: false,
         // is_at_capacity: false,
@@ -327,7 +329,7 @@ export default function RegisterPage() {
       }
 
       // Success!
-      alert('Registration successful! Please check your email to verify your account. An admin will review your application within 24-48 hours.')
+      alert('Registration successful! Please check your email to verify your account. An admin will review your application within 24-48 hours. Once approved, you\'ll receive a 7-day free trial to explore our platform.')
       router.push('/login')
       
     } catch (error) {
@@ -351,6 +353,28 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Provider Registration</h1>
           <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
+        </div>
+
+        {/* Subscription Info Banner - NEW */}
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-semibold text-blue-800">Subscription Information</h3>
+              <div className="mt-1 text-sm text-blue-700">
+                <p className="mb-2">
+                  <strong>7-Day Free Trial</strong> – After admin approval, you&apos;ll get full platform access for 7 days at no cost.
+                </p>
+                <p>
+                  <strong>$99.99/month</strong> – After your trial, continue listing your facility and connecting with case managers for just $99.99/month. Cancel anytime.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Progress Bar */}
@@ -720,6 +744,51 @@ export default function RegisterPage() {
                   />
                 </div>
 
+                {/* Subscription & Pricing Info - NEW */}
+                <div className="border-t pt-4 mt-6">
+                  <h3 className="font-semibold mb-3 text-lg">Subscription & Pricing</h3>
+                  
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-green-600 font-bold text-sm">1</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">Admin Review</p>
+                          <p className="text-sm text-gray-600">Your application will be reviewed within 24-48 hours</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-blue-600 font-bold text-sm">2</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">7-Day Free Trial</p>
+                          <p className="text-sm text-gray-600">Once approved, enjoy full access for 7 days – no credit card required</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                          <span className="text-purple-600 font-bold text-sm">3</span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">Monthly Subscription – $99.99/month</p>
+                          <p className="text-sm text-gray-600">Continue listing your facility and receive referrals. Cancel anytime.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-green-800">
+                      <strong>What&apos;s Included:</strong> Facility listing, messaging with case managers & families, booking management, and access to referral network.
+                    </p>
+                  </div>
+                </div>
+
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Agreement Terms</h3>
                   
@@ -732,7 +801,7 @@ export default function RegisterPage() {
                       className="mr-3 mt-1"
                     />
                     <span className="text-sm">
-                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. *
+                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. I understand that after admin approval, I will receive a 7-day free trial, after which a subscription of $99.99/month is required to maintain my listing. *
                     </span>
                   </label>
                 </div>
@@ -787,6 +856,17 @@ export default function RegisterPage() {
               </Link>
             </p>
           </div>
+        </div>
+
+        {/* Care Seeker Note - NEW */}
+        <div className="mt-6 text-center">
+          <p className="text-gray-600 text-sm">
+            Looking for care services?{' '}
+            <Link href="/register/care-seeker" className="text-blue-600 hover:underline">
+              Register as a Care Seeker
+            </Link>
+            {' '}– it&apos;s free!
+          </p>
         </div>
       </div>
     </div>
