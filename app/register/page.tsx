@@ -219,18 +219,12 @@ export default function RegisterPage() {
         primary_photo_url: formData.primary_photo_url || null,
         // Subscription fields - new providers start without subscription (pending approval)
         subscription_status: 'pending',
-        // These fields have defaults in DB, so we don't need to set them:
-        // is_featured: false,
-        // is_at_capacity: false,
-        // is_ghosted: false,
-        // accepts_emergency_placement: false,
-        // created_at and last_updated are auto-set
       }
       
       console.log('Provider data to insert:', providerData)
       
       // First check if business_email already exists
-      const { data: existingProvider, error: checkError } = await supabase
+      const { data: existingProvider } = await supabase
         .from('providers')
         .select('business_email')
         .eq('business_email', providerData.business_email)
@@ -241,7 +235,6 @@ export default function RegisterPage() {
         console.error('Business email already exists:', providerData.business_email)
         
         // Try to delete the auth user we just created
-        // Note: This might not work immediately due to Supabase limitations
         try {
           await supabase.auth.admin.deleteUser(authData.user.id)
         } catch (deleteError) {
@@ -355,7 +348,7 @@ export default function RegisterPage() {
           <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
         </div>
 
-        {/* Subscription Info Banner - NEW */}
+        {/* Subscription Info Banner */}
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
@@ -744,7 +737,7 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* Subscription & Pricing Info - NEW */}
+                {/* Subscription & Pricing Info */}
                 <div className="border-t pt-4 mt-6">
                   <h3 className="font-semibold mb-3 text-lg">Subscription & Pricing</h3>
                   
@@ -858,11 +851,11 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Care Seeker Note - NEW */}
+        {/* Care Seeker Note */}
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
             Looking for care services?{' '}
-            <Link href="/register/care-seeker" className="text-blue-600 hover:underline">
+            <Link href="/auth/register-care-seeker" className="text-blue-600 hover:underline">
               Register as a Care Seeker
             </Link>
             {' '}– it&apos;s free!
