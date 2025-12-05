@@ -29,6 +29,7 @@ export default function AdminSubscriptionsPage() {
   const [providers, setProviders] = useState<ProviderSubscription[]>([])
   const [filter, setFilter] = useState<'all' | 'active' | 'trial' | 'expired'>('all')
   const [editingProvider, setEditingProvider] = useState<string | null>(null)
+  const [sendingReminders, setSendingReminders] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -101,6 +102,30 @@ export default function AdminSubscriptionsPage() {
       setProviders(transformedData)
     } catch (error) {
       console.error('Error loading providers:', error)
+    }
+  }
+
+  // Send trial reminder emails
+  const sendTrialReminders = async () => {
+    if (!confirm('Send trial ending reminder emails to all providers with trials ending in 1-3 days?')) return
+    
+    setSendingReminders(true)
+    try {
+      const response = await fetch('/api/cron/trial-reminders?manual=true', {
+        method: 'POST'
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`Trial reminders sent!\n\nChecked: ${data.checked} providers\nEmails sent: ${data.emailsSent}`)
+      } else {
+        alert('Failed to send reminders: ' + (data.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error sending reminders:', error)
+      alert('Failed to send trial reminders')
+    } finally {
+      setSendingReminders(false)
     }
   }
 
@@ -209,6 +234,13 @@ export default function AdminSubscriptionsPage() {
     return Math.ceil(diff / (1000 * 60 * 60 * 24))
   }
 
+  // Count providers with trials ending soon (1-3 days)
+  const trialsEndingSoon = providers.filter(p => {
+    if (p.subscription_status !== 'trial' || !p.trial_ends_at) return false
+    const daysLeft = getDaysRemaining(p.trial_ends_at)
+    return daysLeft >= 0 && daysLeft <= 3
+  }).length
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -223,16 +255,39 @@ export default function AdminSubscriptionsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Manage Subscriptions</h1>
-            <Link href="/admin" className="text-blue-600 hover:text-blue-800">
-              ← Back to Admin
-            </Link>
+            <div className="flex gap-4 items-center">
+              <button
+                onClick={sendTrialReminders}
+                disabled={sendingReminders}
+                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 text-sm flex items-center gap-2"
+              >
+                {sendingReminders ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    📧 Send Trial Reminders
+                    {trialsEndingSoon > 0 && (
+                      <span className="bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                        {trialsEndingSoon}
+                      </span>
+                    )}
+                  </>
+                )}
+              </button>
+              <Link href="/admin" className="text-blue-600 hover:text-blue-800">
+                ← Back to Admin
+              </Link>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-5 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold">{providers.length}</div>
             <div className="text-sm text-gray-600">Total Providers</div>
@@ -248,6 +303,12 @@ export default function AdminSubscriptionsPage() {
               {providers.filter(p => p.subscription_status === 'trial').length}
             </div>
             <div className="text-sm text-gray-600">On Trial</div>
+          </div>
+          <div className="bg-orange-50 rounded-lg shadow p-4">
+            <div className="text-2xl font-bold text-orange-600">
+              {trialsEndingSoon}
+            </div>
+            <div className="text-sm text-gray-600">Trials Ending Soon</div>
           </div>
           <div className="bg-red-50 rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-red-600">
@@ -309,114 +370,123 @@ export default function AdminSubscriptionsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredProviders.map((provider) => (
-                <tr key={provider.id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{provider.business_name}</div>
-                    <div className="text-sm text-gray-500">{provider.contact_email}</div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {provider.subscription_plans ? (
-                      <div>
-                        <div className="font-medium">{provider.subscription_plans.name}</div>
-                        <div className="text-sm text-gray-500">${provider.subscription_plans.price}/mo</div>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400">No plan</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      provider.subscription_status === 'active' 
-                        ? 'bg-green-100 text-green-800'
-                        : provider.subscription_status === 'trial'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {provider.subscription_status}
-                    </span>
-                    {provider.subscription_status === 'trial' && provider.trial_ends_at && (
-                      <div className="text-xs text-gray-500 mt-1">
-                        {getDaysRemaining(provider.trial_ends_at)} days left
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="text-sm">
-                      <div>Start: {formatDate(provider.subscription_start_date)}</div>
-                      <div>End: {formatDate(provider.subscription_end_date)}</div>
-                      {provider.trial_ends_at && (
-                        <div className="text-yellow-600">Trial: {formatDate(provider.trial_ends_at)}</div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {provider.stripe_customer_id ? (
-                      <div className="text-xs">
-                        <div className="font-mono text-gray-600 mb-1" title={provider.stripe_customer_id}>
-                          {provider.stripe_customer_id.substring(0, 15)}...
+              {filteredProviders.map((provider) => {
+                const daysLeft = getDaysRemaining(provider.trial_ends_at)
+                const isTrialEndingSoon = provider.subscription_status === 'trial' && daysLeft >= 0 && daysLeft <= 3
+                
+                return (
+                  <tr key={provider.id} className={`hover:bg-gray-50 ${isTrialEndingSoon ? 'bg-orange-50' : ''}`}>
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{provider.business_name}</div>
+                      <div className="text-sm text-gray-500">{provider.contact_email}</div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {provider.subscription_plans ? (
+                        <div>
+                          <div className="font-medium">{provider.subscription_plans.name}</div>
+                          <div className="text-sm text-gray-500">${provider.subscription_plans.price}/mo</div>
                         </div>
-                        {provider.stripe_subscription_id && (
-                          <div className="font-mono text-gray-500" title={provider.stripe_subscription_id}>
-                            {provider.stripe_subscription_id.substring(0, 15)}...
+                      ) : (
+                        <span className="text-gray-400">No plan</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        provider.subscription_status === 'active' 
+                          ? 'bg-green-100 text-green-800'
+                          : provider.subscription_status === 'trial'
+                          ? isTrialEndingSoon 
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {provider.subscription_status}
+                      </span>
+                      {provider.subscription_status === 'trial' && provider.trial_ends_at && (
+                        <div className={`text-xs mt-1 ${isTrialEndingSoon ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                          {daysLeft} days left
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="text-sm">
+                        <div>Start: {formatDate(provider.subscription_start_date)}</div>
+                        <div>End: {formatDate(provider.subscription_end_date)}</div>
+                        {provider.trial_ends_at && (
+                          <div className={isTrialEndingSoon ? 'text-orange-600 font-medium' : 'text-yellow-600'}>
+                            Trial: {formatDate(provider.trial_ends_at)}
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-xs text-gray-400">No Stripe account</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    {editingProvider === provider.id ? (
-                      <div className="flex flex-col gap-1">
+                    </td>
+                    <td className="px-4 py-3">
+                      {provider.stripe_customer_id ? (
+                        <div className="text-xs">
+                          <div className="font-mono text-gray-600 mb-1" title={provider.stripe_customer_id}>
+                            {provider.stripe_customer_id.substring(0, 15)}...
+                          </div>
+                          {provider.stripe_subscription_id && (
+                            <div className="font-mono text-gray-500" title={provider.stripe_subscription_id}>
+                              {provider.stripe_subscription_id.substring(0, 15)}...
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">No Stripe account</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {editingProvider === provider.id ? (
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => activateSubscription(provider.id, 'month')}
+                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+                          >
+                            Activate 1 Month
+                          </button>
+                          <button
+                            onClick={() => activateSubscription(provider.id, '3months')}
+                            className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+                          >
+                            Activate 3 Months
+                          </button>
+                          <button
+                            onClick={() => activateSubscription(provider.id, 'lifetime')}
+                            className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200"
+                          >
+                            Grandfathered (Lifetime)
+                          </button>
+                          <button
+                            onClick={() => extendTrial(provider.id, 7)}
+                            className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded hover:bg-yellow-200"
+                          >
+                            Extend Trial +7 days
+                          </button>
+                          <button
+                            onClick={() => deactivateSubscription(provider.id)}
+                            className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
+                          >
+                            Deactivate
+                          </button>
+                          <button
+                            onClick={() => setEditingProvider(null)}
+                            className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
                         <button
-                          onClick={() => activateSubscription(provider.id, 'month')}
-                          className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
+                          onClick={() => setEditingProvider(provider.id)}
+                          className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                         >
-                          Activate 1 Month
+                          Manage →
                         </button>
-                        <button
-                          onClick={() => activateSubscription(provider.id, '3months')}
-                          className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
-                        >
-                          Activate 3 Months
-                        </button>
-                        <button
-                          onClick={() => activateSubscription(provider.id, 'lifetime')}
-                          className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200"
-                        >
-                          Grandfathered (Lifetime)
-                        </button>
-                        <button
-                          onClick={() => extendTrial(provider.id, 7)}
-                          className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded hover:bg-yellow-200"
-                        >
-                          Extend Trial +7 days
-                        </button>
-                        <button
-                          onClick={() => deactivateSubscription(provider.id)}
-                          className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
-                        >
-                          Deactivate
-                        </button>
-                        <button
-                          onClick={() => setEditingProvider(null)}
-                          className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setEditingProvider(provider.id)}
-                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
-                        Manage →
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))}
+                      )}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           {filteredProviders.length === 0 && (

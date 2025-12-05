@@ -127,6 +127,20 @@ export default function RegisterCareSeekerPage() {
     setStep(step - 1)
   }
 
+  // Helper function to send emails (non-blocking)
+  const sendEmail = async (type: string, to: string, data: Record<string, string | number>) => {
+    try {
+      await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, to, data })
+      })
+      console.log(`Email sent: ${type} to ${to}`)
+    } catch (emailError) {
+      console.log(`Email failed (non-blocking): ${type}`, emailError)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -280,6 +294,21 @@ export default function RegisterCareSeekerPage() {
       } catch (profileErr) {
         console.log('Profile table operation skipped:', profileErr)
       }
+
+      // 5. Send welcome email to care seeker (non-blocking)
+      sendEmail('care_seeker_welcome', formData.email, {
+        firstName: formData.first_name,
+        lastName: formData.last_name
+      })
+
+      // 6. Send notification to admin (non-blocking)
+      const adminEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'careconnectmkting@gmail.com'
+      sendEmail('admin_new_care_seeker', adminEmail, {
+        name: `${formData.first_name} ${formData.last_name}`,
+        email: formData.email,
+        careNeeds: formData.care_needs,
+        urgency: formData.urgency
+      })
 
       // Success!
       alert('Registration successful! Please check your email to verify your account.')

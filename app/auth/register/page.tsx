@@ -154,6 +154,20 @@ export default function RegisterPage() {
     setStep(step - 1)
   }
 
+  // Helper function to send emails (non-blocking)
+  const sendEmail = async (type: string, to: string, data: Record<string, string | number>) => {
+    try {
+      await fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, to, data })
+      })
+      console.log(`Email sent: ${type} to ${to}`)
+    } catch (emailError) {
+      console.log(`Email failed (non-blocking): ${type}`, emailError)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -231,6 +245,22 @@ export default function RegisterPage() {
       if (profileError) {
         console.log('Profile update skipped (table may not exist):', profileError)
       }
+
+      // 4. Send welcome email to provider (non-blocking)
+      sendEmail('provider_welcome', formData.email, {
+        providerName: formData.contact_person,
+        businessName: formData.business_name
+      })
+
+      // 5. Send notification to admin (non-blocking)
+      const adminEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'careconnectmkting@gmail.com'
+      sendEmail('admin_new_provider', adminEmail, {
+        providerName: formData.contact_person,
+        businessName: formData.business_name,
+        email: formData.email,
+        phone: formData.contact_phone,
+        licenseNumber: formData.license_number
+      })
 
       // Success!
       alert('Registration successful! Please check your email to verify your account. An admin will review your 245D license within 24-48 hours.')
