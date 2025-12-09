@@ -21,75 +21,84 @@ const transporter = nodemailer.createTransport({
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
-    await transporter.sendMail({
+    console.log(`Attempting to send email to: ${to}`)
+    const info = await transporter.sendMail({
       from: `"CareConnect" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html
     })
-    return { success: true }
+    console.log(`Email sent successfully to ${to}:`, info.messageId)
+    return { success: true, messageId: info.messageId }
   } catch (error) {
     console.error(`Failed to send email to ${to}:`, error)
-    return { success: false, error }
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
 export async function GET(request: NextRequest) {
-  try {
-    // Optional: Verify cron secret for security
-    const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET
-    
-    // If CRON_SECRET is set, verify it (skip for manual triggers from admin)
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      // Allow manual trigger without auth for now (you can tighten this later)
-      const url = new URL(request.url)
-      const manualTrigger = url.searchParams.get('manual') === 'true'
-      
-      if (!manualTrigger) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      }
-    }
+  return handleRequest(request)
+}
 
+export async function POST(request: NextRequest) {
+  return handleRequest(request)
+}
+
+async function handleRequest(request: NextRequest) {
+  try {
     const now = new Date()
     const results = {
       checked: 0,
       emailsSent: 0,
-      errors: [] as string[]
+      errors: [] as string[],
+      details: [] as { provider: string; email: string; status: string; daysLeft: number }[]
     }
 
-    // Check for trials ending in 3 days
+    // Find ALL providers with trials ending in 1-3 days who haven't subscribed
     const threeDaysFromNow = new Date(now)
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
     threeDaysFromNow.setHours(23, 59, 59, 999)
 
-    const threeDaysFromNowStart = new Date(now)
-    threeDaysFromNowStart.setDate(threeDaysFromNowStart.getDate() + 3)
-    threeDaysFromNowStart.setHours(0, 0, 0, 0)
-
-    // Find providers with trials ending in exactly 3 days
-    // and who haven't subscribed yet
+    // Get providers whose trial ends between now and 3 days from now
     const { data: providers, error } = await supabase
       .from('providers')
-      .select('id, business_name, contact_person, contact_email, trial_ends_at, subscription_status')
-      .gte('trial_ends_at', threeDaysFromNowStart.toISOString())
+      .select('id, business_name, contact_person, contact_email, trial_ends_at, subscription_status, status')
+      .gt('trial_ends_at', now.toISOString())
       .lte('trial_ends_at', threeDaysFromNow.toISOString())
       .eq('status', 'active')
-      .or('subscription_status.is.null,subscription_status.eq.trial,subscription_status.eq.pending')
+      .in('subscription_status', ['trial', 'pending'])
 
     if (error) {
       console.error('Error fetching providers:', error)
-      return NextResponse.json({ error: 'Database error' }, { status: 500 })
+      return NextResponse.json({ error: 'Database error: ' + error.message }, { status: 500 })
     }
+
+    console.log(`Found ${providers?.length || 0} providers with expiring trials`)
 
     results.checked = providers?.length || 0
 
-    // Send reminder emails
+    // Send reminder emails to each provider
     for (const provider of providers || []) {
-      const email = provider.contact_email || provider.business_name
-      if (!email) continue
+      // Make sure we have a valid email
+      const email = provider.contact_email
+      if (!email || !email.includes('@')) {
+        console.log(`Skipping ${provider.business_name} - no valid email: ${email}`)
+        results.errors.push(`${provider.business_name}: No valid email address`)
+        results.details.push({
+          provider: provider.business_name,
+          email: email || 'none',
+          status: 'skipped - no valid email',
+          daysLeft: 0
+        })
+        continue
+      }
 
-      const daysLeft = 3 // We're querying for 3 days specifically
+      // Calculate days left
+      const trialEnd = new Date(provider.trial_ends_at)
+      const daysLeft = Math.max(1, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+
+      console.log(`Sending trial reminder to ${provider.business_name} (${email}) - ${daysLeft} days left`)
+
       const emailContent = providerTrialEndingEmail(
         provider.contact_person || 'Provider',
         provider.business_name,
@@ -100,50 +109,24 @@ export async function GET(request: NextRequest) {
       
       if (result.success) {
         results.emailsSent++
-        console.log(`Trial reminder sent to ${provider.business_name} (${email})`)
+        results.details.push({
+          provider: provider.business_name,
+          email: email,
+          status: 'sent',
+          daysLeft: daysLeft
+        })
+        console.log(`✅ Trial reminder sent to ${provider.business_name}`)
       } else {
-        results.errors.push(`Failed to send to ${provider.business_name}`)
+        results.errors.push(`${provider.business_name}: ${result.error}`)
+        results.details.push({
+          provider: provider.business_name,
+          email: email,
+          status: `failed: ${result.error}`,
+          daysLeft: daysLeft
+        })
+        console.log(`❌ Failed to send to ${provider.business_name}: ${result.error}`)
       }
     }
-
-    // Also check for trials ending in 1 day (final reminder)
-    const oneDayFromNow = new Date(now)
-    oneDayFromNow.setDate(oneDayFromNow.getDate() + 1)
-    oneDayFromNow.setHours(23, 59, 59, 999)
-
-    const oneDayFromNowStart = new Date(now)
-    oneDayFromNowStart.setDate(oneDayFromNowStart.getDate() + 1)
-    oneDayFromNowStart.setHours(0, 0, 0, 0)
-
-    const { data: urgentProviders } = await supabase
-      .from('providers')
-      .select('id, business_name, contact_person, contact_email, trial_ends_at, subscription_status')
-      .gte('trial_ends_at', oneDayFromNowStart.toISOString())
-      .lte('trial_ends_at', oneDayFromNow.toISOString())
-      .eq('status', 'active')
-      .or('subscription_status.is.null,subscription_status.eq.trial,subscription_status.eq.pending')
-
-    for (const provider of urgentProviders || []) {
-      const email = provider.contact_email
-      if (!email) continue
-
-      const emailContent = providerTrialEndingEmail(
-        provider.contact_person || 'Provider',
-        provider.business_name,
-        1
-      )
-
-      const result = await sendEmail(email, emailContent.subject, emailContent.html)
-      
-      if (result.success) {
-        results.emailsSent++
-        console.log(`URGENT trial reminder sent to ${provider.business_name} (${email})`)
-      } else {
-        results.errors.push(`Failed to send urgent to ${provider.business_name}`)
-      }
-    }
-
-    results.checked += urgentProviders?.length || 0
 
     return NextResponse.json({
       success: true,
@@ -158,9 +141,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-// POST method for manual triggers from admin panel
-export async function POST(request: NextRequest) {
-  return GET(request)
 }

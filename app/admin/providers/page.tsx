@@ -30,6 +30,14 @@ export default function AdminProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([])
   const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'suspended'>('all')
   const [sendingReminders, setSendingReminders] = useState(false)
+  
+  // Custom email modal state
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
+  const [emailSubject, setEmailSubject] = useState('')
+  const [emailBody, setEmailBody] = useState('')
+  const [sendingCustomEmail, setSendingCustomEmail] = useState(false)
+  
   const supabase = createClient()
 
   useEffect(() => {
@@ -181,9 +189,15 @@ export default function AdminProvidersPage() {
     }
   }
 
-  // Manual trigger for trial reminder emails
+  // Manual trigger for trial reminder emails - sends to ALL with 1-3 days left
   const sendTrialReminders = async () => {
-    if (!confirm('Send trial ending reminder emails to all providers with trials ending in 1-3 days?')) return
+    const expiringCount = providers.filter(p => {
+      if (!p.trial_ends_at) return false
+      const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      return daysLeft >= 1 && daysLeft <= 3 && p.subscription_status !== 'active'
+    }).length
+
+    if (!confirm(`Send trial ending reminder emails to ${expiringCount} providers with trials ending in 1-3 days?`)) return
     
     setSendingReminders(true)
     try {
@@ -193,7 +207,23 @@ export default function AdminProvidersPage() {
       const data = await response.json()
       
       if (data.success) {
-        alert(`Trial reminders sent!\n\nChecked: ${data.checked} providers\nEmails sent: ${data.emailsSent}`)
+        let message = `Trial Reminders Sent!\n\nChecked: ${data.checked} providers\nEmails sent: ${data.emailsSent}`
+        
+        if (data.details && data.details.length > 0) {
+          message += '\n\nDetails:'
+          data.details.forEach((d: { provider: string; status: string; daysLeft: number }) => {
+            message += `\n• ${d.provider}: ${d.status} (${d.daysLeft} days left)`
+          })
+        }
+        
+        if (data.errors && data.errors.length > 0) {
+          message += '\n\nErrors:'
+          data.errors.forEach((e: string) => {
+            message += `\n• ${e}`
+          })
+        }
+        
+        alert(message)
       } else {
         alert('Failed to send reminders: ' + (data.error || 'Unknown error'))
       }
@@ -202,6 +232,54 @@ export default function AdminProvidersPage() {
       alert('Failed to send trial reminders')
     } finally {
       setSendingReminders(false)
+    }
+  }
+
+  // Open custom email modal for a specific provider
+  const openEmailModal = (provider: Provider) => {
+    setSelectedProvider(provider)
+    setEmailSubject('')
+    setEmailBody('')
+    setShowEmailModal(true)
+  }
+
+  // Send custom email to selected provider
+  const sendCustomEmail = async () => {
+    if (!selectedProvider || !emailSubject.trim() || !emailBody.trim()) {
+      alert('Please fill in both subject and message')
+      return
+    }
+
+    setSendingCustomEmail(true)
+    try {
+      const response = await fetch('/api/email/send-custom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: selectedProvider.contact_email,
+          subject: emailSubject,
+          body: emailBody,
+          providerName: selectedProvider.contact_person,
+          businessName: selectedProvider.business_name
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`Email sent successfully to ${selectedProvider.contact_email}!`)
+        setShowEmailModal(false)
+        setSelectedProvider(null)
+        setEmailSubject('')
+        setEmailBody('')
+      } else {
+        alert('Failed to send email: ' + (data.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error sending custom email:', error)
+      alert('Failed to send email')
+    } finally {
+      setSendingCustomEmail(false)
     }
   }
 
@@ -233,6 +311,13 @@ export default function AdminProvidersPage() {
     return { text: `${daysLeft} days left`, color: 'bg-blue-100 text-blue-800' }
   }
 
+  // Count providers with trials ending in 1-3 days
+  const trialsEndingSoon = providers.filter(p => {
+    if (!p.trial_ends_at) return false
+    const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    return daysLeft >= 1 && daysLeft <= 3 && p.subscription_status !== 'active'
+  }).length
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -243,17 +328,106 @@ export default function AdminProvidersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Custom Email Modal */}
+      {showEmailModal && selectedProvider && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Send Email to Provider</h2>
+                <button 
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              </div>
+              
+              <div className="bg-gray-50 rounded p-3 mb-4">
+                <p className="text-sm text-gray-600">
+                  <strong>To:</strong> {selectedProvider.contact_person} ({selectedProvider.contact_email})
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Business:</strong> {selectedProvider.business_name}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    placeholder="Enter email subject..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Message
+                  </label>
+                  <textarea
+                    value={emailBody}
+                    onChange={(e) => setEmailBody(e.target.value)}
+                    placeholder="Enter your message..."
+                    rows={8}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    The message will be wrapped in the CareConnect email template automatically.
+                  </p>
+                </div>
+
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setShowEmailModal(false)}
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={sendCustomEmail}
+                    disabled={sendingCustomEmail || !emailSubject.trim() || !emailBody.trim()}
+                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {sendingCustomEmail ? 'Sending...' : '📧 Send Email'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Manage Providers</h1>
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-3 items-center">
               <button
                 onClick={sendTrialReminders}
                 disabled={sendingReminders}
-                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 text-sm"
+                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 text-sm flex items-center gap-2"
               >
-                {sendingReminders ? 'Sending...' : '📧 Send Trial Reminders'}
+                {sendingReminders ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    📧 Send Trial Reminders
+                    {trialsEndingSoon > 0 && (
+                      <span className="bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                        {trialsEndingSoon}
+                      </span>
+                    )}
+                  </>
+                )}
               </button>
               <Link href="/admin" className="text-blue-600 hover:text-blue-800">
                 ← Back to Admin
@@ -284,11 +458,7 @@ export default function AdminProvidersPage() {
           </div>
           <div className="bg-orange-50 rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-orange-600">
-              {providers.filter(p => {
-                if (!p.trial_ends_at) return false
-                const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-                return daysLeft >= 0 && daysLeft <= 3 && p.subscription_status !== 'active'
-              }).length}
+              {trialsEndingSoon}
             </div>
             <div className="text-sm text-gray-600">Trial Ending Soon</div>
           </div>
@@ -397,7 +567,7 @@ export default function AdminProvidersPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         {provider.status === 'pending' && (
                           <>
                             <button
@@ -430,6 +600,12 @@ export default function AdminProvidersPage() {
                             Reactivate
                           </button>
                         )}
+                        <button
+                          onClick={() => openEmailModal(provider)}
+                          className="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                        >
+                          Email
+                        </button>
                         <Link
                           href={`/admin/providers/${provider.id}/edit`}
                           className="text-green-600 hover:text-green-800 text-sm font-medium"
