@@ -11,17 +11,34 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
+// Create transporter inside the function to ensure env vars are loaded
+function getTransporter() {
+  const user = process.env.EMAIL_USER
+  const pass = process.env.EMAIL_PASSWORD
+  
+  console.log('Email config check:', { 
+    hasUser: !!user, 
+    hasPass: !!pass,
+    userValue: user ? user.substring(0, 5) + '...' : 'undefined'
+  })
+  
+  if (!user || !pass) {
+    throw new Error('EMAIL_USER or EMAIL_PASSWORD environment variables are not set')
   }
-})
+  
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: user,
+      pass: pass
+    }
+  })
+}
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
     console.log(`Attempting to send email to: ${to}`)
+    const transporter = getTransporter()
     const info = await transporter.sendMail({
       from: `"CareConnect" <${process.env.EMAIL_USER}>`,
       to,
@@ -54,7 +71,7 @@ async function handleRequest(request: NextRequest) {
       details: [] as { provider: string; email: string; status: string; daysLeft: number }[]
     }
 
-    // Find ALL providers with trials ending in 1-3 days who haven't subscribed
+    // Find ALL providers with trials ending in 0-3 days who haven't subscribed
     const threeDaysFromNow = new Date(now)
     threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3)
     threeDaysFromNow.setHours(23, 59, 59, 999)
@@ -63,7 +80,7 @@ async function handleRequest(request: NextRequest) {
     const { data: providers, error } = await supabase
       .from('providers')
       .select('id, business_name, contact_person, contact_email, trial_ends_at, subscription_status, status')
-      .gt('trial_ends_at', now.toISOString())
+      .gte('trial_ends_at', now.toISOString())
       .lte('trial_ends_at', threeDaysFromNow.toISOString())
       .eq('status', 'active')
       .in('subscription_status', ['trial', 'pending'])
@@ -95,7 +112,7 @@ async function handleRequest(request: NextRequest) {
 
       // Calculate days left
       const trialEnd = new Date(provider.trial_ends_at)
-      const daysLeft = Math.max(1, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+      const daysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
 
       console.log(`Sending trial reminder to ${provider.business_name} (${email}) - ${daysLeft} days left`)
 
