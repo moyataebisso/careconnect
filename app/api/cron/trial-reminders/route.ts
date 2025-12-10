@@ -11,34 +11,18 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// Create transporter inside the function to ensure env vars are loaded
-function getTransporter() {
-  const user = process.env.EMAIL_USER
-  const pass = process.env.EMAIL_PASSWORD
-  
-  console.log('Email config check:', { 
-    hasUser: !!user, 
-    hasPass: !!pass,
-    userValue: user ? user.substring(0, 5) + '...' : 'undefined'
-  })
-  
-  if (!user || !pass) {
-    throw new Error('EMAIL_USER or EMAIL_PASSWORD environment variables are not set')
+// Match exactly how send-custom works
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
   }
-  
-  return nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: user,
-      pass: pass
-    }
-  })
-}
+})
 
 async function sendEmail(to: string, subject: string, html: string) {
   try {
     console.log(`Attempting to send email to: ${to}`)
-    const transporter = getTransporter()
     const info = await transporter.sendMail({
       from: `"CareConnect" <${process.env.EMAIL_USER}>`,
       to,
