@@ -312,7 +312,7 @@ export default function BrowseProvidersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with Search */}
+      {/* Header Search */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
         <div className="container mx-auto px-4 py-4">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
