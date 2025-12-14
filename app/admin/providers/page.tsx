@@ -30,6 +30,7 @@ export default function AdminProvidersPage() {
   const [providers, setProviders] = useState<Provider[]>([])
   const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'suspended'>('all')
   const [sendingReminders, setSendingReminders] = useState(false)
+  const [sendingTrialReminderId, setSendingTrialReminderId] = useState<string | null>(null)
   
   // Custom email modal state
   const [showEmailModal, setShowEmailModal] = useState(false)
@@ -189,15 +190,15 @@ export default function AdminProvidersPage() {
     }
   }
 
-  // Manual trigger for trial reminder emails - sends to ALL with 1-3 days left
+  // Manual trigger for trial reminder emails - sends to ALL with 0-3 days left
   const sendTrialReminders = async () => {
     const expiringCount = providers.filter(p => {
       if (!p.trial_ends_at) return false
       const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-      return daysLeft >= 1 && daysLeft <= 3 && p.subscription_status !== 'active'
+      return daysLeft >= 0 && daysLeft <= 3 && p.subscription_status !== 'active'
     }).length
 
-    if (!confirm(`Send trial ending reminder emails to ${expiringCount} providers with trials ending in 1-3 days?`)) return
+    if (!confirm(`Send trial ending reminder emails to ${expiringCount} providers with trials ending in 0-3 days?`)) return
     
     setSendingReminders(true)
     try {
@@ -232,6 +233,47 @@ export default function AdminProvidersPage() {
       alert('Failed to send trial reminders')
     } finally {
       setSendingReminders(false)
+    }
+  }
+
+  // Send trial reminder to a single provider
+  const sendSingleTrialReminder = async (provider: Provider) => {
+    // Calculate days left for display
+    let daysLeft = 0
+    if (provider.trial_ends_at) {
+      const trialEnd = new Date(provider.trial_ends_at)
+      const now = new Date()
+      daysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+    }
+
+    if (!confirm(`Send trial reminder email to ${provider.business_name}?\n\nThis will send the "Your Trial is Ending Soon" email showing ${daysLeft} days left.`)) return
+
+    setSendingTrialReminderId(provider.id)
+    try {
+      const response = await fetch('/api/email/send-trial-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          providerId: provider.id,
+          to: provider.contact_email,
+          providerName: provider.contact_person,
+          businessName: provider.business_name,
+          daysLeft: daysLeft
+        })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`Trial reminder sent to ${provider.contact_email}!`)
+      } else {
+        alert('Failed to send reminder: ' + (data.error || 'Unknown error'))
+      }
+    } catch (error) {
+      console.error('Error sending trial reminder:', error)
+      alert('Failed to send trial reminder')
+    } finally {
+      setSendingTrialReminderId(null)
     }
   }
 
@@ -311,11 +353,11 @@ export default function AdminProvidersPage() {
     return { text: `${daysLeft} days left`, color: 'bg-blue-100 text-blue-800' }
   }
 
-  // Count providers with trials ending in 1-3 days
+  // Count providers with trials ending in 0-3 days
   const trialsEndingSoon = providers.filter(p => {
     if (!p.trial_ends_at) return false
     const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-    return daysLeft >= 1 && daysLeft <= 3 && p.subscription_status !== 'active'
+    return daysLeft >= 0 && daysLeft <= 3 && p.subscription_status !== 'active'
   }).length
 
   if (loading) {
@@ -420,7 +462,7 @@ export default function AdminProvidersPage() {
                   </>
                 ) : (
                   <>
-                    📧 Send Trial Reminders
+                    📧 Send Trial Reminders (0-3 days)
                     {trialsEndingSoon > 0 && (
                       <span className="bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">
                         {trialsEndingSoon}
@@ -600,6 +642,13 @@ export default function AdminProvidersPage() {
                             Reactivate
                           </button>
                         )}
+                        <button
+                          onClick={() => sendSingleTrialReminder(provider)}
+                          disabled={sendingTrialReminderId === provider.id}
+                          className="text-orange-600 hover:text-orange-800 text-sm font-medium disabled:opacity-50"
+                        >
+                          {sendingTrialReminderId === provider.id ? 'Sending...' : 'Trial Reminder'}
+                        </button>
                         <button
                           onClick={() => openEmailModal(provider)}
                           className="text-purple-600 hover:text-purple-800 text-sm font-medium"
