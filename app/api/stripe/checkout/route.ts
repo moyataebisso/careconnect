@@ -31,13 +31,27 @@ export async function POST(request: Request) {
     // Get provider details
     const { data: provider, error: providerError } = await supabase
       .from('providers')
-      .select('id, business_name, contact_email, stripe_customer_id, subscription_plan_id')
+      .select('id, business_name, contact_email, stripe_customer_id, subscription_status')
       .eq('user_id', user.id)
       .single()
 
     if (providerError || !provider) {
       console.error('Provider not found:', providerError)
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 })
+    }
+
+    // ========================================
+    // NEW: Check if provider already has active subscription in database
+    // ========================================
+    if (provider.subscription_status === 'active') {
+      console.log('Provider already has active subscription in database')
+      return NextResponse.json(
+        { 
+          error: 'You already have an active subscription. Visit your billing page to manage it.',
+          redirect: '/billing'
+        },
+        { status: 400 }
+      )
     }
 
     // Get or create Stripe customer
@@ -62,6 +76,74 @@ export async function POST(request: Request) {
         .eq('id', provider.id)
       
       console.log('Created Stripe customer:', customerId)
+    } else {
+      // ========================================
+      // NEW: Check Stripe for existing active subscriptions
+      // ========================================
+      const existingSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'active',
+        limit: 1
+      })
+
+      if (existingSubscriptions.data.length > 0) {
+        console.log('Customer already has active Stripe subscription:', existingSubscriptions.data[0].id)
+        
+        // Sync the subscription status to database (in case it's out of sync)
+        await supabase
+          .from('providers')
+          .update({ 
+            subscription_status: 'active',
+            stripe_subscription_id: existingSubscriptions.data[0].id
+          })
+          .eq('id', provider.id)
+        
+        return NextResponse.json(
+          { 
+            error: 'You already have an active subscription. Visit your billing page to manage it.',
+            redirect: '/billing'
+          },
+          { status: 400 }
+        )
+      }
+
+      // Also check for trialing subscriptions
+      const trialingSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'trialing',
+        limit: 1
+      })
+
+      if (trialingSubscriptions.data.length > 0) {
+        console.log('Customer already has trialing subscription:', trialingSubscriptions.data[0].id)
+        
+        return NextResponse.json(
+          { 
+            error: 'You already have a subscription in trial. Visit your billing page to manage it.',
+            redirect: '/billing'
+          },
+          { status: 400 }
+        )
+      }
+
+      // Check for incomplete/past_due subscriptions that might still be processing
+      const pendingSubscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: 'past_due',
+        limit: 1
+      })
+
+      if (pendingSubscriptions.data.length > 0) {
+        console.log('Customer has past_due subscription:', pendingSubscriptions.data[0].id)
+        
+        return NextResponse.json(
+          { 
+            error: 'You have a subscription with payment issues. Visit your billing page to update payment method.',
+            redirect: '/billing'
+          },
+          { status: 400 }
+        )
+      }
     }
 
     // Get price ID based on plan
@@ -99,7 +181,16 @@ export async function POST(request: Request) {
         provider_id: provider.id,
         user_id: user.id,
         plan: planId
-      }
+      },
+      // ========================================
+      // NEW: Prevent duplicate checkout sessions
+      // ========================================
+      customer_update: {
+        address: 'auto',
+        name: 'auto'
+      },
+      // Expire the session after 30 minutes to prevent stale checkouts
+      expires_at: Math.floor(Date.now() / 1000) + (30 * 60)
     })
 
     console.log('Created checkout session:', session.id)
