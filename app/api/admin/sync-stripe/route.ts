@@ -122,6 +122,8 @@ export async function POST(request: NextRequest) {
       status: string
       current_period_end: number | null
       current_period_start: number | null
+      start_date: number | null  // Original subscription start date
+      created: number | null     // Fallback: when subscription was created
       trial_end: number | null
       items: { data: Array<{ price: { id: string } }> }
     }
@@ -131,17 +133,24 @@ export async function POST(request: NextRequest) {
       status: subData.status,
       current_period_end: subData.current_period_end,
       current_period_start: subData.current_period_start,
+      start_date: subData.start_date,
+      created: subData.created,
     })
 
     const newStatus = statusMap[subData.status] || 'expired'
     
     // Handle potentially null dates
+    // Use current_period_end for subscription end date
     const periodEnd = subData.current_period_end 
       ? new Date(subData.current_period_end * 1000).toISOString()
       : null
-    const periodStart = subData.current_period_start
-      ? new Date(subData.current_period_start * 1000).toISOString()
-      : new Date().toISOString()
+    
+    // Use start_date (original subscription start) or created as fallback
+    const subscriptionStart = subData.start_date 
+      ? new Date(subData.start_date * 1000).toISOString()
+      : subData.created
+        ? new Date(subData.created * 1000).toISOString()
+        : new Date().toISOString()
 
     // Get plan ID from price
     const priceId = subData.items.data[0]?.price.id
@@ -163,7 +172,7 @@ export async function POST(request: NextRequest) {
       .update({
         subscription_status: newStatus,
         stripe_subscription_id: subData.id,
-        subscription_start_date: periodStart,
+        subscription_start_date: subscriptionStart,
         subscription_end_date: periodEnd,
         subscription_plan_id: planId,
         trial_ends_at: subData.status === 'trialing' && subData.trial_end 
@@ -280,6 +289,8 @@ export async function PUT(request: NextRequest) {
           status: string
           current_period_end: number | null
           current_period_start: number | null
+          start_date: number | null
+          created: number | null
           trial_end: number | null
         }
 
@@ -298,16 +309,19 @@ export async function PUT(request: NextRequest) {
         const periodEnd = subData.current_period_end
           ? new Date(subData.current_period_end * 1000).toISOString()
           : null
-        const periodStart = subData.current_period_start
-          ? new Date(subData.current_period_start * 1000).toISOString()
-          : new Date().toISOString()
+        // Use start_date (original subscription start) or created as fallback
+        const subscriptionStart = subData.start_date 
+          ? new Date(subData.start_date * 1000).toISOString()
+          : subData.created
+            ? new Date(subData.created * 1000).toISOString()
+            : new Date().toISOString()
 
         await adminSupabase
           .from('providers')
           .update({
             subscription_status: newStatus,
             stripe_subscription_id: subData.id,
-            subscription_start_date: periodStart,
+            subscription_start_date: subscriptionStart,
             subscription_end_date: periodEnd,
             trial_ends_at: subData.status === 'trialing' && subData.trial_end 
               ? new Date(subData.trial_end * 1000).toISOString() 
