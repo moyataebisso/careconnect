@@ -307,6 +307,28 @@ export default function AdminSubscriptionsPage() {
   // Count providers with Stripe accounts
   const providersWithStripe = providers.filter(p => p.stripe_customer_id).length
 
+  // Count different subscription types
+  const paidActiveCount = providers.filter(p => 
+    p.subscription_status === 'active' && p.stripe_subscription_id
+  ).length
+  
+  const grandfatheredCount = providers.filter(p => 
+    p.subscription_status === 'active' && 
+    !p.stripe_subscription_id && 
+    p.subscription_end_date && 
+    new Date(p.subscription_end_date).getFullYear() > 2090
+  ).length
+  
+  const manualActiveCount = providers.filter(p => 
+    p.subscription_status === 'active' && 
+    !p.stripe_subscription_id &&
+    (!p.subscription_end_date || new Date(p.subscription_end_date).getFullYear() <= 2090)
+  ).length
+
+  const trialCount = providers.filter(p => p.subscription_status === 'trial').length
+  const expiredCount = providers.filter(p => p.subscription_status === 'expired').length
+  const pastDueCount = providers.filter(p => p.subscription_status === 'past_due').length
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -379,34 +401,46 @@ export default function AdminSubscriptionsPage() {
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold">{providers.length}</div>
             <div className="text-sm text-gray-600">Total Providers</div>
           </div>
-          <div className="bg-green-50 rounded-lg shadow p-4">
+          <div className="bg-green-50 rounded-lg shadow p-4 border-l-4 border-green-500">
             <div className="text-2xl font-bold text-green-600">
-              {providers.filter(p => p.subscription_status === 'active').length}
+              {paidActiveCount}
             </div>
-            <div className="text-sm text-gray-600">Active Subscriptions</div>
+            <div className="text-sm text-gray-600">💳 Paid Active</div>
           </div>
-          <div className="bg-yellow-50 rounded-lg shadow p-4">
+          <div className="bg-purple-50 rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <div className="text-2xl font-bold text-purple-600">
+              {grandfatheredCount}
+            </div>
+            <div className="text-sm text-gray-600">⭐ Grandfathered</div>
+          </div>
+          <div className="bg-blue-50 rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <div className="text-2xl font-bold text-blue-600">
+              {manualActiveCount}
+            </div>
+            <div className="text-sm text-gray-600">🔧 Manual Active</div>
+          </div>
+          <div className="bg-yellow-50 rounded-lg shadow p-4 border-l-4 border-yellow-500">
             <div className="text-2xl font-bold text-yellow-600">
-              {providers.filter(p => p.subscription_status === 'trial').length}
+              {trialCount}
             </div>
-            <div className="text-sm text-gray-600">On Trial</div>
+            <div className="text-sm text-gray-600">🕐 On Trial</div>
           </div>
-          <div className="bg-orange-50 rounded-lg shadow p-4">
+          <div className="bg-orange-50 rounded-lg shadow p-4 border-l-4 border-orange-500">
             <div className="text-2xl font-bold text-orange-600">
               {trialsEndingSoon}
             </div>
-            <div className="text-sm text-gray-600">Trials Ending Soon</div>
+            <div className="text-sm text-gray-600">⚠️ Trials Ending</div>
           </div>
-          <div className="bg-red-50 rounded-lg shadow p-4">
+          <div className="bg-red-50 rounded-lg shadow p-4 border-l-4 border-red-500">
             <div className="text-2xl font-bold text-red-600">
-              {providers.filter(p => p.subscription_status === 'expired').length}
+              {expiredCount + pastDueCount}
             </div>
-            <div className="text-sm text-gray-600">Expired</div>
+            <div className="text-sm text-gray-600">❌ Expired/Past Due</div>
           </div>
         </div>
 
@@ -484,22 +518,79 @@ export default function AdminSubscriptionsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        provider.subscription_status === 'active' 
-                          ? 'bg-green-100 text-green-800'
-                          : provider.subscription_status === 'trial'
-                          ? isTrialEndingSoon 
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {provider.subscription_status}
-                      </span>
-                      {provider.subscription_status === 'trial' && provider.trial_ends_at && (
-                        <div className={`text-xs mt-1 ${isTrialEndingSoon ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
-                          {daysLeft} days left
-                        </div>
-                      )}
+                      {/* Improved status display */}
+                      {(() => {
+                        const hasStripeSubscription = !!provider.stripe_subscription_id
+                        const isGrandfathered = provider.subscription_end_date && 
+                          new Date(provider.subscription_end_date).getFullYear() > 2090
+                        const isManualActive = provider.subscription_status === 'active' && 
+                          !hasStripeSubscription && !isGrandfathered
+                        
+                        if (provider.subscription_status === 'active') {
+                          if (hasStripeSubscription) {
+                            return (
+                              <div>
+                                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                  💳 Paid Active
+                                </span>
+                                <div className="text-xs text-green-600 mt-1">via Stripe</div>
+                              </div>
+                            )
+                          } else if (isGrandfathered) {
+                            return (
+                              <div>
+                                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
+                                  ⭐ Grandfathered
+                                </span>
+                                <div className="text-xs text-purple-600 mt-1">Lifetime access</div>
+                              </div>
+                            )
+                          } else {
+                            return (
+                              <div>
+                                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                                  🔧 Manual Active
+                                </span>
+                                <div className="text-xs text-blue-600 mt-1">Admin activated</div>
+                              </div>
+                            )
+                          }
+                        } else if (provider.subscription_status === 'trial') {
+                          return (
+                            <div>
+                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                isTrialEndingSoon 
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                🕐 Trial
+                              </span>
+                              {provider.trial_ends_at && (
+                                <div className={`text-xs mt-1 ${isTrialEndingSoon ? 'text-orange-600 font-medium' : 'text-gray-500'}`}>
+                                  {daysLeft} days left
+                                </div>
+                              )}
+                            </div>
+                          )
+                        } else if (provider.subscription_status === 'past_due') {
+                          return (
+                            <div>
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-orange-100 text-orange-800">
+                                ⚠️ Past Due
+                              </span>
+                              <div className="text-xs text-orange-600 mt-1">Payment failed</div>
+                            </div>
+                          )
+                        } else {
+                          return (
+                            <div>
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
+                                ❌ Expired
+                              </span>
+                            </div>
+                          )
+                        }
+                      })()}
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-sm">

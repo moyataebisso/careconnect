@@ -100,9 +100,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the most recent active or trialing subscription
-    const activeSubscription = subscriptions.data.find(
+    const listedSubscription = subscriptions.data.find(
       sub => sub.status === 'active' || sub.status === 'trialing'
-    ) || subscriptions.data[0] // Fall back to most recent
+    ) || subscriptions.data[0]
+
+    // Retrieve the full subscription details (list() may not include all fields)
+    const activeSubscription = await stripe.subscriptions.retrieve(listedSubscription.id)
+    
+    console.log('Full subscription retrieved:', activeSubscription.id) // Fall back to most recent
 
     // Map Stripe status to your database status
     const statusMap: Record<string, string> = {
@@ -117,6 +122,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Cast subscription to access properties (Stripe types are strict)
+    // Log the raw subscription object to see all available fields
+    console.log('Raw subscription object keys:', Object.keys(activeSubscription))
+    console.log('Raw subscription:', JSON.stringify(activeSubscription, null, 2))
+    
     const subData = activeSubscription as unknown as {
       id: string
       status: string
@@ -125,6 +134,8 @@ export async function POST(request: NextRequest) {
       start_date: number | null  // Original subscription start date
       created: number | null     // Fallback: when subscription was created
       trial_end: number | null
+      ended_at: number | null    // When subscription ended (if canceled)
+      cancel_at: number | null   // When subscription will cancel
       items: { data: Array<{ price: { id: string } }> }
     }
 
@@ -140,10 +151,12 @@ export async function POST(request: NextRequest) {
     const newStatus = statusMap[subData.status] || 'expired'
     
     // Handle potentially null dates
-    // Use current_period_end for subscription end date
+    // Use current_period_end for subscription end date, fall back to cancel_at
     const periodEnd = subData.current_period_end 
       ? new Date(subData.current_period_end * 1000).toISOString()
-      : null
+      : subData.cancel_at
+        ? new Date(subData.cancel_at * 1000).toISOString()
+        : null
     
     // Use start_date (original subscription start) or created as fallback
     const subscriptionStart = subData.start_date 
