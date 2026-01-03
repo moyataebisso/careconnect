@@ -1,3 +1,6 @@
+// File: /app/admin/subscriptions/page.tsx
+// Replace your existing file at: app/admin/subscriptions/page.tsx
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -30,6 +33,8 @@ export default function AdminSubscriptionsPage() {
   const [filter, setFilter] = useState<'all' | 'active' | 'trial' | 'expired'>('all')
   const [editingProvider, setEditingProvider] = useState<string | null>(null)
   const [sendingReminders, setSendingReminders] = useState(false)
+  const [syncingProvider, setSyncingProvider] = useState<string | null>(null)
+  const [syncingAll, setSyncingAll] = useState(false)
   const supabase = createClient()
 
   useEffect(() => {
@@ -102,6 +107,64 @@ export default function AdminSubscriptionsPage() {
       setProviders(transformedData)
     } catch (error) {
       console.error('Error loading providers:', error)
+    }
+  }
+
+  // Sync single provider with Stripe
+  const syncWithStripe = async (providerId: string, providerName: string) => {
+    setSyncingProvider(providerId)
+    try {
+      const response = await fetch('/api/admin/sync-stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerId })
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        alert(`✅ Synced ${providerName}\n\nStripe Status: ${data.stripeStatus}\nDatabase Status: ${data.dbStatus}${data.stripeSubscriptionId ? `\nSubscription ID: ${data.stripeSubscriptionId}` : ''}`)
+        await loadProviders() // Reload the list
+      } else {
+        alert(`❌ Sync failed for ${providerName}\n\n${data.error}`)
+      }
+    } catch (error) {
+      console.error('Sync error:', error)
+      alert('Failed to sync with Stripe')
+    } finally {
+      setSyncingProvider(null)
+    }
+  }
+
+  // Sync ALL providers with Stripe
+  const syncAllWithStripe = async () => {
+    if (!confirm('Sync ALL providers with Stripe accounts?\n\nThis will check each provider\'s Stripe subscription and update the database accordingly.')) return
+    
+    setSyncingAll(true)
+    try {
+      const response = await fetch('/api/admin/sync-stripe', {
+        method: 'PUT'
+      })
+      
+      const data = await response.json()
+      
+      if (data.success) {
+        const resultText = data.results
+          .map((r: {provider: string, status: string, error?: string}) => 
+            `• ${r.provider}: ${r.status}${r.error ? ` (${r.error})` : ''}`
+          )
+          .join('\n')
+        
+        alert(`✅ ${data.message}\n\nResults:\n${resultText}`)
+        await loadProviders() // Reload the list
+      } else {
+        alert(`❌ Sync failed: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Bulk sync error:', error)
+      alert('Failed to sync with Stripe')
+    } finally {
+      setSyncingAll(false)
     }
   }
 
@@ -241,6 +304,9 @@ export default function AdminSubscriptionsPage() {
     return daysLeft >= 0 && daysLeft <= 3
   }).length
 
+  // Count providers with Stripe accounts
+  const providersWithStripe = providers.filter(p => p.stripe_customer_id).length
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -255,7 +321,32 @@ export default function AdminSubscriptionsPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Manage Subscriptions</h1>
-            <div className="flex gap-4 items-center">
+            <div className="flex gap-3 items-center">
+              {/* Sync All Button */}
+              <button
+                onClick={syncAllWithStripe}
+                disabled={syncingAll || providersWithStripe === 0}
+                className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 text-sm flex items-center gap-2"
+                title={`Sync ${providersWithStripe} providers with Stripe accounts`}
+              >
+                {syncingAll ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Syncing...
+                  </>
+                ) : (
+                  <>
+                    🔄 Sync All with Stripe
+                    {providersWithStripe > 0 && (
+                      <span className="bg-white text-purple-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                        {providersWithStripe}
+                      </span>
+                    )}
+                  </>
+                )}
+              </button>
+              
+              {/* Trial Reminders Button */}
               <button
                 onClick={sendTrialReminders}
                 disabled={sendingReminders}
@@ -277,6 +368,7 @@ export default function AdminSubscriptionsPage() {
                   </>
                 )}
               </button>
+              
               <Link href="/admin" className="text-blue-600 hover:text-blue-800">
                 ← Back to Admin
               </Link>
@@ -373,6 +465,7 @@ export default function AdminSubscriptionsPage() {
               {filteredProviders.map((provider) => {
                 const daysLeft = getDaysRemaining(provider.trial_ends_at)
                 const isTrialEndingSoon = provider.subscription_status === 'trial' && daysLeft >= 0 && daysLeft <= 3
+                const hasStripe = !!provider.stripe_customer_id
                 
                 return (
                   <tr key={provider.id} className={`hover:bg-gray-50 ${isTrialEndingSoon ? 'bg-orange-50' : ''}`}>
@@ -425,9 +518,13 @@ export default function AdminSubscriptionsPage() {
                           <div className="font-mono text-gray-600 mb-1" title={provider.stripe_customer_id}>
                             {provider.stripe_customer_id.substring(0, 15)}...
                           </div>
-                          {provider.stripe_subscription_id && (
-                            <div className="font-mono text-gray-500" title={provider.stripe_subscription_id}>
-                              {provider.stripe_subscription_id.substring(0, 15)}...
+                          {provider.stripe_subscription_id ? (
+                            <div className="font-mono text-green-600" title={provider.stripe_subscription_id}>
+                              ✓ {provider.stripe_subscription_id.substring(0, 15)}...
+                            </div>
+                          ) : (
+                            <div className="text-orange-500 font-medium">
+                              ⚠️ No sub ID synced
                             </div>
                           )}
                         </div>
@@ -438,6 +535,20 @@ export default function AdminSubscriptionsPage() {
                     <td className="px-4 py-3">
                       {editingProvider === provider.id ? (
                         <div className="flex flex-col gap-1">
+                          {/* Sync with Stripe button - only show if has Stripe customer */}
+                          {hasStripe && (
+                            <button
+                              onClick={() => syncWithStripe(provider.id, provider.business_name)}
+                              disabled={syncingProvider === provider.id}
+                              className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded hover:bg-purple-200 disabled:opacity-50 flex items-center gap-1"
+                            >
+                              {syncingProvider === provider.id ? (
+                                <>⏳ Syncing...</>
+                              ) : (
+                                <>🔄 Sync with Stripe</>
+                              )}
+                            </button>
+                          )}
                           <button
                             onClick={() => activateSubscription(provider.id, 'month')}
                             className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
