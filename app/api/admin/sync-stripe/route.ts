@@ -120,15 +120,28 @@ export async function POST(request: NextRequest) {
     const subData = activeSubscription as unknown as {
       id: string
       status: string
-      current_period_end: number
-      current_period_start: number
+      current_period_end: number | null
+      current_period_start: number | null
       trial_end: number | null
       items: { data: Array<{ price: { id: string } }> }
     }
 
+    console.log('Subscription data:', {
+      id: subData.id,
+      status: subData.status,
+      current_period_end: subData.current_period_end,
+      current_period_start: subData.current_period_start,
+    })
+
     const newStatus = statusMap[subData.status] || 'expired'
-    const periodEnd = new Date(subData.current_period_end * 1000).toISOString()
-    const periodStart = new Date(subData.current_period_start * 1000).toISOString()
+    
+    // Handle potentially null dates
+    const periodEnd = subData.current_period_end 
+      ? new Date(subData.current_period_end * 1000).toISOString()
+      : null
+    const periodStart = subData.current_period_start
+      ? new Date(subData.current_period_start * 1000).toISOString()
+      : new Date().toISOString()
 
     // Get plan ID from price
     const priceId = subData.items.data[0]?.price.id
@@ -238,10 +251,14 @@ export async function PUT(request: NextRequest) {
 
     for (const provider of providers) {
       try {
+        console.log(`Syncing provider: ${provider.business_name} (${provider.stripe_customer_id})`)
+        
         const subscriptions = await stripe.subscriptions.list({
           customer: provider.stripe_customer_id!,
           limit: 5,
         })
+
+        console.log(`Found ${subscriptions.data.length} subscriptions`)
 
         if (subscriptions.data.length === 0) {
           results.push({ provider: provider.business_name, status: 'no_subscription' })
@@ -252,12 +269,17 @@ export async function PUT(request: NextRequest) {
           sub => sub.status === 'active' || sub.status === 'trialing'
         ) || subscriptions.data[0]
 
+        console.log('Active subscription:', {
+          id: activeSubscription.id,
+          status: activeSubscription.status,
+        })
+
         // Cast subscription to access properties
         const subData = activeSubscription as unknown as {
           id: string
           status: string
-          current_period_end: number
-          current_period_start: number
+          current_period_end: number | null
+          current_period_start: number | null
           trial_end: number | null
         }
 
@@ -273,8 +295,12 @@ export async function PUT(request: NextRequest) {
         }
 
         const newStatus = statusMap[subData.status] || 'expired'
-        const periodEnd = new Date(subData.current_period_end * 1000).toISOString()
-        const periodStart = new Date(subData.current_period_start * 1000).toISOString()
+        const periodEnd = subData.current_period_end
+          ? new Date(subData.current_period_end * 1000).toISOString()
+          : null
+        const periodStart = subData.current_period_start
+          ? new Date(subData.current_period_start * 1000).toISOString()
+          : new Date().toISOString()
 
         await adminSupabase
           .from('providers')
