@@ -75,14 +75,17 @@ export default function BrowseProvidersPage() {
 
   const loadProviders = async () => {
     try {
-      const query = supabase
+      // UPDATED QUERY: Only show providers who are:
+      // 1. Admin approved (status = 'active' AND verified_245d = true)
+      // 2. AND have ACTIVE subscription (paid) - no more free trials shown
+      const { data, error } = await supabase
         .from('providers')
         .select('*')
         .eq('status', 'active')
         .eq('verified_245d', true)
+        .eq('subscription_status', 'active') // ONLY paid active subscriptions
+        .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
-
-      const { data, error } = await query
 
       if (error) throw error
 
@@ -173,16 +176,15 @@ export default function BrowseProvidersPage() {
 
     // KEEPING WAIVER FILTER - handle both CAC and private_pay
     if (selectedWaivers.length > 0) {
-  filtered = filtered.filter(p => {
-    if (!p.accepted_waivers || !Array.isArray(p.accepted_waivers)) return false
-    
-    return selectedWaivers.some(selectedWaiver => {
-      // If user selects private_pay, match both CAC and private_pay in the database
-      if (selectedWaiver === 'private_pay') {
-        return p.accepted_waivers.some(w => w === 'private_pay')
-      }
-      return p.accepted_waivers.includes(selectedWaiver)
-
+      filtered = filtered.filter(p => {
+        if (!p.accepted_waivers || !Array.isArray(p.accepted_waivers)) return false
+        
+        return selectedWaivers.some(selectedWaiver => {
+          // If user selects private_pay, match both CAC and private_pay in the database
+          if (selectedWaiver === 'private_pay') {
+            return p.accepted_waivers.some(w => w === 'private_pay')
+          }
+          return p.accepted_waivers.includes(selectedWaiver)
         })
       })
     }

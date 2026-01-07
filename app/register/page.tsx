@@ -192,12 +192,12 @@ export default function RegisterPage() {
       console.log('Creating provider record...')
       
       // Build provider data - matching your database schema exactly
+      // UPDATED: subscription_status starts as 'pending' (no trial)
       const providerData = {
-        // DO NOT include id field - let Supabase auto-generate it
         user_id: authData.user.id,
         business_name: formData.business_name,
-        business_email: formData.business_email || formData.email, // This MUST be unique and NOT NULL
-        contact_email: formData.email, // Login email
+        business_email: formData.business_email || formData.email,
+        contact_email: formData.email,
         contact_phone: formData.contact_phone,
         address: formData.address,
         city: formData.city,
@@ -210,15 +210,15 @@ export default function RegisterPage() {
         status: 'pending',
         verified_245d: false,
         license_number: formData.license_number,
-        contact_name: formData.contact_person, // This matches your DB column
-        // Optional fields
+        contact_name: formData.contact_person,
         description: formData.description || null,
         amenities: formData.amenities ? formData.amenities.split(',').map(a => a.trim()) : [],
         languages_spoken: formData.languages_spoken ? formData.languages_spoken.split(',').map(l => l.trim()) : [],
         years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
         primary_photo_url: formData.primary_photo_url || null,
-        // Subscription fields - new providers start without subscription (pending approval)
+        // UPDATED: No more free trial - subscription starts as pending
         subscription_status: 'pending',
+        trial_ends_at: null, // No trial
       }
       
       console.log('Provider data to insert:', providerData)
@@ -231,10 +231,8 @@ export default function RegisterPage() {
         .maybeSingle()
       
       if (existingProvider) {
-        // If we found a provider with this email, show error
         console.error('Business email already exists:', providerData.business_email)
         
-        // Try to delete the auth user we just created
         try {
           await supabase.auth.admin.deleteUser(authData.user.id)
         } catch (deleteError) {
@@ -259,8 +257,7 @@ export default function RegisterPage() {
         })
         console.error('Provider data that failed:', providerData)
         
-        // Better error messages for common issues
-        if (providerError.code === '23505') { // Unique violation
+        if (providerError.code === '23505') {
           if (providerError.message.includes('business_email')) {
             throw new Error('This business email is already registered. Please use a different email.')
           }
@@ -270,15 +267,14 @@ export default function RegisterPage() {
           throw new Error('This provider information already exists.')
         }
         
-        if (providerError.code === '23503') { // Foreign key violation
+        if (providerError.code === '23503') {
           throw new Error('User registration failed. Please try again.')
         }
         
-        if (providerError.code === '42501') { // Permission denied
+        if (providerError.code === '42501') {
           throw new Error('Permission denied. Please ensure you have the right to create a provider account.')
         }
         
-        // If provider creation fails, we should note that auth user was created
         console.error('Note: Auth user was created but provider record failed')
         
         throw new Error(`Provider creation failed: ${providerError.message}`)
@@ -288,7 +284,6 @@ export default function RegisterPage() {
 
       // 3. Try to update or create profile if table exists
       try {
-        // First try to insert the profile
         const { error: profileInsertError } = await supabase
           .from('profiles')
           .insert({
@@ -299,7 +294,6 @@ export default function RegisterPage() {
           })
 
         if (profileInsertError) {
-          // If insert fails (profile might already exist from trigger), try update
           const { error: profileUpdateError } = await supabase
             .from('profiles')
             .update({
@@ -318,12 +312,13 @@ export default function RegisterPage() {
         }
       } catch (profileErr) {
         console.log('Profile table operation skipped:', profileErr)
-        // Don't throw - profile table operations are non-critical
       }
 
-      // Success!
-      alert('Registration successful! Please check your email to verify your account. An admin will review your application within 24-48 hours. Once approved, you\'ll receive a 7-day free trial to explore our platform.')
-      router.push('/login')
+      // UPDATED: Success message and redirect to PRICING page
+      alert('Registration successful! Please check your email to verify your account, then subscribe to activate your listing.')
+      
+      // CHANGED: Redirect to pricing page instead of login
+      router.push('/pricing')
       
     } catch (error) {
       console.error('Full registration error:', error)
@@ -348,7 +343,7 @@ export default function RegisterPage() {
           <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
         </div>
 
-        {/* Subscription Info Banner */}
+        {/* UPDATED: Subscription Info Banner - No Free Trial */}
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
@@ -357,13 +352,13 @@ export default function RegisterPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-semibold text-blue-800">Subscription Information</h3>
+              <h3 className="text-sm font-semibold text-blue-800">Subscription Required</h3>
               <div className="mt-1 text-sm text-blue-700">
                 <p className="mb-2">
-                  <strong>7-Day Free Trial</strong> – After admin approval, you&apos;ll get full platform access for 7 days at no cost.
+                  <strong>$99.99/month</strong> – After registration, subscribe to list your facility and connect with case managers. Cancel anytime.
                 </p>
-                <p>
-                  <strong>$99.99/month</strong> – After your trial, continue listing your facility and connecting with case managers for just $99.99/month. Cancel anytime.
+                <p className="text-xs text-blue-600">
+                  You can create an account and browse other providers for free. Subscription is only required to have your listing visible to families and case managers.
                 </p>
               </div>
             </div>
@@ -737,7 +732,7 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                {/* Subscription & Pricing Info */}
+                {/* UPDATED: Subscription & Pricing Info - No Free Trial */}
                 <div className="border-t pt-4 mt-6">
                   <h3 className="font-semibold mb-3 text-lg">Subscription & Pricing</h3>
                   
@@ -748,8 +743,8 @@ export default function RegisterPage() {
                           <span className="text-green-600 font-bold text-sm">1</span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Admin Review</p>
-                          <p className="text-sm text-gray-600">Your application will be reviewed within 24-48 hours</p>
+                          <p className="font-medium text-gray-900">Create Account</p>
+                          <p className="text-sm text-gray-600">Register now - it&apos;s free to create an account</p>
                         </div>
                       </div>
                       
@@ -758,8 +753,8 @@ export default function RegisterPage() {
                           <span className="text-blue-600 font-bold text-sm">2</span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">7-Day Free Trial</p>
-                          <p className="text-sm text-gray-600">Once approved, enjoy full access for 7 days – no credit card required</p>
+                          <p className="font-medium text-gray-900">Subscribe – $99.99/month</p>
+                          <p className="text-sm text-gray-600">Activate your listing to be visible to families and case managers</p>
                         </div>
                       </div>
                       
@@ -768,8 +763,8 @@ export default function RegisterPage() {
                           <span className="text-purple-600 font-bold text-sm">3</span>
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">Monthly Subscription – $99.99/month</p>
-                          <p className="text-sm text-gray-600">Continue listing your facility and receive referrals. Cancel anytime.</p>
+                          <p className="font-medium text-gray-900">Get Referrals</p>
+                          <p className="text-sm text-gray-600">Start receiving inquiries from case managers and families</p>
                         </div>
                       </div>
                     </div>
@@ -778,6 +773,12 @@ export default function RegisterPage() {
                   <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
                     <p className="text-sm text-green-800">
                       <strong>What&apos;s Included:</strong> Facility listing, messaging with case managers & families, booking management, and access to referral network.
+                    </p>
+                  </div>
+                  
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>Free Account Benefits:</strong> You can browse other providers and access your dashboard without a subscription. Subscription is only required to make your listing visible.
                     </p>
                   </div>
                 </div>
@@ -794,7 +795,7 @@ export default function RegisterPage() {
                       className="mr-3 mt-1"
                     />
                     <span className="text-sm">
-                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. I understand that after admin approval, I will receive a 7-day free trial, after which a subscription of $99.99/month is required to maintain my listing. *
+                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. I understand that a subscription of $99.99/month is required to make my listing visible. *
                     </span>
                   </label>
                 </div>
