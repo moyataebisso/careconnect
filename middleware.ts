@@ -60,8 +60,7 @@ export async function middleware(request: NextRequest) {
   // Protected routes that require authentication
   const protectedPaths = [
     '/find-care',
-    '/book-service', 
-    '/providers',
+    '/book-service',
     '/booking',
     '/my-bookings',
     '/dashboard'
