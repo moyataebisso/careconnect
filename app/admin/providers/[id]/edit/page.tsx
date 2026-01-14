@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ServiceType, WaiverType, SERVICE_TYPE_LABELS, WAIVER_TYPE_LABELS } from '@/lib/types/careconnect'
 import { geocodeAddress } from '@/lib/geocoding'
+import AdminPhotoUploadSection from '@/app/components/AdminPhotoUploadSection'
 
 interface ProviderData {
   id: string
@@ -31,6 +32,7 @@ interface ProviderData {
   languages_spoken?: string[]
   years_in_business?: number
   primary_photo_url?: string
+  photo_urls?: string[]
   status?: string
   verified_245d?: boolean
   contact_person?: string
@@ -67,6 +69,7 @@ export default function AdminEditProviderPage() {
     languages_spoken: '',
     years_in_business: '',
     primary_photo_url: '',
+    photo_urls: [] as string[],
     status: 'pending',
     verified_245d: false
   })
@@ -137,6 +140,7 @@ export default function AdminEditProviderPage() {
         languages_spoken: providerData.languages_spoken?.join(', ') || '',
         years_in_business: providerData.years_in_business?.toString() || '',
         primary_photo_url: providerData.primary_photo_url || '',
+        photo_urls: providerData.photo_urls || [],
         status: providerData.status || 'pending',
         verified_245d: providerData.verified_245d || false
       })
@@ -203,6 +207,14 @@ export default function AdminEditProviderPage() {
     }))
   }
 
+  const handlePhotosUpdate = (photos: string[], primaryPhoto: string | null) => {
+    setFormData(prev => ({
+      ...prev,
+      photo_urls: photos,
+      primary_photo_url: primaryPhoto || ''
+    }))
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
@@ -247,6 +259,7 @@ export default function AdminEditProviderPage() {
         languages_spoken: formData.languages_spoken ? formData.languages_spoken.split(',').map(l => l.trim()) : [],
         years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
         primary_photo_url: formData.primary_photo_url || null,
+        photo_urls: formData.photo_urls || [],
         status: formData.status,
         verified_245d: formData.verified_245d,
         last_updated: new Date().toISOString()
@@ -593,20 +606,18 @@ export default function AdminEditProviderPage() {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Primary Photo URL (optional)
-                </label>
-                <input
-                  type="text"
-                  name="primary_photo_url"
-                  value={formData.primary_photo_url}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://example.com/photo.jpg"
-                />
-              </div>
             </div>
+          </div>
+
+          {/* Photo Management */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Photos</h2>
+            <AdminPhotoUploadSection
+              providerId={providerId}
+              photos={formData.photo_urls}
+              primaryPhoto={formData.primary_photo_url || null}
+              onPhotosUpdate={handlePhotosUpdate}
+            />
           </div>
 
           {/* Submit Buttons */}
