@@ -47,8 +47,9 @@ export default function SubscribePage() {
         // Check provider subscription
         const status = await checkProviderSubscription(user.id)
         setSubscriptionStatus(status)
-        
-        if (status.hasAccess && status.status !== 'trial') {
+
+        // If already has active subscription, redirect to dashboard
+        if (status.hasAccess) {
           router.push('/dashboard')
         }
       } else {
@@ -139,14 +140,6 @@ export default function SubscribePage() {
             List your facility and connect with care seekers
           </p>
           
-          {subscriptionStatus?.status === 'trial' && (
-            <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
-              <p className="text-blue-800">
-                🎉 You have {subscriptionStatus.trialDaysLeft} days left in your free trial
-              </p>
-            </div>
-          )}
-
           {error && (
             <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 max-w-md mx-auto">
               <p className="text-red-800">{error}</p>
@@ -168,7 +161,6 @@ export default function SubscribePage() {
                 <span className="text-4xl font-bold">$99.99</span>
                 <span className="ml-2 text-blue-200">/month</span>
               </div>
-              <p className="text-sm text-blue-100 mt-2">7-day free trial included</p>
             </div>
             
             <div className="p-6">
@@ -230,7 +222,6 @@ export default function SubscribePage() {
                 <span className="text-4xl font-bold">$199.99</span>
                 <span className="ml-2 text-green-200">/month</span>
               </div>
-              <p className="text-sm text-green-100 mt-2">7-day free trial included</p>
             </div>
             
             <div className="p-6">
@@ -298,13 +289,8 @@ export default function SubscribePage() {
           
           <div className="text-center mt-4">
             <p className="text-sm text-gray-600">
-              ✓ 7-day free trial • ✓ Cancel anytime • ✓ Secure payment via Stripe
+              Cancel anytime. Secure payment via Stripe.
             </p>
-            {subscriptionStatus?.status === 'trial' && (
-              <p className="text-xs text-blue-600 mt-2">
-                Your trial will end on {new Date(Date.now() + (subscriptionStatus.trialDaysLeft * 24 * 60 * 60 * 1000)).toLocaleDateString()}
-              </p>
-            )}
           </div>
 
           <div className="mt-8 text-center">

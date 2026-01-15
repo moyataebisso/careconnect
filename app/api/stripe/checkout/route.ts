@@ -156,7 +156,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Price configuration missing' }, { status: 500 })
     }
 
-    // Create checkout session
+    // Create checkout session - no trial, payment required immediately
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
@@ -170,7 +170,6 @@ export async function POST(request: Request) {
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&subscription_success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe?canceled=true`,
       subscription_data: {
-        trial_period_days: 7,
         metadata: {
           provider_id: provider.id,
           user_id: user.id,
@@ -182,9 +181,6 @@ export async function POST(request: Request) {
         user_id: user.id,
         plan: planId
       },
-      // ========================================
-      // NEW: Prevent duplicate checkout sessions
-      // ========================================
       customer_update: {
         address: 'auto',
         name: 'auto'

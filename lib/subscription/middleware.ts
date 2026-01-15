@@ -1,13 +1,12 @@
 // lib/subscription/middleware.ts
 import { createClient } from '@/lib/supabase/client'
-import { SUBSCRIPTION_CONFIG, SubscriptionStatus } from './config'
+import { SubscriptionStatus } from './config'
 
 export interface SubscriptionCheck {
   hasAccess: boolean
   status: SubscriptionStatus
   planId?: string
   planName?: string
-  trialDaysLeft?: number
   message?: string
   requiresPayment: boolean
 }
@@ -16,14 +15,13 @@ export interface SubscriptionCheck {
 export async function checkProviderSubscription(userId: string): Promise<SubscriptionCheck> {
   try {
     const supabase = createClient()
-    
+
     // Check if user is a provider
     const { data: provider, error } = await supabase
       .from('providers')
       .select(`
         subscription_status,
         subscription_plan_id,
-        trial_ends_at,
         subscription_start_date,
         subscription_end_date
       `)
@@ -31,8 +29,8 @@ export async function checkProviderSubscription(userId: string): Promise<Subscri
       .single()
 
     if (error || !provider) {
-      return { 
-        hasAccess: false, 
+      return {
+        hasAccess: false,
         status: 'no_account',
         requiresPayment: true,
         message: 'No provider account found'
@@ -40,27 +38,27 @@ export async function checkProviderSubscription(userId: string): Promise<Subscri
     }
 
     const now = new Date()
-    
+
     // Check for grandfathered/permanent access (subscription_end_date in 2099 or similar)
     if (provider.subscription_status === 'active') {
       if (provider.subscription_end_date) {
         const subEnd = new Date(provider.subscription_end_date)
         const yearDiff = subEnd.getFullYear() - now.getFullYear()
-        
+
         // If end date is more than 50 years in the future, it's permanent
         if (yearDiff > 50) {
-          return { 
-            hasAccess: true, 
+          return {
+            hasAccess: true,
             status: 'active',
             requiresPayment: false,
             message: 'Grandfathered account - permanent access'
           }
         }
-        
+
         // Normal subscription check
         if (subEnd > now) {
-          return { 
-            hasAccess: true, 
+          return {
+            hasAccess: true,
             status: 'active',
             requiresPayment: false,
             message: 'Subscription active'
@@ -68,67 +66,24 @@ export async function checkProviderSubscription(userId: string): Promise<Subscri
         }
       } else if (provider.subscription_status === 'active') {
         // Active with no end date = permanent
-        return { 
-          hasAccess: true, 
+        return {
+          hasAccess: true,
           status: 'active',
           requiresPayment: false,
           message: 'Subscription active'
         }
       }
     }
-    
-    // Check trial period
-    if (provider.subscription_status === 'trial' && provider.trial_ends_at) {
-      const trialEnd = new Date(provider.trial_ends_at)
-      
-      if (trialEnd > now) {
-        const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-        return { 
-          hasAccess: true, 
-          status: 'trial',
-          trialDaysLeft: daysLeft,
-          requiresPayment: false,
-          message: `Trial ends in ${daysLeft} day${daysLeft > 1 ? 's' : ''}`
-        }
-      } else {
-        // Trial expired
-        return {
-          hasAccess: false,
-          status: 'expired',
-          requiresPayment: true,
-          message: 'Your trial has expired. Please subscribe to continue.'
-        }
-      }
-    }
-    
-    // Check if this is an existing provider without subscription data
-    if (!provider.subscription_status || provider.subscription_status === '') {
-      // Set them up with a trial starting now
-      await supabase
-        .from('providers')
-        .update({
-          subscription_status: 'trial',
-          trial_ends_at: new Date(Date.now() + SUBSCRIPTION_CONFIG.trial.days * 24 * 60 * 60 * 1000).toISOString()
-        })
-        .eq('user_id', userId)
-      
-      return {
-        hasAccess: true,
-        status: 'trial',
-        trialDaysLeft: SUBSCRIPTION_CONFIG.trial.days,
-        requiresPayment: false,
-        message: `Free trial activated - ${SUBSCRIPTION_CONFIG.trial.days} days remaining`
-      }
-    }
-    
-    // Default - subscription required
+
+    // No trial - payment required immediately for all non-active providers
+    // This includes: new providers, expired, cancelled, past_due, or empty status
     return {
       hasAccess: false,
-      status: 'expired',
+      status: provider.subscription_status === 'past_due' ? 'past_due' : 'expired',
       requiresPayment: true,
-      message: 'Please subscribe to list your facility'
+      message: 'Please subscribe to activate your listing'
     }
-    
+
   } catch (error) {
     console.error('Subscription check error:', error)
     return {

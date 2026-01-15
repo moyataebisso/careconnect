@@ -124,26 +124,25 @@ export default function BillingPage() {
     return year > 2090
   }
 
-  // Check if this is a trial account without Stripe
-  const isTrialWithoutStripe = provider?.subscription_status === 'trial' && !provider?.stripe_customer_id
+  // Check if account needs subscription (not active)
+  const needsSubscription = provider?.subscription_status !== 'active'
 
   return (
     <div className="container mx-auto px-4 pt-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-8">Billing & Subscription</h1>
-      
-      {/* Show warning if trial without Stripe */}
-      {isTrialWithoutStripe && (
-        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6 mb-6">
-          <h2 className="text-xl font-semibold text-yellow-800 mb-2">⏰ Trial Account</h2>
-          <p className="text-yellow-700 mb-4">
-            You are currently on a free trial. To continue using CareConnect after your trial ends, 
-            you will need to subscribe through Stripe.
+
+      {/* Show warning if subscription needed */}
+      {needsSubscription && (
+        <div className="bg-orange-50 border-2 border-orange-300 rounded-lg p-6 mb-6">
+          <h2 className="text-xl font-semibold text-orange-800 mb-2">Subscription Required</h2>
+          <p className="text-orange-700 mb-4">
+            Subscribe now to activate your listing and start connecting with families and case managers.
           </p>
           <Link
             href="/subscribe"
-            className="inline-block bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 font-semibold"
+            className="inline-block bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold"
           >
-            Subscribe Now →
+            Subscribe Now
           </Link>
         </div>
       )}
@@ -156,13 +155,9 @@ export default function BillingPage() {
             <div className="flex justify-between py-2 border-b">
               <span className="text-gray-600">Status</span>
               <span className={`font-semibold ${
-                provider.subscription_status === 'active' ? 'text-green-600' :
-                provider.subscription_status === 'trial' ? 'text-yellow-600' :
-                'text-red-600'
+                provider.subscription_status === 'active' ? 'text-green-600' : 'text-orange-600'
               }`}>
-                {provider.subscription_status === 'active' ? 'Active' :
-                 provider.subscription_status === 'trial' ? 'Trial' :
-                 'Expired'}
+                {provider.subscription_status === 'active' ? 'Active' : 'Inactive'}
               </span>
             </div>
             
@@ -180,7 +175,7 @@ export default function BillingPage() {
               </>
             )}
             
-            {!isTrialWithoutStripe && provider.subscription_end_date && !isGrandfathered(provider.subscription_end_date) && (
+            {!needsSubscription && provider.subscription_end_date && !isGrandfathered(provider.subscription_end_date) && (
               <div className="flex justify-between py-2 border-b">
                 <span className="text-gray-600">Next Billing Date</span>
                 <span className="font-medium">
@@ -210,7 +205,7 @@ export default function BillingPage() {
       </div>
       
       {/* Only show billing portal for accounts with Stripe */}
-      {!isTrialWithoutStripe && provider?.stripe_customer_id && (
+      {!needsSubscription && provider?.stripe_customer_id && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Manage Your Subscription</h2>
           
@@ -241,13 +236,13 @@ export default function BillingPage() {
         </div>
       )}
 
-      {/* Show subscribe option for trial accounts */}
-      {isTrialWithoutStripe && (
+      {/* Show subscribe option for accounts needing subscription */}
+      {needsSubscription && (
         <div className="bg-white rounded-lg shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Ready to Subscribe?</h2>
           
           <p className="text-gray-600 mb-6">
-            Choose a subscription plan to continue accessing CareConnect after your trial ends.
+            Subscribe to activate your listing and start receiving referrals.
           </p>
           
           <div className="space-y-4 mb-6">

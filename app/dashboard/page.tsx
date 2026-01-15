@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import PaymentRequiredOverlay from '@/components/PaymentRequiredOverlay'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -57,146 +58,76 @@ export default async function DashboardPage() {
     })
   }
 
-  // Determine subscription status
+  // Determine subscription status - no trial, only active or requires payment
   const getSubscriptionStatus = () => {
     const status = provider.subscription_status
-    
+
     if (status === 'active') {
-      return { status: 'active', hasAccess: true }
+      return { status: 'active', hasAccess: true, requiresPayment: false }
     }
-    
-    if (status === 'trial' && provider.trial_ends_at) {
-      const trialEnd = new Date(provider.trial_ends_at)
-      const now = new Date()
-      const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-      
-      if (daysLeft > 0) {
-        return { status: 'trial', hasAccess: true, trialDaysLeft: daysLeft }
-      }
-    }
-    
-    // No active subscription - but allow dashboard access
-    return { status: 'inactive', hasAccess: false }
+
+    // All other statuses require payment (no more trial)
+    return { status: 'inactive', hasAccess: false, requiresPayment: true }
   }
 
   const subscriptionStatus = getSubscriptionStatus()
 
   return (
-    <div className="container mx-auto px-4 pt-8">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
-      
-      {/* SUBSCRIPTION REQUIRED BANNER - Show if not subscribed */}
-      {!subscriptionStatus.hasAccess && (
-        <div className="bg-orange-50 border-2 border-orange-400 rounded-lg p-6 mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-orange-800 mb-2">
-                🔒 Subscribe to Activate Your Listing
-              </h2>
-              <p className="text-orange-700">
-                Your listing is not visible to families and case managers. Subscribe now to start receiving referrals.
-              </p>
-              <ul className="mt-2 text-sm text-orange-600 space-y-1">
-                <li>✓ Make your listing visible on the platform</li>
-                <li>✓ Receive inquiries from case managers</li>
-                <li>✓ Connect with families seeking care</li>
-                <li>✓ Access messaging and booking features</li>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-2">
-              <Link 
-                href="/pricing" 
-                className="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 font-semibold text-center whitespace-nowrap"
-              >
-                Subscribe Now – $99.99/mo →
-              </Link>
-              <p className="text-xs text-orange-600 text-center">Cancel anytime</p>
-            </div>
-          </div>
-        </div>
+    <>
+      {/* Payment Required Overlay - shows on top of dashboard when not subscribed */}
+      {subscriptionStatus.requiresPayment && (
+        <PaymentRequiredOverlay businessName={provider.business_name} />
       )}
-      
-      {/* Subscription Status Section - Show if HAS subscription */}
-      {subscriptionStatus.hasAccess && (
-        <div className={`rounded-lg p-6 mb-6 ${
-          subscriptionStatus.status === 'trial' 
-            ? 'bg-yellow-50 border-2 border-yellow-300' 
-            : 'bg-green-50 border-2 border-green-300'
-        }`}>
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-xl font-bold mb-2">
-                Subscription Status: {' '}
-                <span className={
-                  subscriptionStatus.status === 'active' ? 'text-green-600' :
-                  subscriptionStatus.status === 'trial' ? 'text-yellow-600' :
-                  'text-red-600'
-                }>
-                  {subscriptionStatus.status === 'active' ? 'Active ✓' :
-                   subscriptionStatus.status === 'trial' ? `Trial (${subscriptionStatus.trialDaysLeft} days left)` :
-                   'Inactive'}
-                </span>
-              </h2>
-              
-              <div className="space-y-1 text-sm">
-                {provider.subscription_plans && (
-                  <p><strong>Plan:</strong> {provider.subscription_plans.name} - ${provider.subscription_plans.price}/month</p>
-                )}
-                
-                {subscriptionStatus.status === 'trial' && (
-                  <>
-                    <p><strong>Trial Ends:</strong> {formatDate(provider.trial_ends_at)}</p>
-                    <p className="text-yellow-700 mt-2">
-                      ⏰ Your free trial expires in {subscriptionStatus.trialDaysLeft} days. 
-                      Subscribe now to keep your listing active.
+
+      <div className="container mx-auto px-4 pt-8">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+
+        {/* Subscription Status Section - Show if HAS active subscription */}
+        {subscriptionStatus.hasAccess && (
+          <div className="rounded-lg p-6 mb-6 bg-green-50 border-2 border-green-300">
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-bold mb-2">
+                  Subscription Status: {' '}
+                  <span className="text-green-600">Active</span>
+                </h2>
+
+                <div className="space-y-1 text-sm">
+                  {provider.subscription_plans && (
+                    <p><strong>Plan:</strong> {provider.subscription_plans.name} - ${provider.subscription_plans.price}/month</p>
+                  )}
+
+                  {provider.subscription_end_date && new Date(provider.subscription_end_date).getFullYear() > 2090 ? (
+                    <p className="text-green-700">
+                      <strong>Grandfathered Account</strong> - Lifetime access as an early supporter!
                     </p>
-                  </>
-                )}
-                
-                {subscriptionStatus.status === 'active' && (
-                  <>
-                    {provider.subscription_end_date && new Date(provider.subscription_end_date).getFullYear() > 2090 ? (
-                      <p className="text-green-700">
-                        ✨ <strong>Grandfathered Account</strong> - Lifetime access as an early supporter!
-                      </p>
-                    ) : (
-                      <>
-                        <p><strong>Subscription Started:</strong> {formatDate(provider.subscription_start_date)}</p>
-                        <p><strong>Next Billing Date:</strong> {formatDate(provider.subscription_end_date)}</p>
-                        {provider.stripe_subscription_id && (
-                          <p className="text-xs text-gray-600 mt-1">
-                            Subscription ID: {provider.stripe_subscription_id}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </>
+                  ) : (
+                    <>
+                      <p><strong>Subscription Started:</strong> {formatDate(provider.subscription_start_date)}</p>
+                      <p><strong>Next Billing Date:</strong> {formatDate(provider.subscription_end_date)}</p>
+                      {provider.stripe_subscription_id && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          Subscription ID: {provider.stripe_subscription_id}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                {!provider.subscription_end_date?.includes('2099') && (
+                  <Link
+                    href="/billing"
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold"
+                  >
+                    Manage Billing
+                  </Link>
                 )}
               </div>
             </div>
-            
-            <div className="flex flex-col gap-2">
-              {subscriptionStatus.status === 'trial' && (
-                <Link 
-                  href="/subscribe" 
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 text-sm font-semibold"
-                >
-                  Upgrade Now →
-                </Link>
-              )}
-              
-              {subscriptionStatus.status === 'active' && !provider.subscription_end_date?.includes('2099') && (
-                <Link 
-                  href="/billing" 
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold"
-                >
-                  Manage Billing →
-                </Link>
-              )}
-            </div>
           </div>
-        </div>
-      )}
+        )}
       
       {/* Welcome Section */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -343,6 +274,7 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   )
 }

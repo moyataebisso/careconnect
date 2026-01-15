@@ -62,17 +62,14 @@ export default function ProtectedRoute({
 
       if (provider) {
         setUserType('provider')
-        
+
         // Check provider subscription if required
         if (requireProviderSubscription) {
           const status = await checkProviderSubscription(user.id)
           setSubscriptionStatus(status)
-          
-          if (!status.hasAccess) {
-            // Redirect to subscribe page if no access
-            router.push('/subscribe')
-            return
-          }
+
+          // Don't redirect - let the dashboard show with payment overlay
+          // The dashboard itself will handle showing the PaymentRequiredOverlay
         }
       } else {
         // User is neither provider nor care seeker
@@ -96,36 +93,20 @@ export default function ProtectedRoute({
     )
   }
 
-  // Show trial banner for providers in trial
+  // Show grandfathered banner for early supporters only
   return (
     <>
-      {userType === 'provider' && subscriptionStatus?.status === 'trial' && (
-        <div className="bg-yellow-50 border-b border-yellow-200 p-3">
-          <div className="container mx-auto px-4 flex items-center justify-between">
-            <p className="text-sm text-yellow-800">
-              🎉 Free trial: {subscriptionStatus.trialDaysLeft} days remaining
-            </p>
-            <Link 
-              href="/subscribe" 
-              className="text-sm font-semibold text-yellow-900 hover:text-yellow-700 underline"
-            >
-              Upgrade Now →
-            </Link>
-          </div>
-        </div>
-      )}
-      
-      {userType === 'provider' && subscriptionStatus?.status === 'active' && 
+      {userType === 'provider' && subscriptionStatus?.status === 'active' &&
        subscriptionStatus.message?.includes('Grandfathered') && (
         <div className="bg-green-50 border-b border-green-200 p-3">
           <div className="container mx-auto px-4">
             <p className="text-sm text-green-800">
-              ✨ Grandfathered Account - Thank you for being an early supporter!
+              Grandfathered Account - Thank you for being an early supporter!
             </p>
           </div>
         </div>
       )}
-      
+
       {children}
     </>
   )

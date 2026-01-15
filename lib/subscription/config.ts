@@ -39,14 +39,7 @@ export const SUBSCRIPTION_CONFIG = {
     }
   },
   
-  trial: {
-    days: parseInt(process.env.NEXT_PUBLIC_TRIAL_DAYS || '7'),
-    features: [
-      'Full access for 7 days',
-      'No credit card required',
-      'Cancel anytime'
-    ]
-  },
+  // Trial removed - payment required immediately after registration
   
   // Provider dashboard pages that require subscription
   protectedProviderPaths: [
