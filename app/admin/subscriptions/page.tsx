@@ -87,7 +87,7 @@ export default function AdminSubscriptionsPage() {
           stripe_subscription_id,
           subscription_plan_id,
           created_at,
-          subscription_plans (
+          subscription_plans!left (
             name,
             price
           )

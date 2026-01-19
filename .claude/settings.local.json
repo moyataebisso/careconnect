@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ls -la \"C:\\\\Users\\\\ebiss\\\\Desktop\\\\homebridge-mn\\\\app\\\\auth\"\" 2>/dev/null || echo \"Auth directory not found \")"
+      "Bash(ls -la \"C:\\\\Users\\\\ebiss\\\\Desktop\\\\homebridge-mn\\\\app\\\\auth\"\" 2>/dev/null || echo \"Auth directory not found \")",
+      "Bash(npm run build:*)"
     ]
   }
 }

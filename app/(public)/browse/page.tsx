@@ -83,7 +83,7 @@ export default function BrowseProvidersPage() {
         .select('*')
         .eq('status', 'active')
         .eq('verified_245d', true)
-        .eq('subscription_status', 'active') // ONLY paid active subscriptions
+        .or('subscription_status.eq.active,subscription_status.eq.trial') // Show paid active AND trial providers
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
 
