@@ -19,7 +19,7 @@ export default function AdminDashboard() {
     totalCareSeekers: 0,
     activeCareSeekers: 0,
     activeSubscriptions: 0,
-    trialSubscriptions: 0
+    pendingSubscriptions: 0
   })
   
   const supabase = createClient()
@@ -88,10 +88,10 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('subscription_status', 'active')
 
-      const { count: trialSubscriptions } = await supabase
+      const { count: pendingSubscriptions } = await supabase
         .from('providers')
         .select('*', { count: 'exact', head: true })
-        .eq('subscription_status', 'trial')
+        .eq('subscription_status', 'pending')
 
       // Get contact submission stats
       const { count: totalContactSubmissions } = await supabase
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         totalCareSeekers: totalCareSeekers || 0,
         activeCareSeekers: activeCareSeekers || 0,
         activeSubscriptions: activeSubscriptions || 0,
-        trialSubscriptions: trialSubscriptions || 0
+        pendingSubscriptions: pendingSubscriptions || 0
       })
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -196,8 +196,8 @@ export default function AdminDashboard() {
             <div className="text-sm text-gray-600">Active Subs</div>
           </div>
           <div className="bg-purple-50 rounded-lg shadow p-6">
-            <div className="text-2xl font-bold text-purple-600">{stats.trialSubscriptions}</div>
-            <div className="text-sm text-gray-600">Trial Subs</div>
+            <div className="text-2xl font-bold text-purple-600">{stats.pendingSubscriptions}</div>
+            <div className="text-sm text-gray-600">Pending Subs</div>
           </div>
         </div>
 
@@ -275,6 +275,26 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-semibold text-lg mb-2">Manage Subscriptions</h3>
               <p className="text-gray-600 text-sm">View and manage provider subscriptions</p>
+            </div>
+          </Link>
+
+          {/* Email Management */}
+          <Link href="/admin/emails" className="block">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-cyan-100 rounded-lg p-3">
+                  <svg className="w-8 h-8 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                {stats.pendingSubscriptions > 0 && (
+                  <span className="bg-cyan-500 text-white text-xs px-2 py-1 rounded-full">
+                    {stats.pendingSubscriptions} UNPAID
+                  </span>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Email Management</h3>
+              <p className="text-gray-600 text-sm">Send subscription reminders and custom emails</p>
             </div>
           </Link>
 

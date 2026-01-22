@@ -75,15 +75,13 @@ export default function BrowseProvidersPage() {
 
   const loadProviders = async () => {
     try {
-      // UPDATED QUERY: Only show providers who are:
-      // 1. Admin approved (status = 'active' AND verified_245d = true)
-      // 2. AND have ACTIVE subscription (paid) - no more free trials shown
+      // Show all admin-approved providers (status = 'active' AND verified_245d = true)
+      // Subscription status does NOT affect visibility on browse page
       const { data, error } = await supabase
         .from('providers')
         .select('*')
         .eq('status', 'active')
         .eq('verified_245d', true)
-        .or('subscription_status.eq.active,subscription_status.eq.trial') // Show paid active AND trial providers
         .order('is_featured', { ascending: false })
         .order('created_at', { ascending: false })
 

@@ -1,7 +1,8 @@
 // /app/api/email/send-trial-reminder/route.ts
+// Repurposed as subscription reminder API
 
 import { NextRequest, NextResponse } from 'next/server'
-import { providerTrialEndingEmail } from '@/lib/email/template'
+import { providerSubscriptionReminderEmail } from '@/lib/email/template'
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
@@ -12,9 +13,12 @@ const transporter = nodemailer.createTransport({
   }
 })
 
+// Stripe payment link base URL
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kw6Hof5na0d1NzbfO00'
+
 export async function POST(request: NextRequest) {
   try {
-    const { to, providerName, businessName, daysLeft } = await request.json()
+    const { to, providerName, businessName, providerEmail } = await request.json()
 
     if (!to || !businessName) {
       return NextResponse.json(
@@ -23,14 +27,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Use the same trial ending email template
-    const emailContent = providerTrialEndingEmail(
+    // Build payment link with prefilled email
+    const emailToUse = providerEmail || to
+    const paymentLink = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(emailToUse)}`
+
+    // Use the subscription reminder email template
+    const emailContent = providerSubscriptionReminderEmail(
       providerName || 'Provider',
       businessName,
-      daysLeft || 0
+      paymentLink
     )
 
-    console.log(`Sending trial reminder to: ${to}`)
+    console.log(`Sending subscription reminder to: ${to}`)
     console.log(`Subject: ${emailContent.subject}`)
 
     const info = await transporter.sendMail({
@@ -40,16 +48,16 @@ export async function POST(request: NextRequest) {
       html: emailContent.html
     })
 
-    console.log(`Trial reminder sent successfully to ${to}:`, info.messageId)
+    console.log(`Subscription reminder sent successfully to ${to}:`, info.messageId)
 
     return NextResponse.json({
       success: true,
       messageId: info.messageId,
-      message: `Trial reminder sent to ${to}`
+      message: `Subscription reminder sent to ${to}`
     })
 
   } catch (error) {
-    console.error('Error sending trial reminder:', error)
+    console.error('Error sending subscription reminder:', error)
     return NextResponse.json(
       { success: false, error: error instanceof Error ? error.message : 'Failed to send email' },
       { status: 500 }

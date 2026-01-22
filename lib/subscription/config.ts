@@ -74,4 +74,4 @@ export const SUBSCRIPTION_CONFIG = {
 }
 
 export type PlanId = keyof typeof SUBSCRIPTION_CONFIG.plans
-export type SubscriptionStatus = 'trial' | 'active' | 'cancelled' | 'expired' | 'past_due' | 'no_account'
+export type SubscriptionStatus = 'pending' | 'active' | 'cancelled' | 'expired' | 'past_due' | 'no_account'

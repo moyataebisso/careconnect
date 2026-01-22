@@ -6,6 +6,7 @@ import {
   providerWelcomeEmail,
   providerApprovedEmail,
   providerTrialEndingEmail,
+  providerSubscriptionReminderEmail,
   providerSubscriptionConfirmedEmail,
   careSeekerWelcomeEmail,
   careSeekerBookingConfirmationEmail,
@@ -60,10 +61,19 @@ export async function POST(request: NextRequest) {
         break
 
       case 'provider_trial_ending':
+        // Legacy - redirects to subscription reminder
         emailContent = providerTrialEndingEmail(
           data.providerName as string,
           data.businessName as string,
           data.daysLeft as number
+        )
+        break
+
+      case 'subscription_reminder':
+        emailContent = providerSubscriptionReminderEmail(
+          data.providerName as string,
+          data.businessName as string,
+          data.paymentLink as string
         )
         break
 

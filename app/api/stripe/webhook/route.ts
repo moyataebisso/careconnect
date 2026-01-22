@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
           .from('providers')
           .update({
             stripe_subscription_id: subData.id,
-            subscription_status: subData.status === 'trialing' ? 'trial' : 'active',
+            subscription_status: subData.status === 'trialing' ? 'pending' : 'active',
             subscription_plan_id: plan?.id || null,
             subscription_start_date: startDate,
             subscription_end_date: periodEnd,
@@ -155,7 +155,7 @@ export async function POST(request: NextRequest) {
           'unpaid': 'expired',
           'incomplete': 'past_due',
           'incomplete_expired': 'expired',
-          'trialing': 'trial',
+          'trialing': 'pending',
           'paused': 'paused'
         }
         

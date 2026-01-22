@@ -74,14 +74,14 @@ const footer = `
 // ============================================
 
 export const providerWelcomeEmail = (providerName: string, businessName: string): { subject: string; html: string } => ({
-  subject: `Welcome to CareConnect, ${providerName}! 🎉`,
+  subject: `Welcome to CareConnect, ${providerName}!`,
   html: wrapTemplate(`
     ${header}
     <div class="content">
       <h2>Welcome to CareConnect!</h2>
       <p>Dear ${providerName},</p>
       <p>Thank you for registering <strong>${businessName}</strong> with CareConnect! We're excited to have you join Minnesota's growing network of licensed 245D care providers.</p>
-      
+
       <div class="highlight-box yellow">
         <strong>⏳ What Happens Next?</strong>
         <p style="margin-bottom: 0;">Your application is now under review. Our team will verify your 245D license and review your facility information within <strong>24-48 hours</strong>.</p>
@@ -99,8 +99,8 @@ export const providerWelcomeEmail = (providerName: string, businessName: string)
         <div class="step">
           <span class="step-number">2</span>
           <div class="step-content">
-            <strong>Approval & Free Trial</strong><br>
-            Once approved, you get 7 days of full access — no credit card required
+            <strong>Approval & Subscription</strong><br>
+            Once approved, subscribe to make your listing visible to referral sources
           </div>
         </div>
         <div class="step">
@@ -113,8 +113,8 @@ export const providerWelcomeEmail = (providerName: string, businessName: string)
       </div>
 
       <div class="highlight-box green">
-        <strong>💰 Subscription Details</strong>
-        <p style="margin-bottom: 0;">After your 7-day free trial, continue your listing for just <strong>$99.99/month</strong>. Cancel anytime with no long-term commitment.</p>
+        <strong>💰 Subscription: $99.99/month</strong>
+        <p style="margin-bottom: 0;">Subscribe to list your facility and connect with case managers. Cancel anytime with no long-term commitment.</p>
       </div>
 
       <h3>What's Included:</h3>
@@ -141,40 +141,49 @@ export const providerWelcomeEmail = (providerName: string, businessName: string)
   `)
 })
 
-export const providerApprovedEmail = (providerName: string, businessName: string, trialEndDate: string): { subject: string; html: string } => ({
-  subject: `🎉 You're Approved! ${businessName} is Now Live on CareConnect`,
+export const providerApprovedEmail = (providerName: string, businessName: string, _trialEndDate?: string): { subject: string; html: string } => ({
+  subject: `You're Approved! ${businessName} is Now Live on CareConnect`,
   html: wrapTemplate(`
     ${header}
     <div class="content">
-      <h2>Congratulations, ${providerName}! 🎉</h2>
+      <h2>Congratulations, ${providerName}!</h2>
       <p>Great news! Your facility <strong>${businessName}</strong> has been approved and is now live on CareConnect!</p>
-      
+
       <div class="highlight-box green">
-        <strong>🎁 Your 7-Day Free Trial Has Started!</strong>
-        <p style="margin-bottom: 0;">You have full access to all features until <strong>${trialEndDate}</strong>. No credit card required during the trial.</p>
+        <strong>✅ Your Listing is Approved!</strong>
+        <p style="margin-bottom: 0;">Subscribe now to make your listing visible to case managers, social workers, and families seeking care.</p>
       </div>
+
+      <div class="highlight-box">
+        <strong>💰 Subscription: $99.99/month</strong>
+        <p style="margin-bottom: 0;">Activate your listing today to start receiving referrals. Cancel anytime.</p>
+      </div>
+
+      <center>
+        <a href="https://www.careconnectlive.org/pricing" class="button green">Subscribe Now</a>
+      </center>
 
       <h3>Get Started Now:</h3>
       <div class="steps">
         <div class="step">
           <span class="step-number">1</span>
           <div class="step-content">
-            <strong>Complete Your Profile</strong><br>
-            Add photos, detailed descriptions, and amenities to attract more referrals
+            <strong>Subscribe to Activate</strong><br>
+            Your listing will be visible once you subscribe
           </div>
         </div>
         <div class="step">
           <span class="step-number">2</span>
           <div class="step-content">
-            <strong>Set Your Availability</strong><br>
-            Update your current capacity so case managers know you have openings
+            <strong>Complete Your Profile</strong><br>
+            Add photos, detailed descriptions, and amenities to attract more referrals
           </div>
         </div>
         <div class="step">
           <span class="step-number">3</span>
           <div class="step-content">
-            <strong>Respond to Inquiries</strong><br>
-            Check your messages regularly and respond within 24 hours
+            <strong>Start Receiving Referrals</strong><br>
+            Connect with case managers and families seeking care
           </div>
         </div>
       </div>
@@ -199,40 +208,50 @@ export const providerApprovedEmail = (providerName: string, businessName: string
   `)
 })
 
-export const providerTrialEndingEmail = (providerName: string, businessName: string, daysLeft: number): { subject: string; html: string } => ({
-  subject: `⏰ ${daysLeft} Days Left in Your CareConnect Trial`,
+// Subscription reminder email - for providers who haven't paid yet
+export const providerSubscriptionReminderEmail = (providerName: string, businessName: string, paymentLink: string): { subject: string; html: string } => ({
+  subject: `Activate Your CareConnect Listing - ${businessName}`,
   html: wrapTemplate(`
     ${header}
     <div class="content">
-      <h2>Your Trial is Ending Soon</h2>
+      <h2>Activate Your Listing Today</h2>
       <p>Dear ${providerName},</p>
-      <p>Your free trial for <strong>${businessName}</strong> ends in <strong>${daysLeft} days</strong>.</p>
-      
+      <p>Your facility <strong>${businessName}</strong> has been approved on CareConnect, but your listing isn't visible yet because you haven't subscribed.</p>
+
       <div class="highlight-box yellow">
-        <strong>⏰ Don't Lose Your Listing!</strong>
-        <p style="margin-bottom: 0;">Subscribe now to keep receiving referrals and maintain your visibility to case managers and families.</p>
+        <strong>📋 Your Listing is Hidden</strong>
+        <p style="margin-bottom: 0;">Case managers and families can't see your facility until you activate your subscription.</p>
       </div>
 
-      <h3>Continue for Just $99.99/month:</h3>
+      <h3>Subscribe for Just $99.99/month:</h3>
       <ul>
-        <li>✅ Keep your facility listing active</li>
-        <li>✅ Continue receiving referrals and inquiries</li>
-        <li>✅ Maintain messaging with case managers</li>
+        <li>✅ Make your facility listing visible to referral sources</li>
+        <li>✅ Start receiving referrals and inquiries</li>
+        <li>✅ Message directly with case managers and families</li>
+        <li>✅ Access booking and inquiry management tools</li>
         <li>✅ Cancel anytime — no long-term contracts</li>
       </ul>
 
       <center>
-        <a href="https://www.careconnectlive.org/subscribe" class="button">Subscribe Now</a>
+        <a href="${paymentLink}" class="button green">Subscribe Now - $99.99/month</a>
       </center>
 
       <div class="divider"></div>
 
       <p>If you have any questions about your subscription or need assistance, please don't hesitate to reach out.</p>
+      <p>
+        📞 Call or text: <a href="tel:763-321-4542">763-321-4542</a><br>
+        📧 Email: <a href="mailto:careconnectmkting@gmail.com">careconnectmkting@gmail.com</a>
+      </p>
       <p><strong>The CareConnect Team</strong></p>
     </div>
     ${footer}
   `)
 })
+
+// Legacy alias for backward compatibility
+export const providerTrialEndingEmail = (providerName: string, businessName: string, _daysLeft: number): { subject: string; html: string } =>
+  providerSubscriptionReminderEmail(providerName, businessName, 'https://www.careconnectlive.org/pricing')
 
 export const providerSubscriptionConfirmedEmail = (providerName: string, businessName: string): { subject: string; html: string } => ({
   subject: `✅ Subscription Confirmed - ${businessName}`,

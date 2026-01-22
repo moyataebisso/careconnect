@@ -20,7 +20,6 @@ interface Provider {
   total_capacity: number
   created_at: string
   user_id: string
-  trial_ends_at: string | null
   subscription_status: string | null
 }
 
@@ -29,16 +28,14 @@ export default function AdminProvidersPage() {
   const [loading, setLoading] = useState(true)
   const [providers, setProviders] = useState<Provider[]>([])
   const [filter, setFilter] = useState<'all' | 'pending' | 'active' | 'suspended'>('all')
-  const [sendingReminders, setSendingReminders] = useState(false)
-  const [sendingTrialReminderId, setSendingTrialReminderId] = useState<string | null>(null)
-  
+
   // Custom email modal state
   const [showEmailModal, setShowEmailModal] = useState(false)
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null)
   const [emailSubject, setEmailSubject] = useState('')
   const [emailBody, setEmailBody] = useState('')
   const [sendingCustomEmail, setSendingCustomEmail] = useState(false)
-  
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -117,24 +114,16 @@ export default function AdminProvidersPage() {
         status: string
         verified_245d?: boolean
         last_updated: string
-        trial_ends_at?: string
-        subscription_status?: string
       }
 
-      const updates: ProviderUpdate = { 
+      const updates: ProviderUpdate = {
         status: newStatus,
         last_updated: new Date().toISOString()
       }
-      
-      // If approving, also verify and start trial
+
+      // If approving, also verify (subscription stays as pending until they pay)
       if (newStatus === 'active') {
         updates.verified_245d = true
-        
-        // Set trial to end 7 days from now
-        const trialEndDate = new Date()
-        trialEndDate.setDate(trialEndDate.getDate() + 7)
-        updates.trial_ends_at = trialEndDate.toISOString()
-        updates.subscription_status = 'trial'
       }
 
       const { error } = await supabase
@@ -146,23 +135,13 @@ export default function AdminProvidersPage() {
 
       // Send approval email if activating
       if (newStatus === 'active') {
-        // Calculate trial end date for email
-        const trialEndDate = new Date()
-        trialEndDate.setDate(trialEndDate.getDate() + 7)
-        const formattedTrialEnd = trialEndDate.toLocaleDateString('en-US', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        })
-
         sendEmail('provider_approved', provider.contact_email, {
           providerName: provider.contact_person,
           businessName: provider.business_name,
-          trialEndDate: formattedTrialEnd
+          trialEndDate: '' // Not used anymore but kept for API compatibility
         })
       }
-      
+
       await loadProviders()
       alert(`Provider ${newStatus === 'active' ? 'approved' : newStatus === 'suspended' ? 'suspended' : 'updated'} successfully`)
     } catch (error) {
@@ -187,93 +166,6 @@ export default function AdminProvidersPage() {
     } catch (error) {
       console.error('Error deleting provider:', error)
       alert('Failed to delete provider')
-    }
-  }
-
-  // Manual trigger for trial reminder emails - sends to ALL with 0-3 days left
-  const sendTrialReminders = async () => {
-    const expiringCount = providers.filter(p => {
-      if (!p.trial_ends_at) return false
-      const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-      return daysLeft >= 0 && daysLeft <= 3 && p.subscription_status !== 'active'
-    }).length
-
-    if (!confirm(`Send trial ending reminder emails to ${expiringCount} providers with trials ending in 0-3 days?`)) return
-    
-    setSendingReminders(true)
-    try {
-      const response = await fetch('/api/cron/trial-reminders?manual=true', {
-        method: 'POST'
-      })
-      const data = await response.json()
-      
-      if (data.success) {
-        let message = `Trial Reminders Sent!\n\nChecked: ${data.checked} providers\nEmails sent: ${data.emailsSent}`
-        
-        if (data.details && data.details.length > 0) {
-          message += '\n\nDetails:'
-          data.details.forEach((d: { provider: string; status: string; daysLeft: number }) => {
-            message += `\n• ${d.provider}: ${d.status} (${d.daysLeft} days left)`
-          })
-        }
-        
-        if (data.errors && data.errors.length > 0) {
-          message += '\n\nErrors:'
-          data.errors.forEach((e: string) => {
-            message += `\n• ${e}`
-          })
-        }
-        
-        alert(message)
-      } else {
-        alert('Failed to send reminders: ' + (data.error || 'Unknown error'))
-      }
-    } catch (error) {
-      console.error('Error sending reminders:', error)
-      alert('Failed to send trial reminders')
-    } finally {
-      setSendingReminders(false)
-    }
-  }
-
-  // Send trial reminder to a single provider
-  const sendSingleTrialReminder = async (provider: Provider) => {
-    // Calculate days left for display
-    let daysLeft = 0
-    if (provider.trial_ends_at) {
-      const trialEnd = new Date(provider.trial_ends_at)
-      const now = new Date()
-      daysLeft = Math.max(0, Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
-    }
-
-    if (!confirm(`Send trial reminder email to ${provider.business_name}?\n\nThis will send the "Your Trial is Ending Soon" email showing ${daysLeft} days left.`)) return
-
-    setSendingTrialReminderId(provider.id)
-    try {
-      const response = await fetch('/api/email/send-trial-reminder', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          providerId: provider.id,
-          to: provider.contact_email,
-          providerName: provider.contact_person,
-          businessName: provider.business_name,
-          daysLeft: daysLeft
-        })
-      })
-      
-      const data = await response.json()
-      
-      if (data.success) {
-        alert(`Trial reminder sent to ${provider.contact_email}!`)
-      } else {
-        alert('Failed to send reminder: ' + (data.error || 'Unknown error'))
-      }
-    } catch (error) {
-      console.error('Error sending trial reminder:', error)
-      alert('Failed to send trial reminder')
-    } finally {
-      setSendingTrialReminderId(null)
     }
   }
 
@@ -330,35 +222,24 @@ export default function AdminProvidersPage() {
     return provider.status === filter
   })
 
-  // Helper to format trial status
-  const getTrialStatus = (provider: Provider) => {
-    if (!provider.trial_ends_at) return null
-    
-    const trialEnd = new Date(provider.trial_ends_at)
-    const now = new Date()
-    const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    
+  // Helper to format subscription status
+  const getSubscriptionStatus = (provider: Provider) => {
     if (provider.subscription_status === 'active') {
       return { text: 'Subscribed', color: 'bg-green-100 text-green-800' }
     }
-    
-    if (daysLeft < 0) {
-      return { text: 'Trial Expired', color: 'bg-red-100 text-red-800' }
+    if (provider.subscription_status === 'pending') {
+      return { text: 'Pending Payment', color: 'bg-orange-100 text-orange-800' }
     }
-    
-    if (daysLeft <= 3) {
-      return { text: `${daysLeft} days left`, color: 'bg-orange-100 text-orange-800' }
+    if (provider.subscription_status === 'expired') {
+      return { text: 'Expired', color: 'bg-red-100 text-red-800' }
     }
-    
-    return { text: `${daysLeft} days left`, color: 'bg-blue-100 text-blue-800' }
+    return { text: 'No Subscription', color: 'bg-gray-100 text-gray-800' }
   }
 
-  // Count providers with trials ending in 0-3 days
-  const trialsEndingSoon = providers.filter(p => {
-    if (!p.trial_ends_at) return false
-    const daysLeft = Math.ceil((new Date(p.trial_ends_at).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-    return daysLeft >= 0 && daysLeft <= 3 && p.subscription_status !== 'active'
-  }).length
+  // Count providers needing payment
+  const pendingPaymentCount = providers.filter(p =>
+    p.subscription_status === 'pending' || !p.subscription_status
+  ).length
 
   if (loading) {
     return (
@@ -450,27 +331,14 @@ export default function AdminProvidersPage() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Manage Providers</h1>
             <div className="flex gap-3 items-center">
-              <button
-                onClick={sendTrialReminders}
-                disabled={sendingReminders}
-                className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 text-sm flex items-center gap-2"
-              >
-                {sendingReminders ? (
-                  <>
-                    <span className="animate-spin">⏳</span>
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    📧 Send Trial Reminders (0-3 days)
-                    {trialsEndingSoon > 0 && (
-                      <span className="bg-white text-orange-600 px-2 py-0.5 rounded-full text-xs font-bold">
-                        {trialsEndingSoon}
-                      </span>
-                    )}
-                  </>
+              <Link href="/admin/emails" className="px-4 py-2 bg-cyan-500 text-white rounded hover:bg-cyan-600 text-sm flex items-center gap-2">
+                📧 Email Management
+                {pendingPaymentCount > 0 && (
+                  <span className="bg-white text-cyan-600 px-2 py-0.5 rounded-full text-xs font-bold">
+                    {pendingPaymentCount}
+                  </span>
                 )}
-              </button>
+              </Link>
               <Link href="/admin" className="text-blue-600 hover:text-blue-800">
                 ← Back to Admin
               </Link>
@@ -500,9 +368,9 @@ export default function AdminProvidersPage() {
           </div>
           <div className="bg-orange-50 rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-orange-600">
-              {trialsEndingSoon}
+              {pendingPaymentCount}
             </div>
-            <div className="text-sm text-gray-600">Trial Ending Soon</div>
+            <div className="text-sm text-gray-600">Pending Payment</div>
           </div>
           <div className="bg-red-50 rounded-lg shadow p-4">
             <div className="text-2xl font-bold text-red-600">
@@ -558,14 +426,14 @@ export default function AdminProvidersPage() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Business Name</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Contact</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Location</th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Trial Status</th>
+                <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Subscription</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Status</th>
                 <th className="px-4 py-3 text-left text-sm font-medium text-gray-900">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
               {filteredProviders.map((provider) => {
-                const trialStatus = getTrialStatus(provider)
+                const subscriptionStatus = getSubscriptionStatus(provider)
                 return (
                   <tr key={provider.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">
@@ -586,17 +454,13 @@ export default function AdminProvidersPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      {trialStatus ? (
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${trialStatus.color}`}>
-                          {trialStatus.text}
-                        </span>
-                      ) : (
-                        <span className="text-xs text-gray-400">No trial</span>
-                      )}
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${subscriptionStatus.color}`}>
+                        {subscriptionStatus.text}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        provider.status === 'active' 
+                        provider.status === 'active'
                           ? 'bg-green-100 text-green-800'
                           : provider.status === 'pending'
                           ? 'bg-yellow-100 text-yellow-800'
@@ -642,13 +506,6 @@ export default function AdminProvidersPage() {
                             Reactivate
                           </button>
                         )}
-                        <button
-                          onClick={() => sendSingleTrialReminder(provider)}
-                          disabled={sendingTrialReminderId === provider.id}
-                          className="text-orange-600 hover:text-orange-800 text-sm font-medium disabled:opacity-50"
-                        >
-                          {sendingTrialReminderId === provider.id ? 'Sending...' : 'Trial Reminder'}
-                        </button>
                         <button
                           onClick={() => openEmailModal(provider)}
                           className="text-purple-600 hover:text-purple-800 text-sm font-medium"
