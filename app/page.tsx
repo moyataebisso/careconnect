@@ -4,6 +4,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import ProviderTutorialSlideshow from '@/components/ProviderTutorialSlideshow'
 
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -105,7 +106,7 @@ export default function HomePage() {
       </section>
 
       {/* Stats Bar */}
-      <section className="bg-white py-8 shadow-lg">
+      <section className="bg-[#EBF5FF] py-16 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-3 md:grid-cols-3 gap-8 text-center">
             <div>
@@ -124,83 +125,94 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 245D Services Section */}
-      <section className="py-16 bg-gray-50">
+      {/* How It Works - Provider Tutorial Slideshow */}
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">245D Licensed Services</h2>
-          <p className="text-center text-gray-600 mb-12 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4">How It Works for Providers</h2>
+          <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
+            Join CareConnect in 5 simple steps and start receiving qualified referrals
+          </p>
+          <ProviderTutorialSlideshow variant="medium" />
+        </div>
+      </section>
+
+      {/* 245D Services Section */}
+      <section className="py-20 bg-[#F8FAFC]">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-4 text-[#1F2937]">245D Licensed Services</h2>
+          <p className="text-center text-[#4B5563] mb-12 max-w-2xl mx-auto">
             All our providers are licensed under Minnesota 245D program standards
           </p>
-          
+
           <div className="max-w-6xl mx-auto">
             {/* Basic Services */}
-            <div className="mb-8">
-              <h3 className="text-2xl font-semibold mb-4 text-blue-600">Basic Services</h3>
-              <div className="grid md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="mb-10">
+              <h3 className="text-2xl font-semibold mb-6 text-blue-600">Basic Services</h3>
+              <div className="grid md:grid-cols-4 gap-6">
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">ICS</h4>
-                  <p className="text-sm text-gray-600">Integrated Community Services - Support for independent living</p>
+                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">ICS</h4>
+                  <p className="text-sm text-[#4B5563]">Integrated Community Services - Support for independent living</p>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">FRS</h4>
-                  <p className="text-sm text-gray-600">Family Residential Services - Family-style home environment</p>
+                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">FRS</h4>
+                  <p className="text-sm text-[#4B5563]">Family Residential Services - Family-style home environment</p>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">CRS</h4>
-                  <p className="text-sm text-gray-600">Community Residential Services - Group living with support</p>
+                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">CRS</h4>
+                  <p className="text-sm text-[#4B5563]">Community Residential Services - Group living with support</p>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">Adult Day Services</h4>
-                  <p className="text-sm text-gray-600">Day programs and activities for adults</p>
+                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Adult Day Services</h4>
+                  <p className="text-sm text-[#4B5563]">Day programs and activities for adults</p>
                 </div>
               </div>
             </div>
 
             {/* Comprehensive Services */}
             <div>
-              <h3 className="text-2xl font-semibold mb-4 text-blue-600">Comprehensive Services</h3>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <h3 className="text-2xl font-semibold mb-6 text-blue-600">Comprehensive Services</h3>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">Respite Support</h4>
-                  <p className="text-sm text-gray-600">Temporary relief care for primary caregivers, providing short-term support and assistance</p>
+                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Respite Support</h4>
+                  <p className="text-sm text-[#4B5563]">Temporary relief care for primary caregivers, providing short-term support and assistance</p>
                 </div>
 
-                <div className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-all hover:-translate-y-1">
-                  <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
+                  <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <svg className="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                   </div>
-                  <h4 className="text-lg font-semibold mb-2">Assisted Living</h4>
-                  <p className="text-sm text-gray-600">24/7 comprehensive care with full ADL support, meals, and medication administration</p>
+                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Assisted Living</h4>
+                  <p className="text-sm text-[#4B5563]">24/7 comprehensive care with full ADL support, meals, and medication administration</p>
                 </div>
               </div>
             </div>
@@ -209,7 +221,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Images Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="relative h-64 rounded-lg overflow-hidden shadow-lg group">
@@ -279,7 +291,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-16 bg-white">
+      <section className="py-20 bg-[#EBF5FF]">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">How Our Referral System Works</h2>
           
