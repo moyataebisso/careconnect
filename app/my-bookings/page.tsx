@@ -41,11 +41,11 @@ export default function MyBookingsPage() {
       
       // Filter bookings to only show ones belonging to current user
       const userBookings = allBookings.filter((booking) => {
-        // Check all possible email fields
+        // Check possible email fields that exist on the Booking type
         const bookingEmail = 
-          booking.customer?.email || 
           booking.customer_email || 
-          booking.email;
+          booking.email ||
+          '';
         
         // Only show bookings that match the current user's email
         return bookingEmail === userEmail;
@@ -278,12 +278,12 @@ export default function MyBookingsPage() {
                               {booking.service?.duration && ` (${booking.service.duration} min)`}
                             </p>
                           )}
-                          {(booking.customer?.name || booking.customer_name) && (
+                          {booking.customer_name && (
                             <p className="flex items-center">
                               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                               </svg>
-                              Customer: {booking.customer?.name || booking.customer_name}
+                              Customer: {booking.customer_name}
                             </p>
                           )}
                         </div>
