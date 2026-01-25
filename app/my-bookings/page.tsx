@@ -41,14 +41,8 @@ export default function MyBookingsPage() {
       
       // Filter bookings to only show ones belonging to current user
       const userBookings = allBookings.filter((booking) => {
-        // Check possible email fields that exist on the Booking type
-        const bookingEmail = 
-          booking.customer_email || 
-          booking.email ||
-          '';
-        
-        // Only show bookings that match the current user's email
-        return bookingEmail === userEmail;
+        // Use customer_email which is the actual column in the database
+        return booking.customer_email === userEmail;
       })
       
       console.log(`Found ${userBookings.length} bookings for ${userEmail} out of ${allBookings.length} total`)
@@ -249,13 +243,13 @@ export default function MyBookingsPage() {
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                             </svg>
-                            Provider: {booking.provider?.business_name || booking.provider_name || 'Provider'}
+                            Provider: {booking.provider?.business_name || 'Provider'}
                           </p>
                           <p className="flex items-center">
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
-                            Service: {booking.service?.name || booking.service_name || 'Service'}
+                            Service: {booking.service?.name || 'Service'}
                           </p>
                           <p className="flex items-center">
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
