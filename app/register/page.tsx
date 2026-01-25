@@ -6,6 +6,9 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ServiceType, WaiverType, SERVICE_TYPE_LABELS, WAIVER_TYPE_LABELS } from '@/lib/types/careconnect'
 
+// Stripe Payment Link - $99.99/month Basic Provider Plan
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kw6Hof5na0d1NzbfO00'
+
 export default function RegisterPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -151,9 +154,8 @@ export default function RegisterPage() {
     setStep(step - 1)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  // Handle registration AND immediate redirect to payment
+  const handleRegisterAndPay = async () => {
     if (!validateStep()) return
     
     setLoading(true)
@@ -191,8 +193,7 @@ export default function RegisterPage() {
       // 2. Create provider record
       console.log('Creating provider record...')
       
-      // Build provider data - matching your database schema exactly
-      // UPDATED: subscription_status starts as 'pending' (no trial)
+      // Build provider data - subscription_status starts as 'pending' until payment completes
       const providerData = {
         user_id: authData.user.id,
         business_name: formData.business_name,
@@ -216,9 +217,9 @@ export default function RegisterPage() {
         languages_spoken: formData.languages_spoken ? formData.languages_spoken.split(',').map(l => l.trim()) : [],
         years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
         primary_photo_url: formData.primary_photo_url || null,
-        // UPDATED: No more free trial - subscription starts as pending
+        // Subscription starts as pending - will be activated after payment via Stripe webhook
         subscription_status: 'pending',
-        trial_ends_at: null, // No trial
+        trial_ends_at: null,
       }
       
       console.log('Provider data to insert:', providerData)
@@ -314,11 +315,10 @@ export default function RegisterPage() {
         console.log('Profile table operation skipped:', profileErr)
       }
 
-      // UPDATED: Success message and redirect to PRICING page
-      alert('Registration successful! Please check your email to verify your account, then subscribe to activate your listing.')
-      
-      // CHANGED: Redirect to pricing page instead of login
-      router.push('/pricing')
+      // 4. IMMEDIATELY redirect to Stripe payment - NO SKIP OPTION
+      console.log('Redirecting to Stripe payment...')
+      const paymentUrl = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(formData.email)}`
+      window.location.href = paymentUrl
       
     } catch (error) {
       console.error('Full registration error:', error)
@@ -329,9 +329,9 @@ export default function RegisterPage() {
       } else {
         setError('Registration failed. Please check the console for details.')
       }
-    } finally {
       setLoading(false)
     }
+    // Note: Don't set loading to false on success because we're redirecting
   }
 
   return (
@@ -343,7 +343,7 @@ export default function RegisterPage() {
           <p className="text-gray-600">Join CareConnect network of licensed 245D providers accepting waiver programs</p>
         </div>
 
-        {/* UPDATED: Subscription Info Banner - No Free Trial */}
+        {/* Subscription Info Banner */}
         <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-start">
             <div className="flex-shrink-0">
@@ -352,20 +352,17 @@ export default function RegisterPage() {
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-semibold text-blue-800">Subscription Required</h3>
+              <h3 className="text-sm font-semibold text-blue-800">Subscription Required – $99.99/month</h3>
               <div className="mt-1 text-sm text-blue-700">
-                <p className="mb-2">
-                  <strong>$99.99/month</strong> – After registration, subscribe to list your facility and connect with case managers. Cancel anytime.
-                </p>
-                <p className="text-xs text-blue-600">
-                  You can create an account and browse other providers for free. Subscription is only required to have your listing visible to families and case managers.
+                <p>
+                  Complete registration and payment to list your facility and connect with case managers. Cancel anytime.
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Progress Bar - 5 Steps */}
         <div className="mb-8">
           <div className="flex justify-between items-center">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -379,7 +376,7 @@ export default function RegisterPage() {
                   {i === 2 && 'Business'}
                   {i === 3 && 'Location'}
                   {i === 4 && 'Services'}
-                  {i === 5 && 'Review'}
+                  {i === 5 && 'Review & Pay'}
                 </p>
               </div>
             ))}
@@ -396,11 +393,11 @@ export default function RegisterPage() {
 
           {step === 5 && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700">
-              Please agree to all terms to continue
+              Please agree to all terms to continue to payment
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={(e) => e.preventDefault()}>
             {/* Step 1: Account Information */}
             {step === 1 && (
               <div className="space-y-4">
@@ -671,10 +668,10 @@ export default function RegisterPage() {
               </div>
             )}
 
-            {/* Step 5: Additional Info & Agreement */}
+            {/* Step 5: Additional Info, Agreement & Payment */}
             {step === 5 && (
               <div className="space-y-4">
-                <h2 className="text-xl font-semibold mb-4">Additional Information</h2>
+                <h2 className="text-xl font-semibold mb-4">Review & Complete Payment</h2>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -684,7 +681,7 @@ export default function RegisterPage() {
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
-                    rows={4}
+                    rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Describe your 245D facility and services..."
                   />
@@ -704,85 +701,84 @@ export default function RegisterPage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Languages Spoken (Optional, comma-separated)
-                  </label>
-                  <input
-                    type="text"
-                    name="languages_spoken"
-                    value={formData.languages_spoken}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g., English, Spanish, Somali"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Languages Spoken (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      name="languages_spoken"
+                      value={formData.languages_spoken}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., English, Spanish"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Years in Business (Optional)
+                    </label>
+                    <input
+                      type="number"
+                      name="years_in_business"
+                      value={formData.years_in_business}
+                      onChange={handleInputChange}
+                      min="0"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Years in Business (Optional)
-                  </label>
-                  <input
-                    type="number"
-                    name="years_in_business"
-                    value={formData.years_in_business}
-                    onChange={handleInputChange}
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                {/* UPDATED: Subscription & Pricing Info - No Free Trial */}
-                <div className="border-t pt-4 mt-6">
-                  <h3 className="font-semibold mb-3 text-lg">Subscription & Pricing</h3>
-                  
-                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                    <div className="space-y-3">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                          <span className="text-green-600 font-bold text-sm">1</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">Create Account</p>
-                          <p className="text-sm text-gray-600">Register now - it&apos;s free to create an account</p>
-                        </div>
+                {/* Payment Summary Box */}
+                <div className="border-t pt-4 mt-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                      Subscription Summary
+                    </h3>
+                    
+                    <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="font-medium text-gray-900">Provider Subscription</span>
+                        <span className="text-2xl font-bold text-blue-600">$99.99<span className="text-sm font-normal text-gray-500">/month</span></span>
                       </div>
                       
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                          <span className="text-blue-600 font-bold text-sm">2</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">Subscribe – $99.99/month</p>
-                          <p className="text-sm text-gray-600">Activate your listing to be visible to families and case managers</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                          <span className="text-purple-600 font-bold text-sm">3</span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">Get Referrals</p>
-                          <p className="text-sm text-gray-600">Start receiving inquiries from case managers and families</p>
-                        </div>
-                      </div>
+                      <ul className="space-y-2 text-sm text-gray-600">
+                        <li className="flex items-center">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Your facility visible to families & case managers
+                        </li>
+                        <li className="flex items-center">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Receive and respond to referral inquiries
+                        </li>
+                        <li className="flex items-center">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Secure messaging with potential clients
+                        </li>
+                        <li className="flex items-center">
+                          <svg className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                          Cancel anytime – no long-term commitment
+                        </li>
+                      </ul>
                     </div>
-                  </div>
-
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-green-800">
-                      <strong>What&apos;s Included:</strong> Facility listing, messaging with case managers & families, booking management, and access to referral network.
-                    </p>
-                  </div>
-                  
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-blue-800">
-                      <strong>Free Account Benefits:</strong> You can browse other providers and access your dashboard without a subscription. Subscription is only required to make your listing visible.
+                    
+                    <p className="text-xs text-center text-gray-500">
+                      You&apos;ll be redirected to Stripe to complete secure payment after clicking below.
                     </p>
                   </div>
                 </div>
 
+                {/* Agreement Terms */}
                 <div className="border-t pt-4">
                   <h3 className="font-semibold mb-3">Agreement Terms</h3>
                   
@@ -795,7 +791,7 @@ export default function RegisterPage() {
                       className="mr-3 mt-1"
                     />
                     <span className="text-sm">
-                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. I understand that a subscription of $99.99/month is required to make my listing visible. *
+                      I agree to CareConnect Terms of Service and authorize CareConnect to market my 245D facility to qualified referral sources including case managers, social workers, and discharge planners. I understand that a subscription of $99.99/month is required and I will be redirected to complete payment. *
                     </span>
                   </label>
                 </div>
@@ -808,7 +804,8 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  disabled={loading}
+                  className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
                 >
                   Previous
                 </button>
@@ -831,11 +828,22 @@ export default function RegisterPage() {
                 </button>
               ) : (
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                  type="button"
+                  onClick={handleRegisterAndPay}
+                  disabled={loading || !formData.agree_to_terms}
+                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                 >
-                  {loading ? 'Creating Account...' : 'Complete Registration'}
+                  {loading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    'Complete Registration & Pay $99.99'
+                  )}
                 </button>
               )}
             </div>

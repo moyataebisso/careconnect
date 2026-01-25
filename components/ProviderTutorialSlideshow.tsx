@@ -273,7 +273,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
           </svg>
         </Link>
         <p className="mt-3 text-sm text-[#5C4A32]">
-          Free to create an account • $99.99/month to go live
+          • $99.99/month to go live •
         </p>
       </div>
     </div>
