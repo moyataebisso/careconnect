@@ -126,10 +126,10 @@ export default function HomePage() {
       </section>
 
       {/* How It Works - Provider Tutorial Slideshow */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-[#F5EBD9]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4">How It Works for Providers</h2>
-          <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-4 text-[#5C4A32]">How It Works for Providers</h2>
+          <p className="text-center text-[#6B5B47] mb-10 max-w-2xl mx-auto">
             Join CareConnect in 5 simple steps and start receiving qualified referrals
           </p>
           <ProviderTutorialSlideshow variant="medium" />
@@ -137,7 +137,7 @@ export default function HomePage() {
       </section>
 
       {/* 245D Services Section */}
-      <section className="py-20 bg-[#F8FAFC]">
+      <section className="py-20 bg-[#E0EEF9]">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4 text-[#1F2937]">245D Licensed Services</h2>
           <p className="text-center text-[#4B5563] mb-12 max-w-2xl mx-auto">
@@ -147,7 +147,7 @@ export default function HomePage() {
           <div className="max-w-6xl mx-auto">
             {/* Basic Services */}
             <div className="mb-10">
-              <h3 className="text-2xl font-semibold mb-6 text-blue-600">Basic Services</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-blue-700">Basic Services</h3>
               <div className="grid md:grid-cols-4 gap-6">
                 <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
                   <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -193,7 +193,7 @@ export default function HomePage() {
 
             {/* Comprehensive Services */}
             <div>
-              <h3 className="text-2xl font-semibold mb-6 text-blue-600">Comprehensive Services</h3>
+              <h3 className="text-2xl font-semibold mb-6 text-blue-700">Comprehensive Services</h3>
               <div className="grid md:grid-cols-2 gap-6">
                 <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
                   <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -221,7 +221,7 @@ export default function HomePage() {
       </section>
 
       {/* Featured Images Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-[#F5EBD9]">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-3 gap-8">
             <div className="relative h-64 rounded-lg overflow-hidden shadow-lg group">
@@ -291,7 +291,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-[#EBF5FF]">
+      <section className="py-20 bg-[#E0EEF9]">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">How Our Referral System Works</h2>
           
@@ -321,7 +321,7 @@ export default function HomePage() {
 
             {/* Connection Lines for Desktop */}
             <div className="hidden md:block relative -mt-12">
-              <div className="absolute top-0 left-[12.5%] right-[12.5%] h-0.5 bg-blue-200"></div>
+              <div className="absolute top-0 left-[12.5%] right-[12.5%] h-0.5 bg-blue-300"></div>
             </div>
           </div>
 

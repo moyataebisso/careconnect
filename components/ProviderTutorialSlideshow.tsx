@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 
 interface Slide {
   step: number
   title: string
   description: string
-  icon: React.ReactNode
+  image: string
 }
 
 interface ProviderTutorialSlideshowProps {
@@ -18,56 +19,36 @@ const slides: Slide[] = [
   {
     step: 1,
     title: 'Create Your Account',
-    description: 'Sign up with your email and basic information in just 2 minutes',
-    icon: (
-      <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-      </svg>
-    ),
+    description: 'Sign up with your email and password to get started - it\'s free to create an account',
+    image: 'https://lfffmzomhcyixrduddio.supabase.co/storage/v1/object/public/tutorial-images/Screenshot%202026-01-24%20201944.png',
   },
   {
     step: 2,
-    title: 'Complete Your Facility Profile',
-    description: 'Add your 245D license, services offered, photos, and description to attract referrals',
-    icon: (
-      <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-    ),
+    title: 'Add Business Information',
+    description: 'Enter your business name, 245D license number, contact person, and phone number',
+    image: 'https://lfffmzomhcyixrduddio.supabase.co/storage/v1/object/public/tutorial-images/Screenshot%202026-01-24%20202138.png',
   },
   {
     step: 3,
-    title: 'Get Verified & Approved',
-    description: 'Our team reviews your 245D license and approves your listing within 24-48 hours',
-    icon: (
-      <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-      </svg>
-    ),
+    title: 'Set Your Location',
+    description: 'Add your facility address so families and case managers can find you',
+    image: 'https://lfffmzomhcyixrduddio.supabase.co/storage/v1/object/public/tutorial-images/Screenshot%202026-01-24%20202220.png',
   },
   {
     step: 4,
-    title: 'Activate Your Subscription',
-    description: 'Start your $99.99/month subscription to go live and receive referrals',
-    icon: (
-      <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-      </svg>
-    ),
+    title: 'Select Services & Capacity',
+    description: 'Choose the 245D services you offer and waiver types you accept',
+    image: 'https://lfffmzomhcyixrduddio.supabase.co/storage/v1/object/public/tutorial-images/Screenshot%202026-01-24%20202304.png',
   },
   {
     step: 5,
-    title: 'Start Receiving Referrals',
-    description: 'Connect with case managers, social workers, and families seeking care across Minnesota',
-    icon: (
-      <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-      </svg>
-    ),
+    title: 'Review & Complete',
+    description: 'Add optional details, review your information, and complete registration',
+    image: 'https://lfffmzomhcyixrduddio.supabase.co/storage/v1/object/public/tutorial-images/Screenshot%202026-01-24%20202341.png',
   },
 ]
 
-const SLIDE_DURATION = 5000 // 5 seconds per slide
+const SLIDE_DURATION = 6000 // 6 seconds per slide (slightly longer to view screenshots)
 
 export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialSlideshowProps) {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -114,8 +95,8 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
   const isMedium = variant === 'medium'
   const slide = slides[currentSlide]
 
-  const containerWidth = isPreview ? 'max-w-md' : isMedium ? 'max-w-3xl' : 'max-w-4xl'
-  const padding = isPreview ? 'p-4' : isMedium ? 'p-6 md:p-10' : 'p-6 md:p-10'
+  const containerWidth = isPreview ? 'max-w-md' : isMedium ? 'max-w-4xl' : 'max-w-5xl'
+  const padding = isPreview ? 'p-4' : isMedium ? 'p-6 md:p-8' : 'p-6 md:p-10'
 
   return (
     <div className={`relative ${containerWidth} mx-auto`}>
@@ -127,7 +108,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
         `}
       >
         {/* Video-like top bar with play/pause */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <button
               onClick={togglePlayPause}
@@ -154,7 +135,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
         </div>
 
         {/* Slide Content */}
-        <div className={`relative ${isPreview ? 'min-h-[200px]' : isMedium ? 'min-h-[260px] md:min-h-[300px]' : 'min-h-[300px] md:min-h-[350px]'}`}>
+        <div className={`relative ${isPreview ? 'min-h-[280px]' : isMedium ? 'min-h-[400px] md:min-h-[480px]' : 'min-h-[450px] md:min-h-[550px]'}`}>
           {/* Navigation Arrows */}
           <button
             onClick={prevSlide}
@@ -187,83 +168,62 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
           </button>
 
           {/* Slide Animation Container */}
-          <div className="flex flex-col items-center justify-center h-full px-8 md:px-16">
-            {/* Icon/Visual */}
-            <div
-              className={`
-                bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mb-5 md:mb-6 shadow-lg
-                transition-all duration-500 ease-out
-                ${isPreview ? 'w-16 h-16' : isMedium ? 'w-24 h-24 md:w-28 md:h-28' : 'w-28 h-28 md:w-32 md:h-32'}
-              `}
-              style={{
-                animation: 'fadeSlideIn 0.5s ease-out',
-              }}
-            >
-              <div className={`${isPreview ? 'w-8 h-8' : isMedium ? 'w-12 h-12 md:w-14 md:h-14' : 'w-14 h-14 md:w-16 md:h-16'} text-white`}>
-                {slide.icon}
+          <div className="flex flex-col items-center justify-start h-full px-4 md:px-12">
+            {/* Step Badge and Title */}
+            <div className="flex items-center gap-3 mb-4">
+              <div
+                className={`
+                  bg-blue-600 text-white rounded-full font-bold
+                  ${isPreview ? 'w-7 h-7 text-sm' : 'w-9 h-9 text-base'}
+                  flex items-center justify-center
+                `}
+              >
+                {slide.step}
               </div>
+              <h3
+                className={`
+                  font-bold text-gray-900
+                  ${isPreview ? 'text-lg' : isMedium ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}
+                `}
+              >
+                {slide.title}
+              </h3>
             </div>
-
-            {/* Step Number Badge */}
-            <div
-              className={`
-                bg-blue-100 text-blue-700 rounded-full font-bold mb-3
-                ${isPreview ? 'w-7 h-7 text-sm' : 'w-10 h-10 text-base'}
-                flex items-center justify-center
-              `}
-            >
-              {slide.step}
-            </div>
-
-            {/* Title */}
-            <h3
-              className={`
-                font-bold text-gray-900 text-center mb-3
-                ${isPreview ? 'text-lg' : isMedium ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}
-              `}
-              key={`title-${currentSlide}`}
-              style={{
-                animation: 'fadeSlideIn 0.5s ease-out 0.1s both',
-              }}
-            >
-              {slide.title}
-            </h3>
 
             {/* Description */}
             <p
               className={`
-                text-gray-600 text-center max-w-lg leading-relaxed
-                ${isPreview ? 'text-sm' : isMedium ? 'text-base md:text-lg' : 'text-lg md:text-xl'}
+                text-gray-600 text-center max-w-2xl mb-4
+                ${isPreview ? 'text-sm' : isMedium ? 'text-base' : 'text-lg'}
               `}
-              key={`desc-${currentSlide}`}
-              style={{
-                animation: 'fadeSlideIn 0.5s ease-out 0.2s both',
-              }}
             >
               {slide.description}
             </p>
 
-            {/* CTA Button on Last Slide */}
-            {currentSlide === slides.length - 1 && (
-              <Link
-                href="/register"
-                className={`
-                  mt-5 md:mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl
-                  transition-all hover:shadow-lg hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                  ${isPreview ? 'px-5 py-3 text-sm' : 'px-8 py-4 text-base md:text-lg min-h-[52px]'}
-                `}
-                style={{
-                  animation: 'fadeSlideIn 0.5s ease-out 0.3s both',
-                }}
-              >
-                Get Started
-              </Link>
-            )}
+            {/* Screenshot Image */}
+            <div 
+              className={`
+                relative w-full rounded-lg overflow-hidden shadow-lg border border-gray-200 bg-gray-50
+                ${isPreview ? 'h-[180px]' : isMedium ? 'h-[280px] md:h-[340px]' : 'h-[320px] md:h-[400px]'}
+              `}
+              style={{
+                animation: 'fadeSlideIn 0.4s ease-out',
+              }}
+            >
+              <Image
+                src={slide.image}
+                alt={`Step ${slide.step}: ${slide.title}`}
+                fill
+                className="object-contain object-top"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1000px"
+                priority={currentSlide === 0}
+              />
+            </div>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="mt-6">
+        <div className="mt-4">
           <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-600 transition-all duration-50 ease-linear"
@@ -273,7 +233,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
         </div>
 
         {/* Navigation Dots */}
-        <div className="flex justify-center gap-3 mt-5">
+        <div className="flex justify-center gap-3 mt-4">
           {slides.map((_, index) => (
             <button
               key={index}
@@ -292,6 +252,27 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
         </div>
       </div>
 
+      {/* Persistent Register Button - Always visible below slideshow */}
+      <div className="mt-6 text-center">
+        <Link
+          href="/register"
+          className={`
+            inline-flex items-center justify-center gap-2
+            bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl
+            transition-all hover:shadow-lg hover:-translate-y-0.5 
+            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+            ${isPreview ? 'px-6 py-3 text-base' : 'px-8 py-4 text-lg'}
+          `}
+        >
+          <span>Register as a Provider</span>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </Link>
+        <p className="mt-3 text-sm text-gray-500">
+          Free to create an account • $99.99/month to go live
+        </p>
+      </div>
     </div>
   )
 }
