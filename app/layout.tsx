@@ -66,11 +66,11 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={inter.className}>
-        {/* Navigation */}
-        <nav className="bg-white shadow-lg sticky top-0 z-50">
+        {/* Navigation - Tan/Brown Background */}
+        <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: '#EDE4D3' }}>
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center h-16">
-              {/* Logo */}
+              {/* Logo - Keep blue */}
               <Link href="/" className="flex items-center">
                 <div className="flex items-center">
                   <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
@@ -79,8 +79,8 @@ export default async function RootLayout({
                     </svg>
                   </div>
                   <div>
-                    <span className="text-xl font-bold text-blue-900">Care</span>
-                    <span className="text-xl font-bold text-gray-700">Connect</span>
+                    <span className="text-xl font-bold text-blue-600">Care</span>
+                    <span className="text-xl font-bold text-[#5C4A32]">Connect</span>
                   </div>
                 </div>
               </Link>
@@ -89,32 +89,32 @@ export default async function RootLayout({
               <Navigation initialUser={user} initialRole={userRole} />
 
               {/* Mobile Menu Button */}
-              <button className="md:hidden mobile-menu-button">
+              <button className="md:hidden mobile-menu-button text-[#5C4A32]">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
             </div>
 
-            {/* Mobile Menu - Also needs to be dynamic but keeping simple for now */}
+            {/* Mobile Menu */}
             <div className="mobile-menu hidden md:hidden pb-4">
-              <Link href="/browse" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Browse Providers</Link>
-              <Link href="/services" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Our Services</Link>
-              <Link href="/about" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">About 245D</Link>
-              <Link href="/contact" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Contact</Link>
-              <div className="border-t border-gray-200 mt-2 pt-2">
+              <Link href="/browse" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Browse Providers</Link>
+              <Link href="/services" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Our Services</Link>
+              <Link href="/about" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">About 245D</Link>
+              <Link href="/contact" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Contact</Link>
+              <div className="border-t border-[#D4C4A8] mt-2 pt-2">
                 {user ? (
                   <>
-                    <Link href="/dashboard" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Dashboard</Link>
+                    <Link href="/dashboard" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Dashboard</Link>
                     <form action="/auth/logout" method="POST">
-                      <button className="block w-full text-left px-3 py-2 text-gray-700 hover:bg-gray-100">
+                      <button className="block w-full text-left px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">
                         Sign Out
                       </button>
                     </form>
                   </>
                 ) : (
                   <>
-                    <Link href="/auth/login" className="block px-3 py-2 text-gray-700 hover:bg-gray-100">Sign In</Link>
+                    <Link href="/auth/login" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Sign In</Link>
                     <Link href="/auth/register-care-seeker" className="block px-3 py-2 bg-green-600 text-white hover:bg-green-700 mx-3 rounded mb-2">
                       Find Care
                     </Link>
@@ -133,8 +133,8 @@ export default async function RootLayout({
           {children}
         </main>
 
-        {/* Footer */}
-        <footer className="bg-gray-900 text-white py-12">
+        {/* Footer - Tan/Brown Background */}
+        <footer className="py-12" style={{ backgroundColor: '#5C4A32' }}>
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-4 gap-8">
               {/* Company Info */}
@@ -146,50 +146,50 @@ export default async function RootLayout({
                     </svg>
                   </div>
                   <div>
-                    <span className="text-lg font-bold">CareConnect</span>
-                    <p className="text-xs text-gray-400">245D Provider Network</p>
+                    <span className="text-lg font-bold text-[#EDE4D3]">CareConnect</span>
+                    <p className="text-xs text-[#D4C4A8]">245D Provider Network</p>
                   </div>
                 </div>
-                <p className="text-gray-400 text-sm">
+                <p className="text-[#D4C4A8] text-sm">
                   Connecting Minnesota families with quality 245D licensed care providers.
                 </p>
               </div>
 
               {/* For Care Seekers */}
               <div>
-                <h4 className="font-semibold mb-4">For Families</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li><Link href="/browse" className="hover:text-white transition-colors">Browse Providers</Link></li>
-                  <li><Link href="/auth/register-care-seeker" className="hover:text-white transition-colors">Create Account</Link></li>
-                  <li><Link href="/about#how-it-works" className="hover:text-white transition-colors">How It Works</Link></li>
-                  <li><Link href="/resources" className="hover:text-white transition-colors">Resources</Link></li>
+                <h4 className="font-bold mb-4 text-[#EDE4D3]">For Families</h4>
+                <ul className="space-y-2">
+                  <li><Link href="/browse" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Browse Providers</Link></li>
+                  <li><Link href="/auth/register-care-seeker" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Create Account</Link></li>
+                  <li><Link href="/about#how-it-works" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">How It Works</Link></li>
+                  <li><Link href="/resources" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Resources</Link></li>
                 </ul>
               </div>
 
-              {/* For Providers - WITHOUT Benefits link */}
+              {/* For Providers */}
               <div>
-                <h4 className="font-semibold mb-4">For Providers</h4>
-                <ul className="space-y-2 text-gray-400">
-                  <li><Link href="/auth/register" className="hover:text-white transition-colors">Join Network</Link></li>
-                  <li><Link href="/providers/requirements" className="hover:text-white transition-colors">Requirements</Link></li>
-                  <li><Link href="/dashboard" className="hover:text-white transition-colors">Provider Login</Link></li>
+                <h4 className="font-bold mb-4 text-[#EDE4D3]">For Providers</h4>
+                <ul className="space-y-2">
+                  <li><Link href="/auth/register" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Join Network</Link></li>
+                  <li><Link href="/providers/requirements" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Requirements</Link></li>
+                  <li><Link href="/dashboard" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Provider Login</Link></li>
                 </ul>
               </div>
 
               {/* Contact & Support */}
               <div>
-                <h4 className="font-semibold mb-4">Support</h4>
-                <p className="text-gray-400 mb-2">
-                  <a href="mailto:careconnectmkting@gmail.com" className="hover:text-white transition-colors">
+                <h4 className="font-bold mb-4 text-[#EDE4D3]">Support</h4>
+                <p className="text-[#D4C4A8] mb-2 font-medium">
+                  <a href="mailto:careconnectmkting@gmail.com" className="hover:text-[#EDE4D3] transition-colors">
                     careconnectmkting@gmail.com
                   </a>
                 </p>
-                <p className="text-gray-400 text-sm mb-4">
+                <p className="text-[#D4C4A8] text-sm mb-4 font-medium">
                   Monday - Friday: 8AM - 5PM CST
                 </p>
-                <div className="space-y-2 text-gray-400 text-sm">
-                  <p>Waiver Types Supported:</p>
-                  <ul className="ml-2">
+                <div className="space-y-2 text-sm">
+                  <p className="text-[#EDE4D3] font-bold">Waiver Types Supported:</p>
+                  <ul className="ml-2 text-[#D4C4A8] font-medium">
                     <li>• CADI Waiver</li>
                     <li>• DD Waiver</li>
                     <li>• BI Waiver</li>
@@ -199,14 +199,14 @@ export default async function RootLayout({
               </div>
             </div>
 
-            <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-              <p>&copy; 2025 CareConnect Minnesota. All rights reserved.</p>
+            <div className="border-t border-[#6B5B47] mt-8 pt-8 text-center text-sm">
+              <p className="text-[#D4C4A8] font-medium">&copy; 2025 CareConnect Minnesota. All rights reserved.</p>
               <p className="mt-2">
-                <Link href="/privacy" className="hover:text-white">Privacy Policy</Link>
-                <span className="mx-2">|</span>
-                <Link href="/terms" className="hover:text-white">Terms of Service</Link>
-                <span className="mx-2">|</span>
-                <Link href="/hipaa" className="hover:text-white">HIPAA Compliance</Link>
+                <Link href="/privacy" className="text-[#D4C4A8] hover:text-[#EDE4D3] font-medium">Privacy Policy</Link>
+                <span className="mx-2 text-[#6B5B47]">|</span>
+                <Link href="/terms" className="text-[#D4C4A8] hover:text-[#EDE4D3] font-medium">Terms of Service</Link>
+                <span className="mx-2 text-[#6B5B47]">|</span>
+                <Link href="/hipaa" className="text-[#D4C4A8] hover:text-[#EDE4D3] font-medium">HIPAA Compliance</Link>
               </p>
             </div>
           </div>

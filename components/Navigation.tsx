@@ -94,20 +94,20 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
     <>
       {/* Main Navigation */}
       <div className="hidden md:flex items-center space-x-8">
-        <Link href="/browse" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+        <Link href="/browse" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium transition-colors">
           Browse Providers
         </Link>
-        <Link href="/services" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+        <Link href="/services" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium transition-colors">
           Our Services
         </Link>
-        <Link href="/about" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+        <Link href="/about" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium transition-colors">
           About Us
         </Link>
-        <Link href="/contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+        <Link href="/contact" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium transition-colors">
           Contact
         </Link>
         {isAdmin && (
-          <Link href="/admin" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">
+          <Link href="/admin" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium transition-colors">
             Admin
           </Link>
         )}
@@ -120,44 +120,41 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
             {/* Show different options based on user role */}
             {userRole === 'care_seeker' && (
               <>
-                <Link href="/care-seeker/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
+                <Link href="/care-seeker/dashboard" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
                   Dashboard
                 </Link>
-                <Link href="/my-bookings" className="text-gray-700 hover:text-blue-600 font-medium">
+                <Link href="/my-bookings" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
                   My Bookings
                 </Link>
-                <Link href="/care-seeker/saved" className="text-gray-700 hover:text-blue-600 font-medium">
+                <Link href="/care-seeker/saved" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
                   Saved
                 </Link>
               </>
             )}
             {userRole === 'provider' && (
               <>
-                <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
-                  Provider Dashboard
-                </Link>
-                <Link href="/dashboard/inquiries" className="text-gray-700 hover:text-blue-600 font-medium">
-                  Inquiries
+                <Link href="/dashboard" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
+                  Dashboard
                 </Link>
               </>
             )}
             {userRole === 'admin' && (
-              <Link href="/dashboard" className="text-gray-700 hover:text-blue-600 font-medium">
+              <Link href="/dashboard" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
                 Dashboard
               </Link>
             )}
             {!loading && !userRole && (
-              <span className="text-sm text-gray-500">Loading...</span>
+              <span className="text-sm text-[#6B5B47]">Loading...</span>
             )}
             <form action="/auth/logout" method="POST">
-              <button className="text-gray-700 hover:text-blue-600 font-medium">
+              <button className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
                 Sign Out
               </button>
             </form>
           </>
         ) : (
           <>
-            <Link href="/auth/login" className="text-gray-700 hover:text-blue-600 font-medium">
+            <Link href="/auth/login" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
               Sign In
             </Link>
             <div className="flex items-center space-x-2">

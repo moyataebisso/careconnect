@@ -109,16 +109,25 @@ export default function HomePage() {
       <section className="bg-[#EBF5FF] py-16 shadow-lg">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-3 md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-600">100%</div>
+            {/* Stat 1 - Small Blue Bubble */}
+            <div className="flex flex-col items-center">
+              <div className="bg-blue-600 rounded-xl px-6 py-3 shadow-md mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-white">100%</div>
+              </div>
               <div className="text-sm text-gray-600">Licensed Providers</div>
             </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-600">24/7</div>
+            {/* Stat 2 - Small Blue Bubble */}
+            <div className="flex flex-col items-center">
+              <div className="bg-blue-600 rounded-xl px-6 py-3 shadow-md mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-white">24/7</div>
+              </div>
               <div className="text-sm text-gray-600">Support Available</div>
             </div>
-            <div>
-              <div className="text-3xl md:text-4xl font-bold text-blue-600">100%</div>
+            {/* Stat 3 - Small Blue Bubble */}
+            <div className="flex flex-col items-center">
+              <div className="bg-blue-600 rounded-xl px-6 py-3 shadow-md mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-white">100%</div>
+              </div>
               <div className="text-sm text-gray-600">245D Verified</div>
             </div>
           </div>
@@ -128,15 +137,19 @@ export default function HomePage() {
       {/* How It Works - Provider Tutorial Slideshow */}
       <section className="py-20 bg-[#F5EBD9]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4 text-[#5C4A32]">How It Works for Providers</h2>
-          <p className="text-center text-[#6B5B47] mb-10 max-w-2xl mx-auto">
-            Join CareConnect in 5 simple steps and start receiving qualified referrals
-          </p>
+          {/* Brown bubble ONLY around title and subtitle */}
+          <div className="bg-[#5C4A32] rounded-2xl px-8 py-6 shadow-lg max-w-2xl mx-auto mb-10">
+            <h2 className="text-3xl font-bold text-center text-white">How It Works for Providers</h2>
+            <p className="text-center text-[#EDE4D3] mt-2">
+              Join CareConnect in 5 simple steps and start receiving qualified referrals
+            </p>
+          </div>
+          {/* Slideshow outside the bubble */}
           <ProviderTutorialSlideshow variant="medium" />
         </div>
       </section>
 
-      {/* 245D Services Section */}
+      {/* 245D Services Section - WHITE CARDS */}
       <section className="py-20 bg-[#E0EEF9]">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-4 text-[#1F2937]">245D Licensed Services</h2>
@@ -283,7 +296,7 @@ export default function HomePage() {
           <p className="text-xl mb-8">Join CareConnect to receive qualified waiver-based referrals</p>
           <Link 
             href="/register" 
-            className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all hover:shadow-lg"
+            className="inline-block bg-[#EDE4D3] text-[#5C4A32] px-8 py-3 rounded-lg font-semibold hover:bg-[#E0D4C0] transition-all hover:shadow-lg"
           >
             Get Started Today
           </Link>
@@ -293,47 +306,47 @@ export default function HomePage() {
       {/* How It Works */}
       <section className="py-20 bg-[#E0EEF9]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">How Our Referral System Works</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 text-[#5C4A32]">How Our Referral System Works</h2>
           
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">1</div>
-                <h3 className="font-semibold mb-2">Initial Contact</h3>
-                <p className="text-sm text-gray-600">Reach out through our platform</p>
+                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">1</div>
+                <h3 className="font-semibold mb-2 text-[#5C4A32]">Initial Contact</h3>
+                <p className="text-sm text-[#6B5B47]">Reach out through our platform</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">2</div>
-                <h3 className="font-semibold mb-2">Profile Creation</h3>
-                <p className="text-sm text-gray-600">Build your professional presence</p>
+                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">2</div>
+                <h3 className="font-semibold mb-2 text-[#5C4A32]">Profile Creation</h3>
+                <p className="text-sm text-[#6B5B47]">Build your professional presence</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">3</div>
-                <h3 className="font-semibold mb-2">Outreach Launch</h3>
-                <p className="text-sm text-gray-600">Begin targeted marketing</p>
+                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">3</div>
+                <h3 className="font-semibold mb-2 text-[#5C4A32]">Outreach Launch</h3>
+                <p className="text-sm text-[#6B5B47]">Begin targeted marketing</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">4</div>
-                <h3 className="font-semibold mb-2">Lead Delivery</h3>
-                <p className="text-sm text-gray-600">Receive qualified referrals</p>
+                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">4</div>
+                <h3 className="font-semibold mb-2 text-[#5C4A32]">Lead Delivery</h3>
+                <p className="text-sm text-[#6B5B47]">Receive qualified referrals</p>
               </div>
             </div>
 
             {/* Connection Lines for Desktop */}
             <div className="hidden md:block relative -mt-12">
-              <div className="absolute top-0 left-[12.5%] right-[12.5%] h-0.5 bg-blue-300"></div>
+              <div className="absolute top-0 left-[12.5%] right-[12.5%] h-0.5 bg-[#D4C4A8]"></div>
             </div>
           </div>
 
           {/* Additional Info */}
           <div className="mt-16 max-w-3xl mx-auto text-center">
-            <p className="text-gray-600 mb-8">
+            <p className="text-[#6B5B47] mb-8">
               Our proven system connects you with social workers, discharge planners, and case managers 
               who are actively seeking quality 245D licensed housing solutions for their waiver clients.
             </p>
             <Link 
               href="/providers" 
-              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all hover:shadow-lg"
+              className="inline-block bg-[#5C4A32] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#4A3B28] transition-all hover:shadow-lg"
             >
               Browse Available Providers
             </Link>
@@ -342,20 +355,20 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-16">
+      <section className="bg-gradient-to-r from-[#5C4A32] to-[#4A3B28] text-white py-16">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Find Quality Care?</h2>
           <p className="text-xl mb-8">Search our network of verified 245D providers</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link 
               href="/providers" 
-              className="inline-block bg-white text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all hover:shadow-lg"
+              className="inline-block bg-[#EDE4D3] text-[#5C4A32] px-8 py-3 rounded-lg font-semibold hover:bg-[#E0D4C0] transition-all hover:shadow-lg"
             >
               Find Care Now
             </Link>
             <Link 
               href="/contact" 
-              className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-900 transition-all"
+              className="inline-block border-2 border-[#EDE4D3] text-[#EDE4D3] px-8 py-3 rounded-lg font-semibold hover:bg-[#EDE4D3] hover:text-[#5C4A32] transition-all"
             >
               Contact Us
             </Link>
