@@ -133,8 +133,8 @@ export default async function RootLayout({
           {children}
         </main>
 
-        {/* Footer - Tan/Brown Background */}
-        <footer className="py-12" style={{ backgroundColor: '#5C4A32' }}>
+        {/* Footer - Light Tan Background */}
+        <footer className="py-12" style={{ backgroundColor: '#EDE4D3' }}>
           <div className="container mx-auto px-4">
             <div className="grid md:grid-cols-4 gap-8">
               {/* Company Info */}
@@ -146,50 +146,50 @@ export default async function RootLayout({
                     </svg>
                   </div>
                   <div>
-                    <span className="text-lg font-bold text-[#EDE4D3]">CareConnect</span>
-                    <p className="text-xs text-[#D4C4A8]">245D Provider Network</p>
+                    <span className="text-lg font-bold text-blue-600">CareConnect</span>
+                    <p className="text-xs text-gray-600">245D Provider Network</p>
                   </div>
                 </div>
-                <p className="text-[#D4C4A8] text-sm">
+                <p className="text-gray-600 text-sm">
                   Connecting Minnesota families with quality 245D licensed care providers.
                 </p>
               </div>
 
               {/* For Care Seekers */}
               <div>
-                <h4 className="font-bold mb-4 text-[#EDE4D3]">For Families</h4>
+                <h4 className="font-bold mb-4 text-blue-600">For Families</h4>
                 <ul className="space-y-2">
-                  <li><Link href="/browse" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Browse Providers</Link></li>
-                  <li><Link href="/auth/register-care-seeker" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Create Account</Link></li>
-                  <li><Link href="/about#how-it-works" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">How It Works</Link></li>
-                  <li><Link href="/resources" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Resources</Link></li>
+                  <li><Link href="/browse" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Browse Providers</Link></li>
+                  <li><Link href="/auth/register-care-seeker" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Create Account</Link></li>
+                  <li><Link href="/about#how-it-works" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">How It Works</Link></li>
+                  <li><Link href="/resources" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Resources</Link></li>
                 </ul>
               </div>
 
               {/* For Providers */}
               <div>
-                <h4 className="font-bold mb-4 text-[#EDE4D3]">For Providers</h4>
+                <h4 className="font-bold mb-4 text-blue-600">For Providers</h4>
                 <ul className="space-y-2">
-                  <li><Link href="/auth/register" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Join Network</Link></li>
-                  <li><Link href="/providers/requirements" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Requirements</Link></li>
-                  <li><Link href="/dashboard" className="text-[#D4C4A8] hover:text-[#EDE4D3] transition-colors font-medium">Provider Login</Link></li>
+                  <li><Link href="/auth/register" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Join Network</Link></li>
+                  <li><Link href="/providers/requirements" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Requirements</Link></li>
+                  <li><Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Provider Login</Link></li>
                 </ul>
               </div>
 
               {/* Contact & Support */}
               <div>
-                <h4 className="font-bold mb-4 text-[#EDE4D3]">Support</h4>
-                <p className="text-[#D4C4A8] mb-2 font-medium">
-                  <a href="mailto:careconnectmkting@gmail.com" className="hover:text-[#EDE4D3] transition-colors">
+                <h4 className="font-bold mb-4 text-blue-600">Support</h4>
+                <p className="text-gray-600 mb-2 font-medium">
+                  <a href="mailto:careconnectmkting@gmail.com" className="hover:text-blue-600 transition-colors">
                     careconnectmkting@gmail.com
                   </a>
                 </p>
-                <p className="text-[#D4C4A8] text-sm mb-4 font-medium">
+                <p className="text-gray-600 text-sm mb-4 font-medium">
                   Monday - Friday: 8AM - 5PM CST
                 </p>
                 <div className="space-y-2 text-sm">
-                  <p className="text-[#EDE4D3] font-bold">Waiver Types Supported:</p>
-                  <ul className="ml-2 text-[#D4C4A8] font-medium">
+                  <p className="text-blue-600 font-bold">Waiver Types Supported:</p>
+                  <ul className="ml-2 text-gray-600 font-medium">
                     <li>• CADI Waiver</li>
                     <li>• DD Waiver</li>
                     <li>• BI Waiver</li>
@@ -199,14 +199,14 @@ export default async function RootLayout({
               </div>
             </div>
 
-            <div className="border-t border-[#6B5B47] mt-8 pt-8 text-center text-sm">
-              <p className="text-[#D4C4A8] font-medium">&copy; 2025 CareConnect Minnesota. All rights reserved.</p>
+            <div className="border-t border-[#D4C4A8] mt-8 pt-8 text-center text-sm">
+              <p className="text-gray-600 font-medium">&copy; 2025 CareConnect Minnesota. All rights reserved.</p>
               <p className="mt-2">
-                <Link href="/privacy" className="text-[#D4C4A8] hover:text-[#EDE4D3] font-medium">Privacy Policy</Link>
-                <span className="mx-2 text-[#6B5B47]">|</span>
-                <Link href="/terms" className="text-[#D4C4A8] hover:text-[#EDE4D3] font-medium">Terms of Service</Link>
-                <span className="mx-2 text-[#6B5B47]">|</span>
-                <Link href="/hipaa" className="text-[#D4C4A8] hover:text-[#EDE4D3] font-medium">HIPAA Compliance</Link>
+                <Link href="/privacy" className="text-gray-600 hover:text-blue-600 font-medium">Privacy Policy</Link>
+                <span className="mx-2 text-[#D4C4A8]">|</span>
+                <Link href="/terms" className="text-gray-600 hover:text-blue-600 font-medium">Terms of Service</Link>
+                <span className="mx-2 text-[#D4C4A8]">|</span>
+                <Link href="/hipaa" className="text-gray-600 hover:text-blue-600 font-medium">HIPAA Compliance</Link>
               </p>
             </div>
           </div>

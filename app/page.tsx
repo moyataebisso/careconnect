@@ -137,10 +137,10 @@ export default function HomePage() {
       {/* How It Works - Provider Tutorial Slideshow */}
       <section className="py-20 bg-[#F5EBD9]">
         <div className="container mx-auto px-4">
-          {/* Brown bubble ONLY around title and subtitle */}
-          <div className="bg-[#5C4A32] rounded-2xl px-8 py-6 shadow-lg max-w-2xl mx-auto mb-10">
+          {/* Slightly darker tan bubble for title */}
+          <div className="bg-[#C9B99A] rounded-2xl px-8 py-6 shadow-lg max-w-2xl mx-auto mb-10">
             <h2 className="text-3xl font-bold text-center text-white">How It Works for Providers</h2>
-            <p className="text-center text-[#EDE4D3] mt-2">
+            <p className="text-center text-white/90 mt-2">
               Join CareConnect in 5 simple steps and start receiving qualified referrals
             </p>
           </div>
@@ -306,29 +306,29 @@ export default function HomePage() {
       {/* How It Works */}
       <section className="py-20 bg-[#E0EEF9]">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-[#5C4A32]">How Our Referral System Works</h2>
-          
+          <h2 className="text-3xl font-bold text-center mb-12 text-black">How Our Referral System Works</h2>
+
           <div className="max-w-4xl mx-auto">
             <div className="grid md:grid-cols-4 gap-8">
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">1</div>
-                <h3 className="font-semibold mb-2 text-[#5C4A32]">Initial Contact</h3>
-                <p className="text-sm text-[#6B5B47]">Reach out through our platform</p>
+                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">1</div>
+                <h3 className="font-semibold mb-2 text-black">Initial Contact</h3>
+                <p className="text-sm text-black">Reach out through our platform</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">2</div>
-                <h3 className="font-semibold mb-2 text-[#5C4A32]">Profile Creation</h3>
-                <p className="text-sm text-[#6B5B47]">Build your professional presence</p>
+                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">2</div>
+                <h3 className="font-semibold mb-2 text-black">Profile Creation</h3>
+                <p className="text-sm text-black">Build your professional presence</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">3</div>
-                <h3 className="font-semibold mb-2 text-[#5C4A32]">Outreach Launch</h3>
-                <p className="text-sm text-[#6B5B47]">Begin targeted marketing</p>
+                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">3</div>
+                <h3 className="font-semibold mb-2 text-black">Outreach Launch</h3>
+                <p className="text-sm text-black">Begin targeted marketing</p>
               </div>
               <div className="text-center">
-                <div className="w-16 h-16 bg-[#5C4A32] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">4</div>
-                <h3 className="font-semibold mb-2 text-[#5C4A32]">Lead Delivery</h3>
-                <p className="text-sm text-[#6B5B47]">Receive qualified referrals</p>
+                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">4</div>
+                <h3 className="font-semibold mb-2 text-black">Lead Delivery</h3>
+                <p className="text-sm text-black">Receive qualified referrals</p>
               </div>
             </div>
 
@@ -340,13 +340,13 @@ export default function HomePage() {
 
           {/* Additional Info */}
           <div className="mt-16 max-w-3xl mx-auto text-center">
-            <p className="text-[#6B5B47] mb-8">
-              Our proven system connects you with social workers, discharge planners, and case managers 
+            <p className="text-black mb-8">
+              Our proven system connects you with social workers, discharge planners, and case managers
               who are actively seeking quality 245D licensed housing solutions for their waiver clients.
             </p>
-            <Link 
-              href="/providers" 
-              className="inline-block bg-[#5C4A32] text-white px-8 py-3 rounded-lg font-semibold hover:bg-[#4A3B28] transition-all hover:shadow-lg"
+            <Link
+              href="/providers"
+              className="inline-block bg-[#EDE4D3] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#D4C4A8] transition-all hover:shadow-lg"
             >
               Browse Available Providers
             </Link>
@@ -355,20 +355,20 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA Section */}
-      <section className="bg-gradient-to-r from-[#5C4A32] to-[#4A3B28] text-white py-16">
+      <section className="bg-[#EDE4D3] py-16">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Find Quality Care?</h2>
-          <p className="text-xl mb-8">Search our network of verified 245D providers</p>
+          <h2 className="text-3xl font-bold mb-4 text-blue-600">Ready to Find Quality Care?</h2>
+          <p className="text-xl mb-8 text-gray-600">Search our network of verified 245D providers</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link 
-              href="/providers" 
-              className="inline-block bg-[#EDE4D3] text-[#5C4A32] px-8 py-3 rounded-lg font-semibold hover:bg-[#E0D4C0] transition-all hover:shadow-lg"
+            <Link
+              href="/providers"
+              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all hover:shadow-lg"
             >
               Find Care Now
             </Link>
-            <Link 
-              href="/contact" 
-              className="inline-block border-2 border-[#EDE4D3] text-[#EDE4D3] px-8 py-3 rounded-lg font-semibold hover:bg-[#EDE4D3] hover:text-[#5C4A32] transition-all"
+            <Link
+              href="/contact"
+              className="inline-block border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition-all"
             >
               Contact Us
             </Link>
