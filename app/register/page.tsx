@@ -6,8 +6,6 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ServiceType, WaiverType, SERVICE_TYPE_LABELS, WAIVER_TYPE_LABELS } from '@/lib/types/careconnect'
 
-// Stripe Payment Link - $99.99/month Basic Provider Plan
-const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kw6Hof5na0d1NzbfO00'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -315,10 +313,9 @@ export default function RegisterPage() {
         console.log('Profile table operation skipped:', profileErr)
       }
 
-      // 4. IMMEDIATELY redirect to Stripe payment - NO SKIP OPTION
-      console.log('Redirecting to Stripe payment...')
-      const paymentUrl = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(formData.email)}`
-      window.location.href = paymentUrl
+      // 4. Redirect to subscription page to choose a plan and pay
+      console.log('Registration complete. Redirecting to subscription page...')
+      router.push('/subscribe')
       
     } catch (error) {
       console.error('Full registration error:', error)

@@ -222,7 +222,9 @@ export default function RegisterPage() {
           primary_photo_url: formData.primary_photo_url || null,
           referral_agreement_signed: formData.agree_to_terms,
           status: 'pending',
-          verified_245d: false
+          verified_245d: false,
+          subscription_status: 'pending',
+          trial_ends_at: null
         })
         .select()
 
@@ -262,9 +264,9 @@ export default function RegisterPage() {
         licenseNumber: formData.license_number
       })
 
-      // Success!
-      alert('Registration successful! Please check your email to verify your account. An admin will review your 245D license within 24-48 hours.')
-      router.push('/login')
+      // Success! Redirect to subscription page for payment
+      console.log('Registration complete. Redirecting to subscription page...')
+      router.push('/subscribe')
       
     } catch (error) {
       console.error('Full registration error:', error)
