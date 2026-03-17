@@ -14,7 +14,11 @@ export default async function DashboardPage() {
   }
 
   // Get user's provider listing with subscription plan details
-  const { data: provider } = await supabase
+  // Try with subscription_plans join first, fall back to plain query if join fails (406)
+  let provider: Record<string, any> | null = null
+  let providerError: string | null = null
+
+  const { data: providerWithPlan, error: joinError } = await supabase
     .from('providers')
     .select(`
       *,
@@ -26,27 +30,50 @@ export default async function DashboardPage() {
     .eq('user_id', user.id)
     .single()
 
-  // If no provider, redirect to create one
-  if (!provider) {
+  if (joinError) {
+    // Retry without the join — the provider may exist but subscription_plans join fails
+    const { data: providerOnly, error: plainError } = await supabase
+      .from('providers')
+      .select('*')
+      .eq('user_id', user.id)
+      .single()
+
+    if (plainError) {
+      // No provider row at all — redirect to registration
+      if (plainError.code === 'PGRST116') {
+        redirect('/auth/register')
+      }
+      providerError = plainError.message
+    } else {
+      provider = providerOnly
+    }
+  } else {
+    provider = providerWithPlan
+  }
+
+  // If no provider and no error, redirect to create one
+  if (!provider && !providerError) {
     redirect('/auth/register')
   }
 
-  // Get user's profile
+  // Get user's profile (non-critical — don't block render on failure)
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  // Get referral requests for this provider
+  // Get referral requests for this provider (non-critical)
   let referralCount = 0
-  const { count } = await supabase
-    .from('referral_requests')
-    .select('*', { count: 'exact', head: true })
-    .eq('provider_id', provider.id)
-    .eq('status', 'new')
-  
-  referralCount = count || 0
+  if (provider) {
+    const { count } = await supabase
+      .from('referral_requests')
+      .select('*', { count: 'exact', head: true })
+      .eq('provider_id', provider.id)
+      .eq('status', 'new')
+
+    referralCount = count || 0
+  }
 
   // Format dates for display
   const formatDate = (dateString: string | null) => {
@@ -56,6 +83,32 @@ export default async function DashboardPage() {
       day: 'numeric',
       year: 'numeric'
     })
+  }
+
+  // If we hit an error loading the provider, show an error state instead of blank page
+  if (providerError || !provider) {
+    return (
+      <div className="container mx-auto px-4 pt-8">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+        <div className="rounded-lg p-6 mb-6 bg-red-50 border-2 border-red-300">
+          <h2 className="text-xl font-bold text-red-800 mb-2">Unable to Load Dashboard</h2>
+          <p className="text-sm text-red-700 mb-4">
+            We encountered an error loading your provider information. Please try refreshing the page.
+          </p>
+          {providerError && (
+            <p className="text-xs text-red-500 mb-4">Error details: {providerError}</p>
+          )}
+          <div className="flex gap-3">
+            <Link href="/dashboard" className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-semibold">
+              Refresh Page
+            </Link>
+            <Link href="/" className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm font-semibold">
+              Go Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Determine subscription status - no trial, only active or requires payment
