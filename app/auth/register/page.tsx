@@ -264,7 +264,16 @@ export default function RegisterPage() {
         licenseNumber: formData.license_number
       })
 
-      // Success! Redirect to subscription page for payment
+      // Save registration info for the subscribe page (in case email isn't verified yet)
+      if (providerData?.[0]?.id) {
+        sessionStorage.setItem('registered_provider', JSON.stringify({
+          provider_id: providerData[0].id,
+          email: formData.email,
+          business_name: formData.business_name,
+        }))
+      }
+
+      // Redirect to subscription page for payment
       console.log('Registration complete. Redirecting to subscription page...')
       router.push('/subscribe')
       

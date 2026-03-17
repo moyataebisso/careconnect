@@ -1,6 +1,7 @@
 // app/api/stripe/checkout/route.ts
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: Request) {
   try {
@@ -13,40 +14,87 @@ export async function POST(request: Request) {
       )
     }
 
-    const { planId } = await request.json()
-    
+    const { planId, provider_id, email } = await request.json()
+
     // Dynamic import Stripe
     const Stripe = (await import('stripe')).default
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: '2025-10-29.clover',
     })
-    
+
     const supabase = await createClient()
+
+    // Two auth modes:
+    // 1. Authenticated user (normal flow)
+    // 2. Fresh registration with provider_id + email (pre-email-verification flow)
+    let provider: {
+      id: string
+      business_name: string
+      contact_email: string | null
+      stripe_customer_id: string | null
+      subscription_status: string | null
+      user_id: string | null
+    } | null = null
+
     const { data: { user } } = await supabase.auth.getUser()
-    
-    if (!user) {
+
+    if (user) {
+      // Authenticated flow — look up provider by user_id
+      const { data, error: providerError } = await supabase
+        .from('providers')
+        .select('id, business_name, contact_email, stripe_customer_id, subscription_status, user_id')
+        .eq('user_id', user.id)
+        .single()
+
+      if (providerError || !data) {
+        console.error('Provider not found:', providerError)
+        return NextResponse.json({ error: 'Provider not found' }, { status: 404 })
+      }
+      provider = data
+    } else if (provider_id && email) {
+      // Unauthenticated flow — fresh registration, email not yet verified
+      // Use admin client to bypass RLS (user has no session yet)
+      const adminClient = createAdminClient()
+      const { data, error: providerError } = await adminClient
+        .from('providers')
+        .select('id, business_name, contact_email, stripe_customer_id, subscription_status, user_id')
+        .eq('id', provider_id)
+        .single()
+
+      if (providerError || !data) {
+        console.error('Provider not found for registration checkout:', providerError)
+        return NextResponse.json({ error: 'Provider not found' }, { status: 404 })
+      }
+
+      // Verify the email matches (prevents someone guessing a provider_id)
+      if (data.contact_email !== email) {
+        console.error('Email mismatch for provider checkout:', { provided: email, expected: data.contact_email })
+        return NextResponse.json({ error: 'Invalid provider credentials' }, { status: 403 })
+      }
+
+      // Only allow this flow for providers that haven't paid yet
+      if (data.subscription_status === 'active') {
+        return NextResponse.json(
+          { error: 'This account already has an active subscription.', redirect: '/auth/login' },
+          { status: 400 }
+        )
+      }
+
+      provider = data
+    } else {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    // Get provider details
-    const { data: provider, error: providerError } = await supabase
-      .from('providers')
-      .select('id, business_name, contact_email, stripe_customer_id, subscription_status')
-      .eq('user_id', user.id)
-      .single()
-
-    if (providerError || !provider) {
-      console.error('Provider not found:', providerError)
-      return NextResponse.json({ error: 'Provider not found' }, { status: 404 })
-    }
+    // Use admin client for DB writes when user has no session (pre-email-verification)
+    const dbClient = user ? supabase : createAdminClient()
 
     // ========================================
-    // NEW: Check if provider already has active subscription in database
+    // Check if provider already has active subscription in database
     // ========================================
     if (provider.subscription_status === 'active') {
       console.log('Provider already has active subscription in database')
       return NextResponse.json(
-        { 
+        {
           error: 'You already have an active subscription. Visit your billing page to manage it.',
           redirect: '/billing'
         },
@@ -59,26 +107,26 @@ export async function POST(request: Request) {
 
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: provider.contact_email || user.email || '',
+        email: provider.contact_email || (user?.email ?? '') || '',
         metadata: {
           provider_id: provider.id,
-          user_id: user.id,
+          user_id: provider.user_id || '',
           business_name: provider.business_name
         }
       })
-      
+
       customerId = customer.id
-      
+
       // Save Stripe customer ID
-      await supabase
+      await dbClient
         .from('providers')
         .update({ stripe_customer_id: customerId })
         .eq('id', provider.id)
-      
+
       console.log('Created Stripe customer:', customerId)
     } else {
       // ========================================
-      // NEW: Check Stripe for existing active subscriptions
+      // Check Stripe for existing active subscriptions
       // ========================================
       const existingSubscriptions = await stripe.subscriptions.list({
         customer: customerId,
@@ -88,18 +136,18 @@ export async function POST(request: Request) {
 
       if (existingSubscriptions.data.length > 0) {
         console.log('Customer already has active Stripe subscription:', existingSubscriptions.data[0].id)
-        
+
         // Sync the subscription status to database (in case it's out of sync)
-        await supabase
+        await dbClient
           .from('providers')
-          .update({ 
+          .update({
             subscription_status: 'active',
             stripe_subscription_id: existingSubscriptions.data[0].id
           })
           .eq('id', provider.id)
-        
+
         return NextResponse.json(
-          { 
+          {
             error: 'You already have an active subscription. Visit your billing page to manage it.',
             redirect: '/billing'
           },
@@ -116,9 +164,9 @@ export async function POST(request: Request) {
 
       if (trialingSubscriptions.data.length > 0) {
         console.log('Customer already has trialing subscription:', trialingSubscriptions.data[0].id)
-        
+
         return NextResponse.json(
-          { 
+          {
             error: 'You already have a subscription in trial. Visit your billing page to manage it.',
             redirect: '/billing'
           },
@@ -135,9 +183,9 @@ export async function POST(request: Request) {
 
       if (pendingSubscriptions.data.length > 0) {
         console.log('Customer has past_due subscription:', pendingSubscriptions.data[0].id)
-        
+
         return NextResponse.json(
-          { 
+          {
             error: 'You have a subscription with payment issues. Visit your billing page to update payment method.',
             redirect: '/billing'
           },
@@ -147,8 +195,8 @@ export async function POST(request: Request) {
     }
 
     // Get price ID based on plan
-    const priceId = planId === 'premium' 
-      ? process.env.STRIPE_PREMIUM_PRICE_ID 
+    const priceId = planId === 'premium'
+      ? process.env.STRIPE_PREMIUM_PRICE_ID
       : process.env.STRIPE_BASIC_PRICE_ID
 
     if (!priceId) {
@@ -172,13 +220,13 @@ export async function POST(request: Request) {
       subscription_data: {
         metadata: {
           provider_id: provider.id,
-          user_id: user.id,
+          user_id: provider.user_id || '',
           plan: planId
         }
       },
       metadata: {
         provider_id: provider.id,
-        user_id: user.id,
+        user_id: provider.user_id || '',
         plan: planId
       },
       customer_update: {
@@ -191,17 +239,17 @@ export async function POST(request: Request) {
 
     console.log('Created checkout session:', session.id)
     return NextResponse.json({ url: session.url })
-    
+
   } catch (error) {
     console.error('Stripe checkout error:', error)
-    
+
     if (error instanceof Error) {
       return NextResponse.json(
         { error: `Checkout failed: ${error.message}` },
         { status: 500 }
       )
     }
-    
+
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

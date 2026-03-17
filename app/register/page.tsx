@@ -313,7 +313,16 @@ export default function RegisterPage() {
         console.log('Profile table operation skipped:', profileErr)
       }
 
-      // 4. Redirect to subscription page to choose a plan and pay
+      // 4. Save registration info for the subscribe page (in case email isn't verified yet)
+      if (providerResult?.[0]?.id) {
+        sessionStorage.setItem('registered_provider', JSON.stringify({
+          provider_id: providerResult[0].id,
+          email: formData.email,
+          business_name: formData.business_name,
+        }))
+      }
+
+      // 5. Redirect to subscription page to choose a plan and pay
       console.log('Registration complete. Redirecting to subscription page...')
       router.push('/subscribe')
       
