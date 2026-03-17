@@ -82,6 +82,51 @@ export default async function DashboardPage() {
       <div className="container mx-auto px-4 pt-8">
         <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
+        {/* Payment pending banner — provider registered but hasn't paid yet */}
+        {provider.subscription_status === 'pending' && (
+          <div className="rounded-lg p-6 mb-6 bg-amber-50 border-2 border-amber-300">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-amber-800 mb-1">Complete Your Payment</h2>
+                <p className="text-sm text-amber-700">
+                  Your account is almost ready. Complete your payment to activate your listing and start receiving referrals.
+                </p>
+              </div>
+              <Link
+                href="/subscribe"
+                className="bg-amber-600 text-white px-5 py-2 rounded-lg hover:bg-amber-700 text-sm font-semibold whitespace-nowrap ml-4"
+              >
+                Subscribe Now
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {/* Subscription expired banner */}
+        {(provider.subscription_status === 'expired' || (
+          provider.subscription_status === 'active' &&
+          provider.subscription_end_date &&
+          new Date(provider.subscription_end_date) < new Date() &&
+          new Date(provider.subscription_end_date).getFullYear() <= 2090
+        )) && (
+          <div className="rounded-lg p-6 mb-6 bg-red-50 border-2 border-red-300">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-bold text-red-800 mb-1">Subscription Expired</h2>
+                <p className="text-sm text-red-700">
+                  Your subscription has expired. Renew to regain access to referrals and make your listing visible again.
+                </p>
+              </div>
+              <Link
+                href="/billing"
+                className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 text-sm font-semibold whitespace-nowrap ml-4"
+              >
+                Renew Subscription
+              </Link>
+            </div>
+          </div>
+        )}
+
         {/* Subscription Status Section - Show if HAS active subscription */}
         {subscriptionStatus.hasAccess && (
           <div className="rounded-lg p-6 mb-6 bg-green-50 border-2 border-green-300">
