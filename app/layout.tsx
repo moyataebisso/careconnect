@@ -88,6 +88,14 @@ export default async function RootLayout({
               {/* Client-side Navigation Component */}
               <Navigation initialUser={user} initialRole={userRole} />
 
+              {/* Portal */}
+              <a
+                href="/admin"
+                className="w-2 h-2 rounded-full bg-current opacity-10 hover:opacity-40 transition-opacity cursor-pointer ml-2"
+                title="Portal"
+                aria-label="Portal"
+              />
+
               {/* Mobile Menu Button */}
               <button className="md:hidden mobile-menu-button text-[#5C4A32]">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
