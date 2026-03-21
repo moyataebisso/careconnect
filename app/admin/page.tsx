@@ -318,6 +318,21 @@ export default function AdminDashboard() {
             </div>
           </Link>
 
+          {/* Change Requests */}
+          <Link href="/admin/change-requests" className="block">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-amber-100 rounded-lg p-3">
+                  <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Change Requests</h3>
+              <p className="text-gray-600 text-sm">Submit and track platform change requests</p>
+            </div>
+          </Link>
+
           {/* Geocode Providers */}
           <Link href="/admin/geocode-providers" className="block">
             <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
