@@ -4,7 +4,31 @@
       "Bash(ls -la \"C:\\\\Users\\\\ebiss\\\\Desktop\\\\homebridge-mn\\\\app\\\\auth\"\" 2>/dev/null || echo \"Auth directory not found \")",
       "Bash(npm run build:*)",
       "Bash(npx tsc:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect -type d -iname \"*migration*\" -o -iname \"*sql*\" -o -iname \"*database*\" 2>/dev/null | head -30)",
+      "Bash(grep -r \"profiles\\\\|providers\" /c/Users/ebiss/Projects/careconnect --include=\"*.sql\" 2>/dev/null | head -20)",
+      "Bash(grep -r \"CREATE TABLE\\\\|ALTER TABLE\" /c/Users/ebiss/Projects/careconnect --include=\"*.ts\" --include=\"*.js\" 2>/dev/null | head -20)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect -type f \\\\\\( -name \"*.md\" -o -name \"README*\" \\\\\\) 2>/dev/null | head -10)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect -type f -name \".env*\" -o -name \"config*\" 2>/dev/null | head -10)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect -type f -name \"*.config.ts\" -o -name \"*.config.js\" 2>/dev/null | head -10)",
+      "Bash(iconv -f UTF-16LE -t UTF-8 /c/Users/ebiss/Projects/careconnect/lib/database.types.ts 2>/dev/null | head -100)",
+      "Bash(node -e \"\nconst fs = require\\('fs'\\);\nconst content = fs.readFileSync\\('/c/Users/ebiss/Projects/careconnect/lib/database.types.ts', 'utf-16le'\\);\nconst profilesStart = content.indexOf\\('profiles:'\\);\nconst profilesSection = content.substring\\(profilesStart, profilesStart + 1500\\);\nconsole.log\\(profilesSection\\);\n\" 2>/dev/null)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect/api -type f -name \"*.ts\" 2>/dev/null | head -20)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect/app -type f -name \"*route*\" 2>/dev/null | head -20)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect/lib -type f -name \"*.ts\" 2>/dev/null | head -20)",
+      "Bash(grep -r \"CREATE TABLE\\\\|profiles\\\\|providers\" /c/Users/ebiss/Projects/careconnect/lib --include=\"*.ts\" 2>/dev/null | grep -v \".types.ts\" | head -30)",
+      "Bash(find /c/Users/ebiss/Projects/careconnect -type f \\\\\\( -name \"*.graphql\" -o -name \"*schema*\" -o -name \"*init*\" \\\\\\) 2>/dev/null | head -20)",
+      "Bash(grep -r \"CREATE TABLE\\\\|TABLE.*\\(\" /c/Users/ebiss/Projects/careconnect --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.sql\" 2>/dev/null | head -20)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(npx next:*)",
+      "Bash(npx --no-install next build --no-lint 2>&1 | tail -30)",
+      "Bash(node_modules/.bin/next build:*)",
+      "Bash(ls node_modules/.bin/next* 2>/dev/null; cat package.json | grep -E '\"next\"|\"typescript\"' | head -5)",
+      "Bash(npm install:*)",
+      "Bash(ls .env* 2>/dev/null)",
+      "Bash(git commit:*)",
+      "Bash(ls:*)"
     ]
   }
 }

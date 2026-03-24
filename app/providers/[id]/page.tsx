@@ -13,6 +13,8 @@ export default function ProviderDetailPage() {
   const [provider, setProvider] = useState<Provider | null>(null)
   const [loading, setLoading] = useState(true)
   const [showContactForm, setShowContactForm] = useState(false)
+  const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [isOwner, setIsOwner] = useState(false)
   
@@ -81,7 +83,8 @@ export default function ProviderDetailPage() {
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setSubmitting(true)
+
     const { data, error } = await supabase
       .from('referral_requests')
       .insert({
@@ -99,12 +102,32 @@ export default function ProviderDetailPage() {
       })
       .select()
 
+    setSubmitting(false)
+
     if (error) {
       console.error('Detailed error:', error)
       alert(`Error: ${error.message}. Check console for details.`)
     } else {
-      alert('Thank you for your inquiry! CareConnect will contact you within 24 hours to assist with placement.')
-      setShowContactForm(false)
+      setSubmitSuccess(true)
+
+      // Send admin notification email (fire-and-forget)
+      fetch('/api/email/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'admin_new_inquiry',
+          to: 'careconnectmkting@gmail.com',
+          data: {
+            clientName: formData.client_name,
+            clientEmail: formData.client_email,
+            clientPhone: formData.client_phone,
+            providerName: provider?.business_name || 'Unknown Provider',
+            urgency: formData.urgency || 'flexible',
+            careNeeds: formData.special_requirements || 'Not specified'
+          }
+        })
+      }).catch(err => console.error('Email notification failed:', err))
+
       setFormData({
         client_name: '',
         client_email: '',
@@ -359,8 +382,8 @@ export default function ProviderDetailPage() {
                 </div>
               )}
 
-              <Link
-                href={`/booking?provider=${provider.id}`}
+              <button
+                onClick={() => { setShowContactForm(true); setSubmitSuccess(false) }}
                 className={`block text-center w-full py-3 rounded-lg font-semibold transition-colors ${
                   provider.is_at_capacity
                     ? 'bg-gray-600 text-white hover:bg-gray-700'
@@ -368,7 +391,7 @@ export default function ProviderDetailPage() {
                 }`}
               >
                 {provider.is_at_capacity ? 'Join Waitlist' : 'Connect With Provider'}
-              </Link>
+              </button>
 
               <p className="text-xs text-gray-500 mt-3 text-center">
                 All communications are secured through CareConnect
@@ -407,6 +430,171 @@ export default function ProviderDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Inquiry Form Modal */}
+      {showContactForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50" onClick={() => { setShowContactForm(false); setSubmitSuccess(false) }} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            {submitSuccess ? (
+              /* Success State */
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Request Received!</h2>
+                <p className="text-gray-600 mb-6">
+                  We&apos;ve received your request. We&apos;ll be in touch within 24 hours.
+                </p>
+                {!user && (
+                  <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+                    <p className="text-sm text-blue-800 mb-3">
+                      Create a free account to track your inquiry, save providers, and get faster responses.
+                    </p>
+                    <Link
+                      href="/auth/register-care-seeker"
+                      className="inline-block bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold"
+                    >
+                      Create Account
+                    </Link>
+                  </div>
+                )}
+                <button
+                  onClick={() => { setShowContactForm(false); setSubmitSuccess(false) }}
+                  className="text-gray-600 hover:text-gray-800 text-sm font-medium"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              /* Inquiry Form */
+              <>
+                <div className="px-8 py-6 border-b">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-bold text-gray-900">
+                      {provider.is_at_capacity ? 'Join Waitlist' : 'Connect With Provider'}
+                    </h2>
+                    <button onClick={() => setShowContactForm(false)} className="text-gray-400 hover:text-gray-600">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Inquiring about <span className="font-medium">{provider.business_name}</span>
+                  </p>
+                </div>
+
+                <form onSubmit={handleContactSubmit} className="p-8 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                    <input
+                      type="text"
+                      name="client_name"
+                      value={formData.client_name}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Your full name"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                      <input
+                        type="email"
+                        name="client_email"
+                        value={formData.client_email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone *</label>
+                      <input
+                        type="tel"
+                        name="client_phone"
+                        value={formData.client_phone}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="(555) 555-5555"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Waiver Type</label>
+                      <select
+                        name="waiver_type"
+                        value={formData.waiver_type}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select...</option>
+                        <option value="CADI">CADI Waiver</option>
+                        <option value="DD">DD Waiver</option>
+                        <option value="BI">Brain Injury</option>
+                        <option value="Elderly">Elderly</option>
+                        <option value="private_pay">Private Pay</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Urgency</label>
+                      <select
+                        name="urgency"
+                        value={formData.urgency}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select...</option>
+                        <option value="immediate">Immediate</option>
+                        <option value="within_week">Within a week</option>
+                        <option value="within_month">Within a month</option>
+                        <option value="flexible">Flexible</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Care Needs / Message</label>
+                    <textarea
+                      name="special_requirements"
+                      value={formData.special_requirements}
+                      onChange={handleInputChange}
+                      rows={3}
+                      className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="Tell us about the care needs, any special requirements, or questions you have..."
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+                      submitting
+                        ? 'bg-blue-400 text-white cursor-wait'
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {submitting ? 'Submitting...' : 'Submit Inquiry'}
+                  </button>
+
+                  <p className="text-xs text-gray-500 text-center">
+                    No account required. We&apos;ll respond within 24 hours.
+                  </p>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

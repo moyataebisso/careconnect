@@ -11,7 +11,8 @@ import {
   careSeekerWelcomeEmail,
   careSeekerBookingConfirmationEmail,
   adminNewProviderNotification,
-  adminNewCareSeekerNotification
+  adminNewCareSeekerNotification,
+  adminNewInquiryNotification
 } from '@/lib/email/template'
 
 const transporter = nodemailer.createTransport({
@@ -116,6 +117,17 @@ export async function POST(request: NextRequest) {
           data.email as string,
           data.careNeeds as string,
           data.urgency as string
+        )
+        break
+
+      case 'admin_new_inquiry':
+        emailContent = adminNewInquiryNotification(
+          data.clientName as string,
+          data.clientEmail as string,
+          data.clientPhone as string,
+          data.providerName as string,
+          data.urgency as string,
+          data.careNeeds as string
         )
         break
 

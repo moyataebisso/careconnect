@@ -473,3 +473,46 @@ export const adminNewCareSeekerNotification = (
     ${footer}
   `)
 })
+
+export const adminNewInquiryNotification = (
+  clientName: string,
+  clientEmail: string,
+  clientPhone: string,
+  providerName: string,
+  urgency: string,
+  careNeeds: string
+): { subject: string; html: string } => ({
+  subject: `📩 New Provider Inquiry: ${clientName} → ${providerName}`,
+  html: wrapTemplate(`
+    ${header}
+    <div class="content">
+      <h2>New Provider Inquiry</h2>
+      <p>A care seeker has submitted an inquiry through the provider detail page.</p>
+
+      <div class="highlight-box">
+        <strong>Contact Details:</strong>
+        <p style="margin-bottom: 0;">
+          <strong>Name:</strong> ${clientName}<br>
+          <strong>Email:</strong> ${clientEmail}<br>
+          <strong>Phone:</strong> ${clientPhone}
+        </p>
+      </div>
+
+      <div class="highlight-box green">
+        <strong>Inquiry Details:</strong>
+        <p style="margin-bottom: 0;">
+          <strong>Provider:</strong> ${providerName}<br>
+          <strong>Urgency:</strong> ${urgency || 'Flexible'}<br>
+          <strong>Care Needs:</strong> ${careNeeds || 'Not specified'}
+        </p>
+      </div>
+
+      <center>
+        <a href="https://www.careconnectlive.org/admin/inquiries" class="button">View in Admin Panel</a>
+      </center>
+
+      <p>Please follow up with this care seeker within 24 hours.</p>
+    </div>
+    ${footer}
+  `)
+})

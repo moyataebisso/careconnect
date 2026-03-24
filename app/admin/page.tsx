@@ -19,7 +19,9 @@ export default function AdminDashboard() {
     totalCareSeekers: 0,
     activeCareSeekers: 0,
     activeSubscriptions: 0,
-    pendingSubscriptions: 0
+    pendingSubscriptions: 0,
+    newInquiries: 0,
+    totalInquiries: 0
   })
   
   const supabase = createClient()
@@ -93,6 +95,16 @@ export default function AdminDashboard() {
         .select('*', { count: 'exact', head: true })
         .eq('subscription_status', 'pending')
 
+      // Get inquiry (referral_requests) stats
+      const { count: totalInquiries } = await supabase
+        .from('referral_requests')
+        .select('*', { count: 'exact', head: true })
+
+      const { count: newInquiries } = await supabase
+        .from('referral_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'new')
+
       // Get contact submission stats
       const { count: totalContactSubmissions } = await supabase
         .from('contact_submissions')
@@ -123,7 +135,9 @@ export default function AdminDashboard() {
         totalCareSeekers: totalCareSeekers || 0,
         activeCareSeekers: activeCareSeekers || 0,
         activeSubscriptions: activeSubscriptions || 0,
-        pendingSubscriptions: pendingSubscriptions || 0
+        pendingSubscriptions: pendingSubscriptions || 0,
+        newInquiries: newInquiries || 0,
+        totalInquiries: totalInquiries || 0
       })
     } catch (error) {
       console.error('Error loading stats:', error)
@@ -157,8 +171,8 @@ export default function AdminDashboard() {
       </div>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Stats Cards - Now 10 cards */}
-        <div className="grid grid-cols-1 md:grid-cols-5 lg:grid-cols-10 gap-4 mb-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-gray-900">{stats.totalBookings}</div>
             <div className="text-sm text-gray-600">Total Bookings</div>
@@ -199,6 +213,14 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold text-purple-600">{stats.pendingSubscriptions}</div>
             <div className="text-sm text-gray-600">Pending Subs</div>
           </div>
+          <div className="bg-orange-50 rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-orange-600">{stats.totalInquiries}</div>
+            <div className="text-sm text-gray-600">Inquiries</div>
+          </div>
+          <div className="bg-rose-50 rounded-lg shadow p-6">
+            <div className="text-2xl font-bold text-rose-600">{stats.newInquiries}</div>
+            <div className="text-sm text-gray-600">New Inquiries</div>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -220,6 +242,26 @@ export default function AdminDashboard() {
               </div>
               <h3 className="font-semibold text-lg mb-2">Contact Messages</h3>
               <p className="text-gray-600 text-sm">View contact form submissions</p>
+            </div>
+          </Link>
+
+          {/* Provider Inquiries */}
+          <Link href="/admin/inquiries" className="block">
+            <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer">
+              <div className="flex items-center justify-between mb-4">
+                <div className="bg-orange-100 rounded-lg p-3">
+                  <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                  </svg>
+                </div>
+                {stats.newInquiries > 0 && (
+                  <span className="bg-orange-500 text-white text-xs px-2 py-1 rounded-full">
+                    {stats.newInquiries} NEW
+                  </span>
+                )}
+              </div>
+              <h3 className="font-semibold text-lg mb-2">Provider Inquiries</h3>
+              <p className="text-gray-600 text-sm">View care seeker connection requests</p>
             </div>
           </Link>
 
