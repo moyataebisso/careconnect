@@ -13,6 +13,8 @@ export default async function DashboardPage() {
     redirect('/login')
   }
 
+  try {
+
   // Get user's provider listing with subscription plan details
   // Try with subscription_plans join first, fall back to plain query if join fails (406)
   let provider: Record<string, any> | null = null
@@ -104,6 +106,55 @@ export default async function DashboardPage() {
             </Link>
             <Link href="/" className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm font-semibold">
               Go Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Subscription status gate — pending and expired get dedicated pages
+  if (provider.subscription_status === 'pending') {
+    return (
+      <div className="container mx-auto px-4 pt-8">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+        <div className="rounded-lg p-6 mb-6 bg-amber-50 border-2 border-amber-300">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-amber-800 mb-1">Payment Pending</h2>
+              <p className="text-sm text-amber-700">
+                Your account is pending payment. Subscribe to activate your listing.
+              </p>
+            </div>
+            <Link
+              href="/subscribe"
+              className="bg-amber-600 text-white px-5 py-2 rounded-lg hover:bg-amber-700 text-sm font-semibold whitespace-nowrap ml-4"
+            >
+              Subscribe Now
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (provider.subscription_status === 'expired') {
+    return (
+      <div className="container mx-auto px-4 pt-8">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+        <div className="rounded-lg p-6 mb-6 bg-red-50 border-2 border-red-300">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-red-800 mb-1">Subscription Expired</h2>
+              <p className="text-sm text-red-700">
+                Your subscription has expired. Renew to regain access.
+              </p>
+            </div>
+            <Link
+              href="/billing"
+              className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 text-sm font-semibold whitespace-nowrap ml-4"
+            >
+              Renew Subscription
             </Link>
           </div>
         </div>
@@ -375,4 +426,27 @@ export default async function DashboardPage() {
       </div>
     </>
   )
+
+  } catch (error) {
+    // Top-level catch prevents blank render from any unexpected error
+    return (
+      <div className="container mx-auto px-4 pt-8">
+        <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+        <div className="rounded-lg p-6 mb-6 bg-red-50 border-2 border-red-300">
+          <h2 className="text-xl font-bold text-red-800 mb-2">Something Went Wrong</h2>
+          <p className="text-sm text-red-700 mb-4">
+            We encountered an unexpected error loading your dashboard. Please try refreshing the page.
+          </p>
+          <div className="flex gap-3">
+            <Link href="/dashboard" className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 text-sm font-semibold">
+              Refresh Page
+            </Link>
+            <Link href="/" className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 text-sm font-semibold">
+              Go Home
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 }
