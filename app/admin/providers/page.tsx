@@ -103,11 +103,20 @@ export default function AdminProvidersPage() {
 
   const updateProviderStatus = async (providerId: string, newStatus: string) => {
     try {
-      // Find the provider to get their details
       const provider = providers.find(p => p.id === providerId)
       if (!provider) {
         alert('Provider not found')
         return
+      }
+
+      if (newStatus === 'active') {
+        const hasPayment = provider.subscription_status === 'active'
+        if (!hasPayment) {
+          const proceed = confirm(
+            `⚠️ PAYMENT WARNING\n\n${provider.business_name} has NOT completed payment.\nSubscription status: "${provider.subscription_status || 'none'}"\n\nApproving without payment gives them full dashboard access for free.\n\nClick OK to approve anyway, or Cancel to stop.`
+          )
+          if (!proceed) return
+        }
       }
 
       interface ProviderUpdate {
@@ -121,7 +130,6 @@ export default function AdminProvidersPage() {
         last_updated: new Date().toISOString()
       }
 
-      // If approving, also verify (subscription stays as pending until they pay)
       if (newStatus === 'active') {
         updates.verified_245d = true
       }
@@ -133,12 +141,11 @@ export default function AdminProvidersPage() {
 
       if (error) throw error
 
-      // Send approval email if activating
       if (newStatus === 'active') {
         sendEmail('provider_approved', provider.contact_email, {
           providerName: provider.contact_person,
           businessName: provider.business_name,
-          trialEndDate: '' // Not used anymore but kept for API compatibility
+          trialEndDate: ''
         })
       }
 
@@ -457,6 +464,9 @@ export default function AdminProvidersPage() {
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${subscriptionStatus.color}`}>
                         {subscriptionStatus.text}
                       </span>
+                      {provider.status === 'pending' && provider.subscription_status !== 'active' && (
+                        <div className="mt-1 text-xs text-red-600 font-medium">⚠️ No payment on file</div>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
