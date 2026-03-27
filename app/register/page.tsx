@@ -848,7 +848,7 @@ export default function RegisterPage() {
                       Processing...
                     </span>
                   ) : (
-                    'Complete Registration & Pay $99.99'
+                    'Complete Registration & Pay Now'
                   )}
                 </button>
               )}
