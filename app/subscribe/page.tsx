@@ -163,13 +163,11 @@ export default function SubscribePage() {
             List your facility and connect with care seekers
           </p>
 
-          {/* Email verification reminder for freshly registered providers */}
+          {/* Banner for freshly registered providers - payment-first flow */}
           {justRegistered && (
             <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 max-w-lg mx-auto">
               <p className="text-amber-800 text-sm">
-                <strong>Almost there!</strong> We sent a verification email to{' '}
-                <strong>{registeredProvider?.email}</strong>. Please verify your email after
-                subscribing so you can log in to your dashboard.
+                <strong>Almost there!</strong> Complete payment to continue setting up your provider profile.
               </p>
             </div>
           )}
