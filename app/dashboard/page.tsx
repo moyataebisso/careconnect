@@ -278,24 +278,46 @@ export default async function DashboardPage() {
           </div>
         )}
       
+      {/* Complete Your Profile CTA - shown when payment is done but profile is still incomplete */}
+      {provider.status === 'incomplete' && (
+        <div className="rounded-lg p-6 mb-6 bg-blue-50 border-2 border-blue-300">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-xl font-bold text-blue-800 mb-1">Complete Your Profile</h2>
+              <p className="text-sm text-blue-700">
+                Your payment is confirmed! Finish setting up your profile to make your listing live and start receiving referrals.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/profile?welcome=true"
+              className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 text-sm font-semibold whitespace-nowrap ml-4"
+            >
+              Complete Your Profile
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <h2 className="text-xl font-semibold mb-2">
           Welcome back, {profile?.full_name || provider?.contact_person || provider?.contact_name || 'Provider'}!
         </h2>
         <p className="text-gray-600">Manage your listing and view referral requests from here.</p>
-        
+
         <div className="mt-4 p-4 bg-blue-50 rounded-lg">
           <p className="text-sm text-blue-800">
             <strong>Your Listing Status:</strong> {' '}
             <span className={`font-semibold ${
-              provider.status === 'active' && subscriptionStatus.hasAccess ? 'text-green-600' : 
-              provider.status === 'pending' ? 'text-yellow-600' : 
+              provider.status === 'active' && subscriptionStatus.hasAccess ? 'text-green-600' :
+              provider.status === 'pending' ? 'text-yellow-600' :
+              provider.status === 'incomplete' ? 'text-blue-600' :
               'text-gray-600'
             }`}>
               {!subscriptionStatus.hasAccess ? '🔒 Hidden (No Subscription)' :
-               provider.status === 'active' ? 'Active & Visible ✓' : 
-               provider.status === 'pending' ? 'Pending Approval' : 
+               provider.status === 'incomplete' ? '⚠️ Setup Incomplete' :
+               provider.status === 'active' ? 'Active & Visible ✓' :
+               provider.status === 'pending' ? 'Pending Approval' :
                provider.status}
             </span>
           </p>

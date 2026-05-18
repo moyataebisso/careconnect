@@ -74,26 +74,25 @@ export default function RegisterPage() {
     agree_to_terms: false
   })
 
-  // Resume-detection: route the user based on their current provider row state
+  // Route logged-in users away from the registration page based on their provider row state
   useEffect(() => {
-    let cancelled = false
-
     const checkResumeState = async () => {
       const { data: { user } } = await supabase.auth.getUser()
 
       if (!user) {
-        if (!cancelled) setResumeChecking(false)
+        setResumeChecking(false)
         return
       }
 
       const { data: provider } = await supabase
         .from('providers')
-        .select('id, status, subscription_status, business_email')
+        .select('id, status')
         .eq('user_id', user.id)
         .single()
 
       if (!provider) {
-        if (!cancelled) setResumeChecking(false)
+        // Logged in but no provider row yet — fresh start
+        setResumeChecking(false)
         return
       }
 
@@ -102,61 +101,16 @@ export default function RegisterPage() {
         return
       }
 
-      if (provider.status === 'incomplete' && provider.subscription_status === 'active') {
-        if (cancelled) return
-        setExistingProviderId(provider.id)
-        setFormData(prev => ({ ...prev, email: user.email || prev.email }))
-        setStep(2)
-        setResumeChecking(false)
+      if (provider.status === 'incomplete') {
+        // They've paid (or are mid-flow) — finish the profile on the dashboard edit page
+        router.push('/dashboard/profile?welcome=true')
         return
       }
 
-      if (provider.status === 'incomplete' && provider.subscription_status === 'pending' && paymentSuccess) {
-        if (cancelled) return
-        setResumeMessage('Confirming your payment...')
-        let attempts = 0
-        const poll = setInterval(async () => {
-          attempts++
-          const { data: refreshed } = await supabase
-            .from('providers')
-            .select('subscription_status')
-            .eq('id', provider.id)
-            .single()
-
-          if (cancelled) {
-            clearInterval(poll)
-            return
-          }
-
-          if (refreshed?.subscription_status === 'active') {
-            clearInterval(poll)
-            setExistingProviderId(provider.id)
-            setFormData(prev => ({ ...prev, email: user.email || prev.email }))
-            setStep(2)
-            setResumeMessage(null)
-            setResumeChecking(false)
-          } else if (attempts >= 5) {
-            clearInterval(poll)
-            setResumeMessage('Payment is still processing. Please refresh in a moment.')
-            setResumeChecking(false)
-          }
-        }, 2000)
-        return
-      }
-
-      if (provider.status === 'incomplete' && provider.subscription_status === 'pending') {
-        router.push('/subscribe')
-        return
-      }
-
-      if (!cancelled) setResumeChecking(false)
+      setResumeChecking(false)
     }
 
     checkResumeState()
-
-    return () => {
-      cancelled = true
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 

@@ -215,7 +215,7 @@ export async function POST(request: Request) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/auth/register?payment_success=true&session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile?welcome=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe?canceled=true`,
       subscription_data: {
         metadata: {
