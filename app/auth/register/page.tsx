@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { ServiceType, WaiverType } from '@/lib/types/careconnect'
@@ -29,10 +29,15 @@ const WAIVER_TYPES = {
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const paymentSuccess = searchParams.get('payment_success') === 'true'
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [step, setStep] = useState(1)
-  
+  const [existingProviderId, setExistingProviderId] = useState<string | null>(null)
+  const [resumeChecking, setResumeChecking] = useState(true)
+  const [resumeMessage, setResumeMessage] = useState<string | null>(null)
+
   const supabase = createClient()
 
   const [formData, setFormData] = useState({
@@ -68,6 +73,92 @@ export default function RegisterPage() {
     // Agreement
     agree_to_terms: false
   })
+
+  // Resume-detection: route the user based on their current provider row state
+  useEffect(() => {
+    let cancelled = false
+
+    const checkResumeState = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        if (!cancelled) setResumeChecking(false)
+        return
+      }
+
+      const { data: provider } = await supabase
+        .from('providers')
+        .select('id, status, subscription_status, business_email')
+        .eq('user_id', user.id)
+        .single()
+
+      if (!provider) {
+        if (!cancelled) setResumeChecking(false)
+        return
+      }
+
+      if (provider.status === 'active') {
+        router.push('/dashboard')
+        return
+      }
+
+      if (provider.status === 'incomplete' && provider.subscription_status === 'active') {
+        if (cancelled) return
+        setExistingProviderId(provider.id)
+        setFormData(prev => ({ ...prev, email: user.email || prev.email }))
+        setStep(2)
+        setResumeChecking(false)
+        return
+      }
+
+      if (provider.status === 'incomplete' && provider.subscription_status === 'pending' && paymentSuccess) {
+        if (cancelled) return
+        setResumeMessage('Confirming your payment...')
+        let attempts = 0
+        const poll = setInterval(async () => {
+          attempts++
+          const { data: refreshed } = await supabase
+            .from('providers')
+            .select('subscription_status')
+            .eq('id', provider.id)
+            .single()
+
+          if (cancelled) {
+            clearInterval(poll)
+            return
+          }
+
+          if (refreshed?.subscription_status === 'active') {
+            clearInterval(poll)
+            setExistingProviderId(provider.id)
+            setFormData(prev => ({ ...prev, email: user.email || prev.email }))
+            setStep(2)
+            setResumeMessage(null)
+            setResumeChecking(false)
+          } else if (attempts >= 5) {
+            clearInterval(poll)
+            setResumeMessage('Payment is still processing. Please refresh in a moment.')
+            setResumeChecking(false)
+          }
+        }, 2000)
+        return
+      }
+
+      if (provider.status === 'incomplete' && provider.subscription_status === 'pending') {
+        router.push('/subscribe')
+        return
+      }
+
+      if (!cancelled) setResumeChecking(false)
+    }
+
+    checkResumeState()
+
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -168,17 +259,191 @@ export default function RegisterPage() {
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+  // Step 1: create auth user + skeleton provider row, then redirect to /subscribe for payment
+  const handleStep1AndPay = async () => {
     if (!validateStep()) return
-    
+
     setLoading(true)
     setError(null)
 
     try {
-      // 1. Create auth user
-      console.log('Creating auth user with email:', formData.email)
+      console.log('Step 1: creating auth user with email:', formData.email)
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+      })
+
+      if (authError) {
+        console.error('Auth error details:', authError)
+        if (authError.message?.includes('already registered') ||
+            authError.message?.includes('duplicate') ||
+            authError.message?.includes('already exists')) {
+          throw new Error('This email is already registered. Please login or use a different email.')
+        }
+        throw new Error(authError.message)
+      }
+
+      if (!authData.user) {
+        throw new Error('No user returned from signup')
+      }
+
+      console.log('User created successfully:', authData.user.id)
+
+      const skeleton = {
+        user_id: authData.user.id,
+        contact_email: formData.email,
+        business_email: formData.email,
+        business_name: 'Pending Setup',
+        address: 'TBD',
+        city: 'TBD',
+        zip_code: '00000',
+        state: 'MN',
+        status: 'incomplete',
+        subscription_status: 'pending',
+        trial_ends_at: null,
+        verified_245d: false,
+      }
+
+      const { data: providerData, error: providerError } = await supabase
+        .from('providers')
+        .insert(skeleton)
+        .select()
+
+      if (providerError) {
+        console.error('Skeleton provider insert error:', providerError)
+        if (providerError.code === '23505' && providerError.message.includes('user_id')) {
+          throw new Error('A provider account already exists for this user.')
+        }
+        throw new Error(`Provider creation failed: ${providerError.message}`)
+      }
+
+      console.log('Skeleton provider created:', providerData)
+
+      // Try-update profiles row (same pattern as before)
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          is_provider: true
+        })
+        .eq('id', authData.user.id)
+
+      if (profileError) {
+        console.log('Profile update skipped (table may not exist):', profileError)
+      }
+
+      if (providerData?.[0]?.id) {
+        sessionStorage.setItem('registered_provider', JSON.stringify({
+          provider_id: providerData[0].id,
+          email: formData.email,
+          business_name: 'Pending Setup',
+        }))
+      }
+
+      console.log('Skeleton created. Redirecting to /subscribe for payment...')
+      router.push('/subscribe')
+    } catch (error) {
+      console.error('Step 1 error:', error)
+      if (error instanceof Error) {
+        setError(error.message)
+      } else if (typeof error === 'string') {
+        setError(error)
+      } else {
+        setError('Registration failed. Please check the console for details.')
+      }
+      setLoading(false)
+    }
+    // Don't unset loading on success — we're redirecting
+  }
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!validateStep()) return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Resume flow: UPDATE the existing skeleton row created in step 1
+      if (existingProviderId) {
+        console.log('Final submit: updating provider row', existingProviderId)
+
+        const updateData = {
+          business_name: formData.business_name,
+          business_email: formData.email,
+          license_number: formData.license_number,
+          contact_person: formData.contact_person,
+          contact_email: formData.email,
+          contact_phone: formData.contact_phone,
+          address: formData.address,
+          city: formData.city,
+          state: 'MN',
+          zip_code: formData.zip_code,
+          service_types: formData.service_types.length > 0 ? formData.service_types : [],
+          accepted_waivers: formData.accepted_waivers.length > 0 ? formData.accepted_waivers : [],
+          total_capacity: parseInt(formData.total_capacity),
+          current_capacity: parseInt(formData.current_capacity),
+          description: formData.description || null,
+          amenities: formData.amenities ? formData.amenities.split(',').map(a => a.trim()) : [],
+          languages_spoken: formData.languages_spoken ? formData.languages_spoken.split(',').map(l => l.trim()) : [],
+          years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
+          primary_photo_url: formData.primary_photo_url || null,
+          referral_agreement_signed: formData.agree_to_terms,
+          status: 'active',
+          verified_245d: true,
+        }
+
+        const { data: updateResult, error: updateError } = await supabase
+          .from('providers')
+          .update(updateData)
+          .eq('id', existingProviderId)
+          .select()
+
+        if (updateError) {
+          console.error('Provider update error:', updateError)
+          throw new Error(`Update failed: ${updateError.message}`)
+        }
+
+        console.log('Provider activated:', updateResult)
+
+        // Keep profiles row's name in sync
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({
+              is_provider: true,
+              full_name: formData.contact_person
+            })
+            .eq('id', user.id)
+          if (profileError) {
+            console.log('Profile update skipped:', profileError)
+          }
+        }
+
+        // Welcome email to provider (non-blocking)
+        sendEmail('provider_welcome', formData.email, {
+          providerName: formData.contact_person,
+          businessName: formData.business_name
+        })
+
+        // Admin notification (non-blocking)
+        const adminEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'careconnectmkting@gmail.com'
+        sendEmail('admin_new_provider', adminEmail, {
+          providerName: formData.contact_person,
+          businessName: formData.business_name,
+          email: formData.email,
+          phone: formData.contact_phone,
+          licenseNumber: formData.license_number
+        })
+
+        router.push('/dashboard?registration_complete=true')
+        return
+      }
+
+      // Fallback: original INSERT path (shouldn't be reached in the new flow,
+      // but kept as a safety net in case someone reaches step 5 without an existingProviderId).
+      console.log('Fallback: creating auth user with email:', formData.email)
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
@@ -195,8 +460,6 @@ export default function RegisterPage() {
 
       console.log('User created successfully:', authData.user.id)
 
-      // 2. Create provider record
-      console.log('Creating provider record...')
       const { data: providerData, error: providerError } = await supabase
         .from('providers')
         .insert({
@@ -233,9 +496,6 @@ export default function RegisterPage() {
         throw new Error(`Provider creation failed: ${providerError.message}`)
       }
 
-      console.log('Provider created:', providerData)
-
-      // 3. Update user profile if profiles table exists
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
@@ -248,13 +508,11 @@ export default function RegisterPage() {
         console.log('Profile update skipped (table may not exist):', profileError)
       }
 
-      // 4. Send welcome email to provider (non-blocking)
       sendEmail('provider_welcome', formData.email, {
         providerName: formData.contact_person,
         businessName: formData.business_name
       })
 
-      // 5. Send notification to admin (non-blocking)
       const adminEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'careconnectmkting@gmail.com'
       sendEmail('admin_new_provider', adminEmail, {
         providerName: formData.contact_person,
@@ -264,7 +522,6 @@ export default function RegisterPage() {
         licenseNumber: formData.license_number
       })
 
-      // Save registration info for the subscribe page (in case email isn't verified yet)
       if (providerData?.[0]?.id) {
         sessionStorage.setItem('registered_provider', JSON.stringify({
           provider_id: providerData[0].id,
@@ -273,10 +530,7 @@ export default function RegisterPage() {
         }))
       }
 
-      // Redirect to subscription page for payment
-      console.log('Registration complete. Redirecting to subscription page...')
       router.push('/subscribe')
-      
     } catch (error) {
       console.error('Full registration error:', error)
       if (error instanceof Error) {
@@ -291,6 +545,17 @@ export default function RegisterPage() {
     }
   }
 
+  if (resumeChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          {resumeMessage && <p className="text-gray-600">{resumeMessage}</p>}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="container mx-auto px-4 max-w-2xl">
@@ -303,21 +568,30 @@ export default function RegisterPage() {
         {/* Progress Bar */}
         <div className="mb-8">
           <div className="flex justify-between items-center">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex-1">
-                <div className="relative">
-                  <div className={`h-2 ${i < step ? 'bg-blue-600' : i === step ? 'bg-blue-400' : 'bg-gray-300'} ${i < 5 ? 'mr-1' : ''}`} />
-                  {i < 5 && <div className="absolute right-0 top-0 h-2 w-1 bg-white" />}
+            {[1, 2, 3, 4, 5].map((i) => {
+              const stepDone = i < step || (i === 1 && existingProviderId !== null)
+              const stepActive = i === step
+              return (
+                <div key={i} className="flex-1">
+                  <div className="relative">
+                    <div className={`h-2 ${stepDone ? 'bg-blue-600' : stepActive ? 'bg-blue-400' : 'bg-gray-300'} ${i < 5 ? 'mr-1' : ''}`} />
+                    {i < 5 && <div className="absolute right-0 top-0 h-2 w-1 bg-white" />}
+                  </div>
+                  <p className="text-xs mt-1 text-center flex items-center justify-center gap-1">
+                    {i === 1 && existingProviderId && (
+                      <svg className="w-3 h-3 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    )}
+                    {i === 1 && 'Account'}
+                    {i === 2 && 'Business'}
+                    {i === 3 && 'Location'}
+                    {i === 4 && 'Services'}
+                    {i === 5 && 'Review'}
+                  </p>
                 </div>
-                <p className="text-xs mt-1 text-center">
-                  {i === 1 && 'Account'}
-                  {i === 2 && 'Business'}
-                  {i === 3 && 'Location'}
-                  {i === 4 && 'Services'}
-                  {i === 5 && 'Review'}
-                </p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 
@@ -329,7 +603,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleFinalSubmit}>
             {/* Step 1: Account Information */}
             {step === 1 && (
               <div className="space-y-4">
@@ -765,7 +1039,7 @@ export default function RegisterPage() {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8">
-              {step > 1 ? (
+              {step > 1 && !(existingProviderId && step === 2) ? (
                 <button
                   type="button"
                   onClick={prevStep}
@@ -782,7 +1056,16 @@ export default function RegisterPage() {
                 </Link>
               )}
 
-              {step < 5 ? (
+              {step === 1 && !existingProviderId ? (
+                <button
+                  type="button"
+                  onClick={handleStep1AndPay}
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loading ? 'Creating Account...' : 'Continue to Payment'}
+                </button>
+              ) : step < 5 ? (
                 <button
                   type="button"
                   onClick={nextStep}
@@ -796,7 +1079,7 @@ export default function RegisterPage() {
                   disabled={loading}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
-                  {loading ? 'Creating Account...' : 'Complete Registration'}
+                  {loading ? 'Submitting...' : 'Complete Registration'}
                 </button>
               )}
             </div>

@@ -294,8 +294,8 @@ export default function HomePage() {
         <div className="container mx-auto px-4 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">Are you a 245D licensed provider?</h2>
           <p className="text-xl mb-8">Join CareConnect to receive qualified waiver-based referrals</p>
-          <Link 
-            href="/register" 
+          <Link
+            href="/auth/register"
             className="inline-block bg-[#EDE4D3] text-[#5C4A32] px-8 py-3 rounded-lg font-semibold hover:bg-[#E0D4C0] transition-all hover:shadow-lg"
           >
             Get Started Today
