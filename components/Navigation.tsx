@@ -55,7 +55,7 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
         .select('role')
         .eq('user_id', userId)
         .single()
-      
+
       if (roleData) {
         setUserRole(roleData.role as 'admin' | 'provider' | 'care_seeker')
         return
@@ -67,7 +67,7 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
         .select('role')
         .eq('user_id', userId)
         .single()
-      
+
       if (adminUser) {
         setUserRole('admin')
         return
@@ -79,7 +79,7 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
         .select('id')
         .eq('user_id', userId)
         .single()
-      
+
       if (provider) {
         setUserRole('provider')
       }
@@ -91,9 +91,9 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
   const isAdmin = userRole === 'admin'
 
   return (
-    <>
+    <div className="hidden md:flex items-center gap-10">
       {/* Main Navigation */}
-      <div className="hidden md:flex items-center space-x-8">
+      <div className="flex items-center gap-8">
         <Link href="/browse" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium transition-colors">
           Browse Providers
         </Link>
@@ -114,7 +114,7 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
       </div>
 
       {/* Auth Buttons */}
-      <div className="hidden md:flex items-center space-x-4">
+      <div className="flex items-center gap-6">
         {user ? (
           <>
             {/* Show different options based on user role */}
@@ -157,17 +157,17 @@ export default function Navigation({ initialUser, initialRole }: NavigationProps
             <Link href="/auth/login" className="text-[#5C4A32] hover:text-[#3D2E1F] font-medium">
               Sign In
             </Link>
-            <div className="flex items-center space-x-2">
-              <Link href="/auth/register-care-seeker" className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm">
+            <div className="flex items-center gap-3">
+              <Link href="/auth/register-care-seeker" className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
                 Find Care
               </Link>
-              <Link href="/auth/register" className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+              <Link href="/auth/register" className="px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
                 List Your Facility
               </Link>
             </div>
           </>
         )}
       </div>
-    </>
+    </div>
   )
 }

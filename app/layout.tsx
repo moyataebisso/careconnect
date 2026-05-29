@@ -68,8 +68,8 @@ export default async function RootLayout({
       <body className={inter.className}>
         {/* Navigation - Tan/Brown Background */}
         <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: '#EDE4D3' }}>
-          <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center h-16">
+          <div className="w-full px-6">
+            <div className="flex justify-between items-center h-20 gap-6">
               {/* Logo - Keep blue */}
               <Link href="/" className="flex items-center">
                 <div className="flex items-center">
