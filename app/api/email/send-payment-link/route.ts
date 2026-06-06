@@ -112,47 +112,17 @@ export async function POST(request: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.careconnectlive.org'
     const plainLink = `${appUrl}/subscribe?provider_id=${encodeURIComponent(provider.id)}&email=${encodeURIComponent(provider.contact_email)}`
 
-    // Try to issue a Supabase magic link so the recipient is auto-logged-in.
-    // If generation fails for any reason, we degrade gracefully to plainLink.
-    let magicLink: string | null = null
-    try {
-      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-        type: 'magiclink',
-        email: provider.contact_email,
-        options: {
-          redirectTo: `${appUrl}/auth/callback?next=${encodeURIComponent('/subscribe')}`
-        }
-      })
-
-      if (linkError) {
-        console.error('Magic link generation failed:', linkError)
-      } else {
-        magicLink = linkData?.properties?.action_link ?? null
-      }
-    } catch (linkErr) {
-      console.error('Magic link generation threw:', linkErr)
-    }
-
     const greetingName = provider.contact_person || 'Provider'
     const businessLine = provider.business_name
       ? `<p>We noticed your registration for <strong>${provider.business_name}</strong> on CareConnect is almost complete, but payment hasn't been finalized yet.</p>`
       : `<p>We noticed your CareConnect registration is almost complete, but payment hasn't been finalized yet.</p>`
 
-    const ctaBlock = magicLink
-      ? `
-        <p>To activate your provider listing and start receiving referral requests, click the secure button below — it will log you in automatically and take you straight to checkout.</p>
+    const ctaBlock = `
+        <p>To activate your provider listing and start receiving referral requests, click the secure button below to head to checkout and complete your subscription.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${magicLink}" class="button">Log In &amp; Complete Payment</a>
+          <a href="${plainLink}" class="button">Complete Payment &amp; Continue</a>
         </div>
-        <p style="font-size: 14px; color: #64748b;">If it doesn't work or has expired, use this link instead:</p>
-        <p class="fallback-url">${plainLink}</p>
-      `
-      : `
-        <p>To activate your provider listing and start receiving referral requests, please complete your subscription payment using the secure link below.</p>
-        <div style="text-align: center; margin: 32px 0;">
-          <a href="${plainLink}" class="button">Complete Payment</a>
-        </div>
-        <p style="font-size: 14px; color: #64748b;">If the button above doesn't work, copy and paste this URL into your browser:</p>
+        <p style="font-size: 14px; color: #64748b;">If the button doesn't work, copy and paste this link into your browser:</p>
         <p class="fallback-url">${plainLink}</p>
       `
 
@@ -179,8 +149,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      messageId: info.messageId,
-      usedMagicLink: magicLink !== null
+      messageId: info.messageId
     })
   } catch (error) {
     console.error('Error sending payment link email:', error)
