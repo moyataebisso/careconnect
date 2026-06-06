@@ -36,6 +36,9 @@ export default function AdminProvidersPage() {
   const [emailBody, setEmailBody] = useState('')
   const [sendingCustomEmail, setSendingCustomEmail] = useState(false)
 
+  // Payment link send state — tracks which provider's link is currently being sent
+  const [sendingPaymentLinkId, setSendingPaymentLinkId] = useState<string | null>(null)
+
   const supabase = createClient()
 
   useEffect(() => {
@@ -173,6 +176,41 @@ export default function AdminProvidersPage() {
     } catch (error) {
       console.error('Error deleting provider:', error)
       alert('Failed to delete provider')
+    }
+  }
+
+  // True for any provider whose subscription is not active (pending, expired, or null)
+  const needsPayment = (provider: Provider): boolean => {
+    return provider.subscription_status !== 'active'
+  }
+
+  // Email the provider a secure link to resume their unauthenticated checkout
+  const sendPaymentLink = async (provider: Provider) => {
+    const confirmed = confirm(
+      `Send a payment link to ${provider.contact_person || provider.business_name} at ${provider.contact_email}?`
+    )
+    if (!confirmed) return
+
+    setSendingPaymentLinkId(provider.id)
+    try {
+      const response = await fetch('/api/email/send-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider_id: provider.id })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        alert(`Payment link sent successfully to ${provider.contact_email}`)
+      } else {
+        alert(`Failed to send payment link: ${data.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Error sending payment link:', error)
+      alert('Failed to send payment link')
+    } finally {
+      setSendingPaymentLinkId(null)
     }
   }
 
@@ -514,6 +552,15 @@ export default function AdminProvidersPage() {
                             className="text-green-600 hover:text-green-800 text-sm font-medium"
                           >
                             Reactivate
+                          </button>
+                        )}
+                        {needsPayment(provider) && (
+                          <button
+                            onClick={() => sendPaymentLink(provider)}
+                            disabled={sendingPaymentLinkId === provider.id}
+                            className="text-amber-600 hover:text-amber-800 text-sm font-medium disabled:opacity-50"
+                          >
+                            {sendingPaymentLinkId === provider.id ? 'Sending...' : 'Send Payment Link'}
                           </button>
                         )}
                         <button

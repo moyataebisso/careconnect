@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { checkProviderSubscription, SubscriptionCheck } from '@/lib/subscription/middleware'
 import Link from 'next/link'
@@ -14,8 +14,9 @@ interface RegisteredProvider {
   business_name: string
 }
 
-export default function SubscribePage() {
+function SubscribePageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [processingPayment, setProcessingPayment] = useState(false)
   const [selectedPlan, setSelectedPlan] = useState<'basic' | 'premium'>('basic')
@@ -59,17 +60,31 @@ export default function SubscribePage() {
           router.push('/providers')
         }
       } else {
-        // Not authenticated — check if they just registered
-        const stored = sessionStorage.getItem('registered_provider')
-        if (stored) {
-          const parsed: RegisteredProvider = JSON.parse(stored)
-          setRegisteredProvider(parsed)
+        // Not authenticated — first check URL params (admin-sent payment link),
+        // then fall back to sessionStorage (just-registered flow)
+        const urlProviderId = searchParams.get('provider_id')
+        const urlEmail = searchParams.get('email')
+
+        if (urlProviderId && urlEmail) {
+          setRegisteredProvider({
+            provider_id: urlProviderId,
+            email: urlEmail,
+            business_name: ''
+          })
           setIsProvider(true)
           setJustRegistered(true)
         } else {
-          // No session and no registration data — send to login
-          router.push('/auth/login')
-          return
+          const stored = sessionStorage.getItem('registered_provider')
+          if (stored) {
+            const parsed: RegisteredProvider = JSON.parse(stored)
+            setRegisteredProvider(parsed)
+            setIsProvider(true)
+            setJustRegistered(true)
+          } else {
+            // No session and no registration data — send to login
+            router.push('/auth/login')
+            return
+          }
         }
       }
     } catch (error) {
@@ -339,5 +354,19 @@ export default function SubscribePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SubscribePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      }
+    >
+      <SubscribePageContent />
+    </Suspense>
   )
 }
