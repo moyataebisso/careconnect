@@ -81,16 +81,40 @@ export async function POST(request: NextRequest) {
         
         const periodEnd = new Date(subData.current_period_end * 1000).toISOString()
         const startDate = new Date(subData.created * 1000).toISOString()
-        
+
+        // Fetch current provider status so we can safely auto-activate pending providers.
+        // Only providers already in 'pending' get promoted — 'incomplete' providers must
+        // finish their profile before going live.
+        const { data: existingProvider } = await supabase
+          .from('providers')
+          .select('status')
+          .eq('id', providerId)
+          .single()
+
+        interface ProviderSubscriptionUpdate {
+          stripe_subscription_id: string
+          subscription_status: string
+          subscription_plan_id: string | null
+          subscription_start_date: string
+          subscription_end_date: string
+          status?: string
+        }
+
+        const updateObj: ProviderSubscriptionUpdate = {
+          stripe_subscription_id: subData.id,
+          subscription_status: subData.status === 'trialing' ? 'pending' : 'active',
+          subscription_plan_id: plan?.id || null,
+          subscription_start_date: startDate,
+          subscription_end_date: periodEnd,
+        }
+
+        if (existingProvider?.status === 'pending' && subData.status !== 'trialing') {
+          updateObj.status = 'active'
+        }
+
         const { error: updateError } = await supabase
           .from('providers')
-          .update({
-            stripe_subscription_id: subData.id,
-            subscription_status: subData.status === 'trialing' ? 'pending' : 'active',
-            subscription_plan_id: plan?.id || null,
-            subscription_start_date: startDate,
-            subscription_end_date: periodEnd,
-          })
+          .update(updateObj)
           .eq('id', providerId)
         
         if (updateError) {
