@@ -18,13 +18,12 @@ export default async function BrowseProvidersPage() {
     const supabase = await createClient()
 
     // Try full query with all filters first
-    let data: any[] | null = null
+    let data: Record<string, unknown>[] | null = null
 
     const { data: fullData, error: fullError } = await supabase
       .from('providers')
       .select('*')
       .eq('status', 'active')
-      .eq('verified_245d', true)
       .order('is_featured', { ascending: false })
       .order('created_at', { ascending: false })
 
@@ -45,27 +44,27 @@ export default async function BrowseProvidersPage() {
       data = fullData
     }
 
-    providers = (data || []).map(provider => ({
+    providers = (data || []).map((provider: Record<string, unknown>) => ({
       ...provider,
       service_types: parseArray(provider.service_types),
       accepted_waivers: parseArray(provider.accepted_waivers),
       languages_spoken: parseArray(provider.languages_spoken),
       photo_urls: parseArray(provider.photo_urls),
-      status: provider.status || 'active',
-      is_at_capacity: provider.is_at_capacity || false,
-      is_ghosted: provider.is_ghosted || false,
-      referral_agreement_signed: provider.referral_agreement_signed || false,
-      verified_245d: provider.verified_245d || false,
+      status: (provider.status as string) || 'active',
+      is_at_capacity: (provider.is_at_capacity as boolean) || false,
+      is_ghosted: (provider.is_ghosted as boolean) || false,
+      referral_agreement_signed: (provider.referral_agreement_signed as boolean) || false,
+      verified_245d: (provider.verified_245d as boolean) || false,
       total_capacity: Number(provider.total_capacity) || 0,
       current_capacity: Number(provider.current_capacity) || 0,
-      created_at: provider.created_at || new Date().toISOString(),
-      updated_at: provider.updated_at || new Date().toISOString(),
+      created_at: (provider.created_at as string) || new Date().toISOString(),
+      updated_at: (provider.updated_at as string) || new Date().toISOString(),
       // Strip contact info — server doesn't know if user is logged in;
       // the client component re-checks auth and conditionally shows contact fields
       contact_phone: undefined,
       contact_email: undefined,
       contact_person: undefined,
-    }))
+    })) as Provider[]
   } catch (error) {
     console.error('Failed to load providers:', error)
   }
