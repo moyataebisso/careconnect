@@ -21,6 +21,7 @@ interface Provider {
   created_at: string
   user_id: string
   subscription_status: string | null
+  stripe_customer_id: string | null
 }
 
 export default function AdminProvidersPage() {
@@ -38,6 +39,7 @@ export default function AdminProvidersPage() {
 
   // Payment link send state — tracks which provider's link is currently being sent
   const [sendingPaymentLinkId, setSendingPaymentLinkId] = useState<string | null>(null)
+  const [syncingStripeId, setSyncingStripeId] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -211,6 +213,29 @@ export default function AdminProvidersPage() {
       alert('Failed to send payment link')
     } finally {
       setSendingPaymentLinkId(null)
+    }
+  }
+
+  const syncStripe = async (provider: Provider) => {
+    setSyncingStripeId(provider.id)
+    try {
+      const response = await fetch('/api/admin/sync-stripe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerId: provider.id })
+      })
+      const data = await response.json()
+      if (data.success) {
+        await loadProviders()
+        alert(`Synced! Stripe: ${data.stripeStatus} → DB: ${data.dbStatus}`)
+      } else {
+        alert(`Sync failed: ${data.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Sync error:', error)
+      alert('Sync failed')
+    } finally {
+      setSyncingStripeId(null)
     }
   }
 
@@ -561,6 +586,15 @@ export default function AdminProvidersPage() {
                             className="text-amber-600 hover:text-amber-800 text-sm font-medium disabled:opacity-50"
                           >
                             {sendingPaymentLinkId === provider.id ? 'Sending...' : 'Send Payment Link'}
+                          </button>
+                        )}
+                        {provider.stripe_customer_id && (
+                          <button
+                            onClick={() => syncStripe(provider)}
+                            disabled={syncingStripeId === provider.id}
+                            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium disabled:opacity-50"
+                          >
+                            {syncingStripeId === provider.id ? 'Syncing...' : 'Sync Stripe'}
                           </button>
                         )}
                         <button

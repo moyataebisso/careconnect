@@ -108,8 +108,15 @@ export async function POST(request: NextRequest) {
           subscription_end_date: periodEnd,
         }
 
-        if (existingProvider?.status === 'pending' && subData.status !== 'trialing') {
-          updateObj.status = 'active'
+        if (subData.status !== 'trialing') {
+          if (existingProvider?.status === 'pending') {
+            // Pending providers go straight to active on payment
+            updateObj.status = 'active'
+          } else if (existingProvider?.status === 'incomplete') {
+            // Incomplete providers paid but haven't finished their profile yet
+            // Promote to pending so they still need to complete setup before going live
+            updateObj.status = 'pending'
+          }
         }
 
         const { error: updateError } = await supabase
