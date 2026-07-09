@@ -78,7 +78,7 @@ export default function AdminSubscriptionsPage() {
           created_at,
           status
         `)
-        .eq('status', 'active') // Only show approved providers
+        .not('status', 'eq', 'suspended') // Show all providers except suspended
         .order('business_name', { ascending: true })
 
       if (error) throw error
