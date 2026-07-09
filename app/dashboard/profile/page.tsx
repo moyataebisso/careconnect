@@ -425,7 +425,7 @@ export default function EditProfilePage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} onKeyDown={(e) => { if (e.key === 'Enter' && step < 4) e.preventDefault() }}>
             {/* Step 1: Business Information */}
             {step === 1 && (
               <div className="space-y-4">
@@ -440,7 +440,6 @@ export default function EditProfilePage() {
                     name="business_name"
                     value={formData.business_name}
                     onChange={handleInputChange}
-                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Your Licensed Facility Name"
                   />
@@ -455,7 +454,6 @@ export default function EditProfilePage() {
                     name="license_number"
                     value={formData.license_number}
                     onChange={handleInputChange}
-                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="245D-XXXX-XXX"
                   />
@@ -471,7 +469,6 @@ export default function EditProfilePage() {
                     name="contact_name"
                     value={formData.contact_name}
                     onChange={handleInputChange}
-                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Full Name"
                   />
@@ -486,7 +483,6 @@ export default function EditProfilePage() {
                     name="contact_phone"
                     value={formData.contact_phone}
                     onChange={handleInputChange}
-                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="(XXX) XXX-XXXX"
                   />
@@ -501,7 +497,6 @@ export default function EditProfilePage() {
                     name="contact_email"
                     value={formData.contact_email}
                     onChange={handleInputChange}
-                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="business@example.com"
                   />
@@ -531,7 +526,6 @@ export default function EditProfilePage() {
                     value={formData.address}
                     onChange={handleInputChange}
                     onBlur={handleAddressBlur}
-                    required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="123 Main Street"
                   />
@@ -548,8 +542,7 @@ export default function EditProfilePage() {
                       value={formData.city}
                       onChange={handleInputChange}
                       onBlur={handleAddressBlur}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="Minneapolis"
                     />
                   </div>
@@ -564,8 +557,7 @@ export default function EditProfilePage() {
                       value={formData.zip_code}
                       onChange={handleInputChange}
                       onBlur={handleAddressBlur}
-                      required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="55401"
                     />
                   </div>
@@ -724,8 +716,7 @@ export default function EditProfilePage() {
                       name="total_capacity"
                       value={formData.total_capacity}
                       onChange={handleInputChange}
-                      required
-                      min="1"
+                        min="1"
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       placeholder="e.g., 4"
                     />
