@@ -117,7 +117,6 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
       )
     }
 
-    // KEEPING WAIVER FILTER - handle both CAC and private_pay
     if (selectedWaivers.length > 0) {
       filtered = filtered.filter(p => {
         if (!p.accepted_waivers || !Array.isArray(p.accepted_waivers)) return false

@@ -48,8 +48,8 @@ export default function RegisterCareSeekerPage() {
     { value: 'ICS', label: 'Integrated Community Services' },
     { value: 'FRS', label: 'Family Residential Services' },
     { value: 'CRS', label: 'Community Residential Services' },
-    { value: 'DC_DM', label: 'Adult Day Services' },
-    { value: 'ADL_SUPPORT', label: 'Respite Support' },
+    { value: 'ADULT_DAY', label: 'Adult Day Services' },
+    { value: 'RESPITE', label: 'Respite Support' },
     { value: 'ASSISTED_LIVING', label: 'Assisted Living (24/7)' },
   ]
 
@@ -538,8 +538,7 @@ export default function RegisterCareSeekerPage() {
                     <option value="CADI">CADI - Community Access for Disability Inclusion</option>
                     <option value="DD">DD - Developmental Disabilities</option>
                     <option value="BI">BI - Brain Injury</option>
-                    <option value="ELDERLY">Elderly Care (65+)</option>
-                    <option value="private_pay">Private Pay</option>
+                    <option value="Elderly">Elderly Care (65+)</option>
                     <option value="other">Other/Not Sure</option>
                   </select>
                 </div>
@@ -657,8 +656,7 @@ export default function RegisterCareSeekerPage() {
                         <option value="CADI">CADI Waiver</option>
                         <option value="DD">DD Waiver</option>
                         <option value="BI">BI Waiver</option>
-                        <option value="ELDERLY">Elderly Waiver</option>
-                        <option value="private_pay">Private Pay</option>
+                        <option value="Elderly">Elderly Waiver</option>
                       </select>
                     </div>
                   )}

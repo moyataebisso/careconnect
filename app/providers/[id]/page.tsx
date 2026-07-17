@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { Provider, SERVICE_TYPE_LABELS, WAIVER_TYPE_SHORT } from '@/lib/types/careconnect'
+import { Provider, WAIVER_TYPE_SHORT } from '@/lib/types/careconnect'
 import PhotoUploadSection from '@/app/components/PhotoUploadSection'
 import { User } from '@supabase/supabase-js'
 
@@ -149,16 +149,6 @@ export default function ProviderDetailPage() {
     })
   }
 
-  const categorizeServices = (services: string[]) => {
-    const basicServices = ['ICS', 'FRS', 'CRS', 'DC_DM']
-    const comprehensiveServices = ['ADL_SUPPORT', 'ASSISTED_LIVING']
-    
-    return {
-      basic: services.filter(s => basicServices.includes(s)),
-      comprehensive: services.filter(s => comprehensiveServices.includes(s))
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -180,7 +170,12 @@ export default function ProviderDetailPage() {
     )
   }
 
-  const serviceCategories = categorizeServices(provider.service_types)
+  const basicServices = ['ICS', 'IHS', 'RESPITE', 'ADULT_DAY', 'HOMEMAKER', 'NIGHT_SUP']
+  const intensiveServices = ['FRS', 'CRS', 'DTH', 'EMPLOY_SUP']
+  const nonServices = ['ASSISTED_LIVING', 'HOME_HEALTH']
+  const hasBasic = provider.service_types?.some((s: string) => basicServices.includes(s))
+  const hasIntensive = provider.service_types?.some((s: string) => intensiveServices.includes(s))
+  const hasNon = provider.service_types?.some((s: string) => nonServices.includes(s))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -272,33 +267,9 @@ export default function ProviderDetailPage() {
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-3">245D Services Offered</h2>
                 
-                {serviceCategories.basic.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-lg font-medium text-blue-600 mb-2">Basic Services</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {serviceCategories.basic.map(service => (
-                        <div key={service} className="bg-blue-100 text-blue-800 px-4 py-2 rounded-lg">
-                          <span className="font-medium">{SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {serviceCategories.comprehensive.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-medium text-green-600 mb-2">Comprehensive Services</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {serviceCategories.comprehensive.map(service => (
-                        <div key={service} className="bg-green-100 text-green-800 px-4 py-2 rounded-lg">
-                          <span className="font-medium">
-                            {SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS]}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {hasBasic && <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">Basic 245D</span>}
+                {hasIntensive && <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">Intensive 245D</span>}
+                {hasNon && <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">Additional Care</span>}
               </div>
 
               <div className="mb-6">
@@ -542,7 +513,6 @@ export default function ProviderDetailPage() {
                         <option value="DD">DD Waiver</option>
                         <option value="BI">Brain Injury</option>
                         <option value="Elderly">Elderly</option>
-                        <option value="private_pay">Private Pay</option>
                       </select>
                     </div>
                     <div>
