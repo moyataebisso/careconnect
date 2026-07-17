@@ -8,14 +8,21 @@ import { ServiceType, WaiverType } from '@/lib/types/careconnect'
 
 // Updated service types for 245D programs with label changes
 const SERVICE_TYPES_245D = {
-  // Basic Services
-  ICS: 'Integrated Community Services',
-  FRS: 'Family Residential Services', 
+  // Basic 245D Services
+  ICS: 'Integrated Community Supports',
+  IHS: 'Individualized Home Supports',
+  RESPITE: 'Respite Care',
+  ADULT_DAY: 'Adult Day Services',
+  HOMEMAKER: 'Homemaker Services',
+  NIGHT_SUP: 'Night Supervision',
+  // Intensive 245D Services
+  FRS: 'Family Residential Services',
   CRS: 'Community Residential Services',
-  DC_DM: 'Adult Day Services', // CHANGED from Day Care/Day Services
-  // Comprehensive Services
-  ADL_SUPPORT: 'Respite Support', // CHANGED from ADLs Support
-  ASSISTED_LIVING: 'Assisted Living (24/7 Care)'
+  DTH: 'Day Training & Habilitation',
+  EMPLOY_SUP: 'Employment Support Services',
+  // Additional (non-245D)
+  ASSISTED_LIVING: 'Assisted Living',
+  HOME_HEALTH: 'Home Health Care',
 } as const
 
 // Updated waiver types to include Private Pay
@@ -24,7 +31,6 @@ const WAIVER_TYPES = {
   DD: 'DD - Developmental Disabilities (All Ages)',
   BI: 'BI - Brain Injury (All Ages)',
   Elderly: 'Elderly Waiver (65+)',
-  private_pay: 'Private Pay - Self-funded care'
 } as const
 
 export default function RegisterPage() {
@@ -742,70 +748,72 @@ export default function RegisterPage() {
                     245D Service Types (Optional - can be added later)
                   </label>
                   
-                  {/* Basic Services */}
+                  {/* Basic 245D Services */}
                   <div className="mb-4">
-                    <h4 className="font-medium text-blue-600 mb-2">Basic Services</h4>
+                    <h4 className="font-medium text-blue-600 mb-2">Basic Support Services</h4>
                     <div className="space-y-2 ml-3">
                       <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.service_types.includes('ICS')}
-                          onChange={() => handleServiceTypeChange('ICS')}
-                          className="mr-3"
-                        />
-                        <span><strong>ICS</strong> - Integrated Community Services</span>
+                        <input type="checkbox" checked={formData.service_types.includes('ICS')} onChange={() => handleServiceTypeChange('ICS')} className="mr-3" />
+                        <span><strong>ICS</strong> - Integrated Community Supports</span>
                       </label>
                       <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.service_types.includes('FRS')}
-                          onChange={() => handleServiceTypeChange('FRS')}
-                          className="mr-3"
-                        />
-                        <span><strong>FRS</strong> - Family Residential Services</span>
+                        <input type="checkbox" checked={formData.service_types.includes('IHS')} onChange={() => handleServiceTypeChange('IHS')} className="mr-3" />
+                        <span><strong>IHS</strong> - Individualized Home Supports</span>
                       </label>
                       <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.service_types.includes('CRS')}
-                          onChange={() => handleServiceTypeChange('CRS')}
-                          className="mr-3"
-                        />
-                        <span><strong>CRS</strong> - Community Residential Services</span>
+                        <input type="checkbox" checked={formData.service_types.includes('RESPITE')} onChange={() => handleServiceTypeChange('RESPITE')} className="mr-3" />
+                        <span><strong>Respite Care</strong> - Short-term relief for caregivers</span>
                       </label>
                       <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.service_types.includes('DC_DM')}
-                          onChange={() => handleServiceTypeChange('DC_DM')}
-                          className="mr-3"
-                        />
-                        <span><strong>DC/DM</strong> - Adult Day Services</span>
+                        <input type="checkbox" checked={formData.service_types.includes('ADULT_DAY')} onChange={() => handleServiceTypeChange('ADULT_DAY')} className="mr-3" />
+                        <span><strong>Adult Day Services</strong> - Daytime programs and activities</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.service_types.includes('HOMEMAKER')} onChange={() => handleServiceTypeChange('HOMEMAKER')} className="mr-3" />
+                        <span><strong>Homemaker Services</strong> - Household support and home management</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.service_types.includes('NIGHT_SUP')} onChange={() => handleServiceTypeChange('NIGHT_SUP')} className="mr-3" />
+                        <span><strong>Night Supervision</strong> - Overnight monitoring in person's home</span>
                       </label>
                     </div>
                   </div>
 
-                  {/* Comprehensive Services */}
-                  <div>
-                    <h4 className="font-medium text-green-600 mb-2">Comprehensive Services</h4>
+                  {/* Intensive 245D Services */}
+                  <div className="mb-4">
+                    <h4 className="font-medium text-blue-700 mb-2">Intensive Support Services</h4>
                     <div className="space-y-2 ml-3">
                       <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.service_types.includes('ADL_SUPPORT')}
-                          onChange={() => handleServiceTypeChange('ADL_SUPPORT')}
-                          className="mr-3"
-                        />
-                        <span><strong>Respite Support</strong> - Temporary relief care services</span>
+                        <input type="checkbox" checked={formData.service_types.includes('FRS')} onChange={() => handleServiceTypeChange('FRS')} className="mr-3" />
+                        <span><strong>FRS</strong> - Family Residential Services</span>
                       </label>
                       <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.service_types.includes('ASSISTED_LIVING')}
-                          onChange={() => handleServiceTypeChange('ASSISTED_LIVING')}
-                          className="mr-3"
-                        />
-                        <span><strong>Assisted Living</strong> - 24/7 Care with full support</span>
+                        <input type="checkbox" checked={formData.service_types.includes('CRS')} onChange={() => handleServiceTypeChange('CRS')} className="mr-3" />
+                        <span><strong>CRS</strong> - Community Residential Services</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.service_types.includes('DTH')} onChange={() => handleServiceTypeChange('DTH')} className="mr-3" />
+                        <span><strong>DTH</strong> - Day Training & Habilitation</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.service_types.includes('EMPLOY_SUP')} onChange={() => handleServiceTypeChange('EMPLOY_SUP')} className="mr-3" />
+                        <span><strong>Employment Support</strong> - Help finding and maintaining paid employment</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Additional Care (non-245D) */}
+                  <div>
+                    <h4 className="font-medium text-gray-500 mb-1">Additional Care Services</h4>
+                    <p className="text-xs text-gray-400 mb-2">Licensed separately from 245D (MN Dept of Health)</p>
+                    <div className="space-y-2 ml-3">
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.service_types.includes('ASSISTED_LIVING')} onChange={() => handleServiceTypeChange('ASSISTED_LIVING')} className="mr-3" />
+                        <span><strong>Assisted Living</strong> - 24/7 residential care</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input type="checkbox" checked={formData.service_types.includes('HOME_HEALTH')} onChange={() => handleServiceTypeChange('HOME_HEALTH')} className="mr-3" />
+                        <span><strong>Home Health Care</strong> - Skilled nursing in client's home</span>
                       </label>
                     </div>
                   </div>
@@ -814,9 +822,9 @@ export default function RegisterPage() {
                 {/* Accepted Payment Types - UPDATED */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Accepted Payment Types (Optional - can be added later)
+                    Accepted Waiver Programs (Optional - can be added later)
                   </label>
-                  <p className="text-xs text-gray-500 mb-3">Select all payment methods you accept</p>
+                  <p className="text-xs text-gray-500 mb-3">Select all Minnesota waiver programs you are enrolled to accept</p>
                   <div className="space-y-2">
                     <label className="flex items-start">
                       <input
@@ -860,17 +868,6 @@ export default function RegisterPage() {
                       />
                       <span>
                         <strong>Elderly</strong> - Elderly Waiver (Ages 65+)
-                      </span>
-                    </label>
-                    <label className="flex items-start">
-                      <input
-                        type="checkbox"
-                        checked={formData.accepted_waivers.includes('private_pay')}
-                        onChange={() => handleWaiverChange('private_pay')}
-                        className="mr-3 mt-1"
-                      />
-                      <span>
-                        <strong>Private Pay</strong> - Self-funded care
                       </span>
                     </label>
                   </div>

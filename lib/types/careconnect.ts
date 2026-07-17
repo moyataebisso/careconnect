@@ -1,10 +1,28 @@
 // lib/types/careconnect.ts
 
 // Service Types for 245D - Updated to match your usage
-export type ServiceType = 'FRS' | 'CRS' | 'ICS' | 'DC_DM' | 'ADL_SUPPORT' | 'ASSISTED_LIVING';
+export type ServiceType =
+  | 'ICS' | 'IHS' | 'RESPITE' | 'ADULT_DAY' | 'HOMEMAKER' | 'NIGHT_SUP'
+  | 'FRS' | 'CRS' | 'DTH' | 'EMPLOY_SUP'
+  | 'ASSISTED_LIVING' | 'HOME_HEALTH';
+
+export const SERVICE_CATEGORY: Record<ServiceType, 'basic_245d' | 'intensive_245d' | 'non_245d'> = {
+  ICS: 'basic_245d',
+  IHS: 'basic_245d',
+  RESPITE: 'basic_245d',
+  ADULT_DAY: 'basic_245d',
+  HOMEMAKER: 'basic_245d',
+  NIGHT_SUP: 'basic_245d',
+  FRS: 'intensive_245d',
+  CRS: 'intensive_245d',
+  DTH: 'intensive_245d',
+  EMPLOY_SUP: 'intensive_245d',
+  ASSISTED_LIVING: 'non_245d',
+  HOME_HEALTH: 'non_245d',
+};
 
 // Waiver Types (NO private pay)
-export type WaiverType = 'CADI' | 'private_pay' | 'DD' | 'BI' | 'Elderly';
+export type WaiverType = 'CADI' | 'DD' | 'BI' | 'Elderly';
 // Provider Status
 export type ProviderStatus = 'pending' | 'active' | 'inactive' | 'suspended';
 
@@ -132,30 +150,34 @@ export interface ReferralRequest {
 
 // Service Type Labels (for display) - UPDATED LABELS ONLY
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
+  ICS: 'Integrated Community Supports',
+  IHS: 'Individualized Home Supports',
+  RESPITE: 'Respite Care',
+  ADULT_DAY: 'Adult Day Services',
+  HOMEMAKER: 'Homemaker Services',
+  NIGHT_SUP: 'Night Supervision',
   FRS: 'Family Residential Services',
   CRS: 'Community Residential Services',
-  ICS: 'Integrated Community Services',
-  DC_DM: 'Adult Day Services', // CHANGED from 'Day Care/Day Services'
-  ADL_SUPPORT: 'Respite Support', // CHANGED from 'ADL Support'
-  ASSISTED_LIVING: 'Assisted Living'
+  DTH: 'Day Training & Habilitation',
+  EMPLOY_SUP: 'Employment Support Services',
+  ASSISTED_LIVING: 'Assisted Living',
+  HOME_HEALTH: 'Home Health Care',
 };
 
 // Waiver Type Labels (for display) - KEEPING ALL WAIVERS
 export const WAIVER_TYPE_LABELS: Record<WaiverType, string> = {
-  CADI: 'Community Access for Disability Inclusion (18+)',
-  private_pay: 'Private Pay', // Changed from CAC
-  DD: 'Developmental Disabilities',
-  BI: 'Brain Injury',
-  Elderly: 'Elderly (65+)'
+  CADI: 'Community Access for Disability Inclusion (CADI)',
+  DD: 'Developmental Disabilities (DD)',
+  BI: 'Brain Injury (BI)',
+  Elderly: 'Elderly (65+)',
 };
 
 // Waiver Type Short Labels - KEEPING ALL WAIVERS
 export const WAIVER_TYPE_SHORT: Record<WaiverType, string> = {
   CADI: 'CADI Waiver',
-  private_pay: 'Private Pay', // Changed from CAC
   DD: 'DD Waiver',
   BI: 'Brain Injury',
-  Elderly: 'Elderly'
+  Elderly: 'Elderly',
 };
 
 // Search Filters Interface

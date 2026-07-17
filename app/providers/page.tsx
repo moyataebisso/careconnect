@@ -239,30 +239,31 @@ export default function ProvidersPage() {
                 <div className="mb-3">
                   <h4 className="text-sm font-medium text-blue-600 mb-2">Basic Services</h4>
                   <div className="space-y-2 ml-2">
-                    {['ICS', 'FRS', 'CRS', 'DC_DM'].map(key => (
+                    {(['ICS', 'IHS', 'RESPITE', 'ADULT_DAY', 'HOMEMAKER', 'NIGHT_SUP'] as ServiceType[]).map(key => (
                       <label key={key} className="flex items-center text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedServices.includes(key as ServiceType)}
-                          onChange={() => toggleService(key as ServiceType)}
-                          className="mr-2"
-                        />
+                        <input type="checkbox" checked={selectedServices.includes(key as ServiceType)} onChange={() => toggleService(key as ServiceType)} className="mr-2" />
+                        <span>{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-blue-700 mb-2">Intensive Services</h4>
+                  <div className="space-y-2 ml-2">
+                    {(['FRS', 'CRS', 'DTH', 'EMPLOY_SUP'] as ServiceType[]).map(key => (
+                      <label key={key} className="flex items-center text-sm">
+                        <input type="checkbox" checked={selectedServices.includes(key as ServiceType)} onChange={() => toggleService(key as ServiceType)} className="mr-2" />
                         <span>{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
                       </label>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-green-600 mb-2">Comprehensive Services</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Additional Care</h4>
                   <div className="space-y-2 ml-2">
-                    {['ADL_SUPPORT', 'ASSISTED_LIVING'].map(key => (
+                    {(['ASSISTED_LIVING', 'HOME_HEALTH'] as ServiceType[]).map(key => (
                       <label key={key} className="flex items-center text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedServices.includes(key as ServiceType)}
-                          onChange={() => toggleService(key as ServiceType)}
-                          className="mr-2"
-                        />
+                        <input type="checkbox" checked={selectedServices.includes(key as ServiceType)} onChange={() => toggleService(key as ServiceType)} className="mr-2" />
                         <span>{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
                       </label>
                     ))}
@@ -365,10 +366,12 @@ export default function ProvidersPage() {
             ) : (
               <div className="grid md:grid-cols-2 gap-6">
                 {filteredProviders.map((provider) => {
-                  const basicServices = ['ICS', 'FRS', 'CRS', 'DC_DM']
-                  const comprehensiveServices = ['ADL_SUPPORT', 'ASSISTED_LIVING']
+                  const basicServices = ['ICS', 'IHS', 'RESPITE', 'ADULT_DAY', 'HOMEMAKER', 'NIGHT_SUP']
+                  const intensiveServices = ['FRS', 'CRS', 'DTH', 'EMPLOY_SUP']
+                  const nonServices = ['ASSISTED_LIVING', 'HOME_HEALTH']
                   const hasBasic = provider.service_types.some(s => basicServices.includes(s))
-                  const hasComprehensive = provider.service_types.some(s => comprehensiveServices.includes(s))
+                  const hasIntensive = provider.service_types.some(s => intensiveServices.includes(s))
+                  const hasNon = provider.service_types.some(s => nonServices.includes(s))
 
                   return (
                     <div
@@ -420,14 +423,13 @@ export default function ProvidersPage() {
                         <div className="mb-3">
                           <div className="flex flex-wrap gap-1">
                             {hasBasic && (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">
-                                Basic Services
-                              </span>
+                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-medium">Basic 245D</span>
                             )}
-                            {hasComprehensive && (
-                              <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs font-medium">
-                                Comprehensive Care
-                              </span>
+                            {hasIntensive && (
+                              <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs font-medium">Intensive 245D</span>
+                            )}
+                            {hasNon && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs font-medium">Additional Care</span>
                             )}
                             {provider.service_types.slice(0, 2).map(service => (
                               <span key={service} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">

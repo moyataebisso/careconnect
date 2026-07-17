@@ -18,15 +18,6 @@ const MapComponent = dynamic(() => import('@/components/MapComponent'), {
   )
 })
 
-// Add this helper function after the imports
-function getWaiverLabel(waiver: string): string {
-  if (waiver === 'CAC' || waiver === 'private_pay') {
-    return 'Private Pay';
-  }
-  // Use the WAIVER_TYPE_SHORT from imports
-  return WAIVER_TYPE_SHORT[waiver as WaiverType] || waiver;
-}
-
 interface User {
   id: string
   email?: string
@@ -132,10 +123,6 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
         if (!p.accepted_waivers || !Array.isArray(p.accepted_waivers)) return false
 
         return selectedWaivers.some(selectedWaiver => {
-          // If user selects private_pay, match both CAC and private_pay in the database
-          if (selectedWaiver === 'private_pay') {
-            return p.accepted_waivers.some(w => w === 'private_pay')
-          }
           return p.accepted_waivers.includes(selectedWaiver)
         })
       })
@@ -358,60 +345,50 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
                 </label>
               </div>
 
-              {/* 245D Service Types */}
               <div className="mb-6">
                 <h3 className="font-medium mb-3">245D Service Types</h3>
-
-                {/* Basic Services */}
                 <div className="mb-3">
                   <h4 className="text-sm font-medium text-blue-600 mb-2">Basic Services</h4>
                   <div className="space-y-2 ml-2">
-                    {['ICS', 'FRS', 'CRS', 'DC_DM'].map(key => (
+                    {(['ICS', 'IHS', 'RESPITE', 'ADULT_DAY', 'HOMEMAKER', 'NIGHT_SUP'] as ServiceType[]).map(key => (
                       <label key={key} className="flex items-center text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedServices.includes(key as ServiceType)}
-                          onChange={() => toggleService(key as ServiceType)}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                        <input type="checkbox" checked={selectedServices.includes(key)} onChange={() => toggleService(key)} className="mr-2" />
+                        <span className="text-xs">{SERVICE_TYPE_LABELS[key]}</span>
                       </label>
                     ))}
                   </div>
                 </div>
-
-                {/* Comprehensive Services */}
-                <div>
-                  <h4 className="text-sm font-medium text-green-600 mb-2">Comprehensive Services</h4>
+                <div className="mb-3">
+                  <h4 className="text-sm font-medium text-blue-700 mb-2">Intensive Services</h4>
                   <div className="space-y-2 ml-2">
-                    {['ADL_SUPPORT', 'ASSISTED_LIVING'].map(key => (
+                    {(['FRS', 'CRS', 'DTH', 'EMPLOY_SUP'] as ServiceType[]).map(key => (
                       <label key={key} className="flex items-center text-sm">
-                        <input
-                          type="checkbox"
-                          checked={selectedServices.includes(key as ServiceType)}
-                          onChange={() => toggleService(key as ServiceType)}
-                          className="mr-2"
-                        />
-                        <span className="text-xs">{SERVICE_TYPE_LABELS[key as keyof typeof SERVICE_TYPE_LABELS]}</span>
+                        <input type="checkbox" checked={selectedServices.includes(key)} onChange={() => toggleService(key)} className="mr-2" />
+                        <span className="text-xs">{SERVICE_TYPE_LABELS[key]}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Additional Care</h4>
+                  <div className="space-y-2 ml-2">
+                    {(['ASSISTED_LIVING', 'HOME_HEALTH'] as ServiceType[]).map(key => (
+                      <label key={key} className="flex items-center text-sm">
+                        <input type="checkbox" checked={selectedServices.includes(key)} onChange={() => toggleService(key)} className="mr-2" />
+                        <span className="text-xs">{SERVICE_TYPE_LABELS[key]}</span>
                       </label>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Payment Types - Updated to show Private Pay */}
               <div className="mb-6">
-                <h3 className="font-medium mb-3">Accepted Payment Types</h3>
+                <h3 className="font-medium mb-3">Accepted Waivers</h3>
                 <div className="space-y-2">
-                  {Object.entries(WAIVER_TYPE_SHORT).map(([key, label], index) => (
-                    <label key={`${key}-${index}`} className="flex items-center text-sm">
-                      <input
-                        type="checkbox"
-                        checked={selectedWaivers.includes(key as WaiverType)}
-                        onChange={() => toggleWaiver(key as WaiverType)}
-                        className="mr-2"
-                      />
-                      <span>{label}</span>
+                  {(['CADI', 'DD', 'BI', 'Elderly'] as WaiverType[]).map(key => (
+                    <label key={key} className="flex items-center text-sm">
+                      <input type="checkbox" checked={selectedWaivers.includes(key)} onChange={() => toggleWaiver(key)} className="mr-2" />
+                      <span>{WAIVER_TYPE_SHORT[key]}</span>
                     </label>
                   ))}
                 </div>
@@ -569,7 +546,7 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
                               <span className="text-sm font-medium text-gray-600">Accepts:</span>
                               {provider.accepted_waivers.map((waiver, waiverIndex) => (
                                 <span key={`${provider.id}-waiver-${waiver}-${waiverIndex}`} className="text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
-                                  {getWaiverLabel(waiver)}
+                                  {WAIVER_TYPE_SHORT[waiver as WaiverType] || waiver}
                                 </span>
                               ))}
                             </div>
