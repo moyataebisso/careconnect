@@ -18,376 +18,276 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section with Background Image */}
-      <section className="relative h-[600px] flex items-center">
-        {/* Background Image */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-          style={{
-            backgroundImage: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1586105251261-72a756497a11?q=80&w=2940&auto=format&fit=crop')`,
-          }}
-        />
-        
-        {/* Hero Content */}
-        <div className="relative z-10 container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 text-white drop-shadow-lg">
-              Welcome to CareConnect
-            </h1>
-            <p className="text-2xl mb-4 text-white drop-shadow-md">
-              Minnesota Trusted 245D/HCBS Referral Service
-            </p>
-            <p className="text-lg mb-12 text-white/90 drop-shadow">
-              Connecting quality care with those who need it most across Minnesota
-            </p>
-            
-            {/* Hero Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
-              <div className="bg-white rounded-lg shadow-2xl p-2 flex">
-                <input
-                  type="text"
-                  placeholder="Enter city, neighborhood, or ZIP code"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 px-6 py-4 text-lg text-gray-900 focus:outline-none"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 px-8 py-4 rounded-md font-semibold text-white transition-colors"
-                >
-                  Search
-                </button>
-              </div>
-            </form>
+    <div className="min-h-screen" style={{ fontFamily: "'Inter', system-ui, sans-serif" }}>
 
-            {/* Quick Filter Buttons */}
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/providers?service=FRS" className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium hover:bg-white transition-all hover:shadow-lg">Family Residential</Link>
-              <Link href="/providers?service=CRS" className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium hover:bg-white transition-all hover:shadow-lg">Community Residential</Link>
-              <Link href="/providers?service=ICS" className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium hover:bg-white transition-all hover:shadow-lg">ICS Services</Link>
-              <Link href="/providers?service=IHS" className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium hover:bg-white transition-all hover:shadow-lg">Home Supports</Link>
-              <Link href="/providers?service=ASSISTED_LIVING" className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium hover:bg-white transition-all hover:shadow-lg">Assisted Living</Link>
-              <Link href="/providers?waiver=CADI" className="bg-white/90 backdrop-blur px-4 py-2 rounded-full text-sm font-medium hover:bg-white transition-all hover:shadow-lg">CADI Waiver</Link>
-            </div>
-          </div>
-        </div>
+      {/* HERO — dark forest green, bold left-aligned headline, search right side */}
+      <section style={{ background: '#1B4332', minHeight: '580px' }} className="relative flex items-center">
+        <div className="container mx-auto px-6 py-20">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
 
-        {/* Scroll Indicator */}
-        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
-          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </div>
-      </section>
+            {/* Left: headline */}
+            <div className="lg:w-1/2 text-white">
+              <p className="text-sm font-semibold tracking-widest uppercase mb-4" style={{ color: '#95D5B2' }}>
+                Minnesota 245D / HCBS Network
+              </p>
+              <h1 className="font-black leading-none mb-6" style={{ fontSize: 'clamp(2.8rem, 5vw, 4.5rem)', letterSpacing: '-0.02em' }}>
+                Real care.<br />
+                Real providers.<br />
+                <span style={{ color: '#95D5B2' }}>Right here.</span>
+              </h1>
+              <p className="text-lg mb-8" style={{ color: '#B7E4C7', maxWidth: '420px', lineHeight: '1.7' }}>
+                Connect with licensed 245D providers across Minnesota — verified, waiver-ready, and accepting referrals.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                {['CADI Waiver', 'DD Waiver', 'Brain Injury', 'Elderly', 'Assisted Living', 'Home Health'].map(tag => (
+                  <span key={tag} className="px-3 py-1.5 rounded-full text-sm font-medium" style={{ background: 'rgba(149,213,178,0.15)', color: '#95D5B2', border: '1px solid rgba(149,213,178,0.3)' }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
 
-      {/* Stats Bar */}
-      <section className="bg-[#EBF5FF] py-16 shadow-lg">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-3 md:grid-cols-3 gap-8 text-center">
-            {/* Stat 1 - Small Blue Bubble */}
-            <div className="flex flex-col items-center">
-              <div className="bg-blue-600 rounded-xl px-6 py-3 shadow-md mb-2">
-                <div className="text-3xl md:text-4xl font-bold text-white">100%</div>
+            {/* Right: search card */}
+            <div className="lg:w-1/2 w-full">
+              <div className="rounded-2xl p-8 shadow-2xl" style={{ background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                <h2 className="text-white text-2xl font-bold mb-6">Find the right care</h2>
+                <form onSubmit={handleSearch} className="space-y-4">
+                  <input
+                    type="text"
+                    placeholder="City, neighborhood, or ZIP code"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full px-5 py-4 rounded-xl text-gray-900 text-base focus:outline-none focus:ring-2"
+                    style={{ background: 'white' }}
+                  />
+                  <button
+                    type="submit"
+                    className="w-full py-4 rounded-xl font-bold text-base transition-all hover:opacity-90 active:scale-[0.99]"
+                    style={{ background: '#95D5B2', color: '#1B4332' }}
+                  >
+                    Search Providers
+                  </button>
+                </form>
+                <div className="mt-6 pt-6" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                  <p className="text-xs mb-3" style={{ color: '#B7E4C7' }}>BROWSE BY SERVICE</p>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { label: 'Family Residential', href: '/providers?service=FRS' },
+                      { label: 'Community Residential', href: '/providers?service=CRS' },
+                      { label: 'Home Supports', href: '/providers?service=IHS' },
+                      { label: 'Assisted Living', href: '/providers?service=ASSISTED_LIVING' },
+                    ].map(item => (
+                      <Link key={item.href} href={item.href}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors hover:bg-white hover:text-green-900"
+                        style={{ background: 'rgba(255,255,255,0.1)', color: 'white' }}>
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               </div>
-              <div className="text-sm text-gray-600">Licensed Providers</div>
-            </div>
-            {/* Stat 2 - Small Blue Bubble */}
-            <div className="flex flex-col items-center">
-              <div className="bg-blue-600 rounded-xl px-6 py-3 shadow-md mb-2">
-                <div className="text-3xl md:text-4xl font-bold text-white">24/7</div>
-              </div>
-              <div className="text-sm text-gray-600">Support Available</div>
-            </div>
-            {/* Stat 3 - Small Blue Bubble */}
-            <div className="flex flex-col items-center">
-              <div className="bg-blue-600 rounded-xl px-6 py-3 shadow-md mb-2">
-                <div className="text-3xl md:text-4xl font-bold text-white">MN</div>
-              </div>
-              <div className="text-sm text-gray-600">245D Licensed</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* How It Works - Provider Tutorial Slideshow */}
-      <section className="py-20 bg-[#F5EBD9]">
-        <div className="container mx-auto px-4">
-          {/* Slightly darker tan bubble for title */}
-          <div className="bg-[#C9B99A] rounded-2xl px-8 py-6 shadow-lg max-w-2xl mx-auto mb-10">
-            <h2 className="text-3xl font-bold text-center text-white">How It Works for Providers</h2>
-            <p className="text-center text-white/90 mt-2">
-              Join CareConnect in 5 simple steps and start receiving qualified referrals
-            </p>
+      {/* TRUST BAR — white, clean stats */}
+      <section className="bg-white border-b" style={{ borderColor: '#E8F5E9' }}>
+        <div className="container mx-auto px-6 py-8">
+          <div className="grid grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-black" style={{ color: '#1B4332' }}>245D</div>
+              <div className="text-sm text-gray-500 mt-1">Licensed Providers Only</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black" style={{ color: '#1B4332' }}>4</div>
+              <div className="text-sm text-gray-500 mt-1">Waiver Programs Supported</div>
+            </div>
+            <div>
+              <div className="text-3xl font-black" style={{ color: '#1B4332' }}>MN</div>
+              <div className="text-sm text-gray-500 mt-1">Statewide Coverage</div>
+            </div>
           </div>
-          {/* Slideshow outside the bubble */}
+        </div>
+      </section>
+
+      {/* CATEGORY CARDS — white background, coral accent icons like Care.com */}
+      <section className="bg-white py-16">
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl font-black text-center mb-3" style={{ color: '#1a1a1a', letterSpacing: '-0.02em' }}>
+            What kind of care are you looking for?
+          </h2>
+          <p className="text-center text-gray-500 mb-12">All providers are licensed under Minnesota 245D program standards</p>
+
+          {/* Basic 245D */}
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: '#E8F5E9', color: '#1B4332' }}>Basic Support Services</span>
+              <div className="flex-1 h-px" style={{ background: '#E8F5E9' }}></div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+              {[
+                { label: 'Integrated Community Supports', short: 'ICS', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
+                { label: 'Individualized Home Supports', short: 'IHS', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
+                { label: 'Respite Care', short: 'RESPITE', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg> },
+                { label: 'Adult Day Services', short: 'ADULT_DAY', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
+                { label: 'Homemaker Services', short: 'HOMEMAKER', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg> },
+                { label: 'Night Supervision', short: 'NIGHT_SUP', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg> },
+              ].map(item => (
+                <Link key={item.short} href={`/providers?service=${item.short}`}
+                  className="flex flex-col items-center p-5 rounded-2xl border text-center transition-all hover:-translate-y-1 hover:shadow-md group"
+                  style={{ borderColor: '#E8F5E9', background: 'white' }}>
+                  <div className="mb-3" style={{ color: '#1B4332' }}>{item.svg}</div>
+                  <span className="text-xs font-semibold text-gray-700 leading-tight group-hover:text-green-800">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Intensive 245D */}
+          <div className="mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: '#EDE9FE', color: '#4C1D95' }}>Intensive Support Services</span>
+              <div className="flex-1 h-px" style={{ background: '#EDE9FE' }}></div>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[
+                { label: 'Family Residential Services', short: 'FRS', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
+                { label: 'Community Residential Services', short: 'CRS', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+                { label: 'Day Training & Habilitation', short: 'DTH', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
+              ].map(item => (
+                <Link key={item.short} href={`/providers?service=${item.short}`}
+                  className="flex flex-col items-center p-5 rounded-2xl border text-center transition-all hover:-translate-y-1 hover:shadow-md group"
+                  style={{ borderColor: '#EDE9FE', background: 'white' }}>
+                  <div className="mb-3" style={{ color: '#4C1D95' }}>{item.svg}</div>
+                  <span className="text-xs font-semibold text-gray-700 leading-tight group-hover:text-purple-800">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* Additional Care */}
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <span className="text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full" style={{ background: '#F3F4F6', color: '#374151' }}>Additional Care Services</span>
+              <div className="flex-1 h-px" style={{ background: '#F3F4F6' }}></div>
+              <span className="text-xs text-gray-400">Licensed by MN Dept of Health</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              {[
+                { label: 'Assisted Living', short: 'ASSISTED_LIVING', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
+                { label: 'Home Health Care', short: 'HOME_HEALTH', svg: <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 0v4m0-4h4m-4 0H8" /></svg> },
+              ].map(item => (
+                <Link key={item.short} href={`/providers?service=${item.short}`}
+                  className="flex flex-col items-center p-5 rounded-2xl border text-center transition-all hover:-translate-y-1 hover:shadow-md group"
+                  style={{ borderColor: '#E5E7EB', background: 'white' }}>
+                  <div className="mb-3 text-gray-400">{item.svg}</div>
+                  <span className="text-xs font-semibold text-gray-700 leading-tight group-hover:text-gray-900">{item.label}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — dark green */}
+      <section className="py-20" style={{ background: '#1B4332' }}>
+        <div className="container mx-auto px-6">
+          <div className="rounded-2xl px-8 py-6 shadow-sm max-w-2xl mx-auto mb-12 text-center text-white" style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)' }}>
+            <h2 className="text-2xl font-black text-white">How It Works for Providers</h2>
+            <p className="mt-2" style={{ color: '#B7E4C7' }}>Join CareConnect in 5 simple steps and start receiving qualified referrals</p>
+          </div>
           <ProviderTutorialSlideshow variant="medium" />
         </div>
       </section>
 
-      {/* 245D Services Section */}
-      <section className="py-20 bg-[#E0EEF9]">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-4 text-[#1F2937]">245D Licensed Services</h2>
-          <p className="text-center text-[#4B5563] mb-12 max-w-2xl mx-auto">
-            All our providers are licensed under Minnesota 245D program standards
-          </p>
-          <div className="max-w-6xl mx-auto">
-
-            {/* Basic Support Services */}
-            <div className="mb-10">
-              <h3 className="text-2xl font-semibold mb-6 text-blue-700">Basic Support Services</h3>
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">ICS</h4>
-                  <p className="text-sm text-[#4B5563]">Integrated Community Supports — assistance for independent living in the community</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">IHS</h4>
-                  <p className="text-sm text-[#4B5563]">Individualized Home Supports — in-home care and skill-building in a person&apos;s own home</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Respite Care</h4>
-                  <p className="text-sm text-[#4B5563]">Short-term relief care for primary caregivers and families</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Adult Day Services</h4>
-                  <p className="text-sm text-[#4B5563]">Daytime programs, activities, and community participation for adults</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Homemaker Services</h4>
-                  <p className="text-sm text-[#4B5563]">Household support and home management assistance</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Night Supervision</h4>
-                  <p className="text-sm text-[#4B5563]">Overnight monitoring and assistance in a person&apos;s own home</p>
+      {/* FEATURED PHOTOS */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { img: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2940&auto=format&fit=crop', title: 'Professional Care', sub: 'Experienced, licensed caregivers' },
+              { img: 'https://images.unsplash.com/photo-1559234938-b60fff04894d?q=80&w=2940&auto=format&fit=crop', title: 'Home-Like Settings', sub: 'Comfortable, welcoming environments' },
+              { img: 'https://images.unsplash.com/photo-1543333995-a78aea2eee50?q=80&w=2940&auto=format&fit=crop', title: 'Community Support', sub: 'Engaging activities and programs' },
+            ].map(card => (
+              <div key={card.title} className="relative h-64 rounded-2xl overflow-hidden shadow-md group">
+                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style={{ backgroundImage: `url('${card.img}')` }} />
+                <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)' }} />
+                <div className="absolute bottom-0 left-0 p-5 text-white">
+                  <h3 className="text-lg font-bold mb-0.5">{card.title}</h3>
+                  <p className="text-sm opacity-80">{card.sub}</p>
                 </div>
               </div>
-            </div>
-
-            {/* Intensive Support Services */}
-            <div className="mb-10">
-              <h3 className="text-2xl font-semibold mb-6 text-blue-700">Intensive Support Services</h3>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">FRS</h4>
-                  <p className="text-sm text-[#4B5563]">Family Residential Services — habilitation and care in a family-operated licensed home</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">CRS</h4>
-                  <p className="text-sm text-[#4B5563]">Community Residential Services — habilitation and care in a licensed group setting</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">DTH</h4>
-                  <p className="text-sm text-[#4B5563]">Day Training & Habilitation — life skills development for community participation</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1">
-                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-2 text-[#1F2937]">Employment Support</h4>
-                  <p className="text-sm text-[#4B5563]">Individualized support to help people find and maintain paid employment</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Additional Care Services - Non-245D */}
-            <div>
-              <h3 className="text-2xl font-semibold mb-2 text-gray-600">Additional Care Services</h3>
-              <p className="text-sm text-gray-500 mb-6">Licensed separately from 245D — providers may offer these alongside their 245D services</p>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1 border-l-4 border-gray-300">
-                  <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-1 text-[#1F2937]">Assisted Living</h4>
-                  <p className="text-xs text-gray-400 mb-2">Licensed by MN Dept of Health</p>
-                  <p className="text-sm text-[#4B5563]">24/7 residential care with full ADL support, meals, and medication administration</p>
-                </div>
-                <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-all hover:-translate-y-1 border-l-4 border-gray-300">
-                  <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-7 h-7 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                  </div>
-                  <h4 className="text-lg font-semibold mb-1 text-[#1F2937]">Home Health Care</h4>
-                  <p className="text-xs text-gray-400 mb-2">Licensed by MN Dept of Health</p>
-                  <p className="text-sm text-[#4B5563]">Skilled nursing and care services provided in a client&apos;s own home</p>
-                </div>
-              </div>
-            </div>
-
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Images Section */}
-      <section className="py-20 bg-[#F5EBD9]">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="relative h-64 rounded-lg overflow-hidden shadow-lg group">
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-                style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?q=80&w=2940&auto=format&fit=crop')`
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 text-white">
-                <h3 className="text-xl font-bold mb-1">Professional Care</h3>
-                <p className="text-sm">Experienced, licensed caregivers</p>
-              </div>
-            </div>
-
-            <div className="relative h-64 rounded-lg overflow-hidden shadow-lg group">
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-                style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1559234938-b60fff04894d?q=80&w=2940&auto=format&fit=crop')`
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 text-white">
-                <h3 className="text-xl font-bold mb-1">Home-Like Settings</h3>
-                <p className="text-sm">Comfortable, welcoming environments</p>
-              </div>
-            </div>
-
-            <div className="relative h-64 rounded-lg overflow-hidden shadow-lg group">
-              <div 
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-300 group-hover:scale-110"
-                style={{
-                  backgroundImage: `url('https://images.unsplash.com/photo-1543333995-a78aea2eee50?q=80&w=2940&auto=format&fit=crop')`
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-6 text-white">
-                <h3 className="text-xl font-bold mb-1">Community Support</h3>
-                <p className="text-sm">Engaging activities and programs</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section for Providers */}
-      <section 
-        className="py-20 relative"
-        style={{
-          backgroundImage: `linear-gradient(rgba(37, 99, 235, 0.9), rgba(37, 99, 235, 0.9)), url('https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=2940&auto=format&fit=crop')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        <div className="container mx-auto px-4 text-center text-white">
-          <h2 className="text-3xl font-bold mb-4">Are you a 245D licensed provider?</h2>
-          <p className="text-xl mb-8">Join CareConnect to receive qualified waiver-based referrals</p>
-          <Link
-            href="/auth/register"
-            className="inline-block bg-[#EDE4D3] text-[#5C4A32] px-8 py-3 rounded-lg font-semibold hover:bg-[#E0D4C0] transition-all hover:shadow-lg"
-          >
+      {/* CTA FOR PROVIDERS */}
+      <section className="py-20 relative overflow-hidden" style={{ background: '#1B4332' }}>
+        <div className="container mx-auto px-6 text-center text-white relative z-10">
+          <p className="text-sm font-semibold tracking-widest uppercase mb-4" style={{ color: '#95D5B2' }}>For 245D Licensed Providers</p>
+          <h2 className="text-4xl font-black mb-4" style={{ letterSpacing: '-0.02em' }}>Are you a 245D licensed provider?</h2>
+          <p className="text-lg mb-8" style={{ color: '#B7E4C7' }}>Join CareConnect to receive qualified waiver-based referrals from case managers and social workers across Minnesota</p>
+          <Link href="/auth/register"
+            className="inline-block px-10 py-4 rounded-xl font-bold text-lg transition-all hover:opacity-90"
+            style={{ background: '#95D5B2', color: '#1B4332' }}>
             Get Started Today
           </Link>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-20 bg-[#E0EEF9]">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-black">How Our Referral System Works</h2>
-
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-4 gap-8">
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">1</div>
-                <h3 className="font-semibold mb-2 text-black">Initial Contact</h3>
-                <p className="text-sm text-black">Reach out through our platform</p>
+      {/* HOW REFERRAL SYSTEM WORKS */}
+      <section className="py-20" style={{ background: '#F0FDF4' }}>
+        <div className="container mx-auto px-6">
+          <h2 className="text-3xl font-black text-center mb-12" style={{ color: '#1a1a1a', letterSpacing: '-0.02em' }}>How Our Referral System Works</h2>
+          <div className="max-w-4xl mx-auto grid md:grid-cols-4 gap-8">
+            {[
+              { n: '1', title: 'Initial Contact', desc: 'Reach out through our platform' },
+              { n: '2', title: 'Profile Creation', desc: 'Build your professional presence' },
+              { n: '3', title: 'Outreach Launch', desc: 'Begin targeted marketing' },
+              { n: '4', title: 'Lead Delivery', desc: 'Receive qualified referrals' },
+            ].map(step => (
+              <div key={step.n} className="text-center">
+                <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-black" style={{ background: '#E8F5E9', color: '#1B4332' }}>{step.n}</div>
+                <h3 className="font-bold mb-1 text-gray-900">{step.title}</h3>
+                <p className="text-sm text-gray-500">{step.desc}</p>
               </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">2</div>
-                <h3 className="font-semibold mb-2 text-black">Profile Creation</h3>
-                <p className="text-sm text-black">Build your professional presence</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">3</div>
-                <h3 className="font-semibold mb-2 text-black">Outreach Launch</h3>
-                <p className="text-sm text-black">Begin targeted marketing</p>
-              </div>
-              <div className="text-center">
-                <div className="w-16 h-16 bg-[#EDE4D3] text-black rounded-full flex items-center justify-center mx-auto mb-4 text-xl font-bold shadow-lg">4</div>
-                <h3 className="font-semibold mb-2 text-black">Lead Delivery</h3>
-                <p className="text-sm text-black">Receive qualified referrals</p>
-              </div>
-            </div>
-
-            {/* Connection Lines for Desktop */}
-            <div className="hidden md:block relative -mt-12">
-              <div className="absolute top-0 left-[12.5%] right-[12.5%] h-0.5 bg-[#D4C4A8]"></div>
-            </div>
+            ))}
           </div>
-
-          {/* Additional Info */}
-          <div className="mt-16 max-w-3xl mx-auto text-center">
-            <p className="text-black mb-8">
-              Our proven system connects you with social workers, discharge planners, and case managers
-              who are actively seeking quality 245D licensed housing solutions for their waiver clients.
-            </p>
-            <Link
-              href="/providers"
-              className="inline-block bg-[#EDE4D3] text-black px-8 py-3 rounded-lg font-semibold hover:bg-[#D4C4A8] transition-all hover:shadow-lg"
-            >
+          <p className="text-center text-gray-500 mt-12 max-w-2xl mx-auto">
+            Our proven system connects you with social workers, discharge planners, and case managers who are actively seeking quality 245D licensed housing solutions for their waiver clients.
+          </p>
+          <div className="text-center mt-8">
+            <Link href="/providers"
+              className="inline-block px-8 py-3 rounded-xl font-semibold transition-all hover:opacity-90"
+              style={{ background: '#1B4332', color: 'white' }}>
               Browse Available Providers
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="bg-[#EDE4D3] py-16">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-4 text-blue-600">Ready to Find Quality Care?</h2>
-          <p className="text-xl mb-8 text-gray-600">Search our network of verified 245D providers</p>
+      {/* FINAL CTA */}
+      <section className="py-16" style={{ background: '#DCFCE7' }}>
+        <div className="container mx-auto px-6 text-center">
+          <h2 className="text-3xl font-black mb-3" style={{ color: '#1B4332', letterSpacing: '-0.02em' }}>Ready to Find Quality Care?</h2>
+          <p className="mb-8" style={{ color: '#1B4332' }}>Search our network of verified 245D providers across Minnesota</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/providers"
-              className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-all hover:shadow-lg"
-            >
+            <Link href="/providers"
+              className="inline-block px-8 py-3 rounded-xl font-semibold text-white transition-all hover:opacity-90"
+              style={{ background: '#1B4332' }}>
               Find Care Now
             </Link>
-            <Link
-              href="/contact"
-              className="inline-block border-2 border-blue-600 text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-600 hover:text-white transition-all"
-            >
+            <Link href="/contact"
+              className="inline-block px-8 py-3 rounded-xl font-semibold transition-all hover:opacity-90"
+              style={{ border: '2px solid #1B4332', color: '#1B4332', background: 'white' }}>
               Contact Us
             </Link>
           </div>
         </div>
       </section>
+
     </div>
   )
 }

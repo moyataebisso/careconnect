@@ -66,72 +66,116 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={inter.className}>
-        {/* Navigation - Tan/Brown Background */}
-        <nav className="shadow-lg sticky top-0 z-50" style={{ backgroundColor: '#EDE4D3' }}>
-          <div className="w-full px-6">
-            <div className="flex justify-between items-center h-20 gap-6">
-              {/* Logo - Keep blue */}
-              <Link href="/" className="flex items-center">
-                <div className="flex items-center">
-                  <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
-                    <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <span className="text-xl font-bold text-blue-600">Care</span>
-                    <span className="text-xl font-bold text-[#5C4A32]">Connect</span>
-                  </div>
-                </div>
-              </Link>
-
-              {/* Client-side Navigation Component */}
-              <Navigation initialUser={user} initialRole={userRole} />
-
-              {/* Portal */}
-              <a
-                href="/admin"
-                className="w-2 h-2 rounded-full bg-current opacity-10 hover:opacity-40 transition-opacity cursor-pointer ml-2"
-                title="Portal"
-                aria-label="Portal"
-              />
-
-              {/* Mobile Menu Button */}
-              <button className="md:hidden mobile-menu-button text-[#5C4A32]">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        <nav className="sticky top-0 z-50 px-4 py-3" style={{ background: '#f8f6f1' }}>
+          <div
+            className="mx-auto flex items-center justify-between px-6"
+            style={{
+              background: '#1B4332',
+              borderRadius: '9999px',
+              height: '64px',
+              maxWidth: '1200px',
+              boxShadow: '0 4px 24px rgba(27,67,50,0.18)',
+            }}
+          >
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2.5 flex-shrink-0">
+              <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#95D5B2' }}>
+                <svg className="w-5 h-5" fill="#1B4332" viewBox="0 0 24 24">
+                  <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
                 </svg>
-              </button>
+              </div>
+              <span className="text-white font-black text-lg tracking-tight">CareConnect</span>
+            </Link>
+
+            {/* Center nav links - desktop only */}
+            <div className="hidden md:flex items-center gap-6">
+              <Link href="/browse" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: '#B7E4C7' }}>
+                Browse Providers
+              </Link>
+              <Link href="/services" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: '#B7E4C7' }}>
+                Our Services
+              </Link>
+              <Link href="/about" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: '#B7E4C7' }}>
+                About Us
+              </Link>
+              <Link href="/contact" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: '#B7E4C7' }}>
+                Contact
+              </Link>
+              {userRole === 'admin' && (
+                <Link href="/admin" className="text-sm font-medium transition-colors hover:opacity-80" style={{ color: '#B7E4C7' }}>
+                  Admin
+                </Link>
+              )}
             </div>
 
-            {/* Mobile Menu */}
-            <div className="mobile-menu hidden md:hidden pb-4">
-              <Link href="/browse" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Browse Providers</Link>
-              <Link href="/services" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Our Services</Link>
-              <Link href="/about" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">About 245D</Link>
-              <Link href="/contact" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Contact</Link>
-              <div className="border-t border-[#D4C4A8] mt-2 pt-2">
-                {user ? (
-                  <>
-                    <Link href="/dashboard" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Dashboard</Link>
-                    <form action="/auth/logout" method="POST">
-                      <button className="block w-full text-left px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">
-                        Sign Out
-                      </button>
-                    </form>
-                  </>
-                ) : (
-                  <>
-                    <Link href="/auth/login" className="block px-3 py-2 text-[#5C4A32] hover:bg-[#D4C4A8] rounded">Sign In</Link>
-                    <Link href="/auth/register-care-seeker" className="block px-3 py-2 bg-green-600 text-white hover:bg-green-700 mx-3 rounded mb-2">
-                      Find Care
+            {/* Right side auth buttons */}
+            <div className="hidden md:flex items-center gap-3">
+              {user ? (
+                <>
+                  {(userRole === 'provider' || userRole === 'admin') && (
+                    <Link href="/dashboard" className="text-sm font-medium" style={{ color: '#B7E4C7' }}>
+                      Dashboard
                     </Link>
-                    <Link href="/auth/register" className="block px-3 py-2 bg-blue-600 text-white hover:bg-blue-700 mx-3 rounded">
-                      List Your Facility
+                  )}
+                  {userRole === 'care_seeker' && (
+                    <Link href="/care-seeker/dashboard" className="text-sm font-medium" style={{ color: '#B7E4C7' }}>
+                      Dashboard
                     </Link>
-                  </>
-                )}
-              </div>
+                  )}
+                  <form action="/auth/logout" method="POST">
+                    <button className="text-sm font-medium px-4 py-2 rounded-full transition-all hover:opacity-80" style={{ background: 'rgba(255,255,255,0.12)', color: 'white' }}>
+                      Sign Out
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="text-sm font-medium" style={{ color: '#B7E4C7' }}>
+                    Sign In
+                  </Link>
+                  <Link href="/auth/register-care-seeker"
+                    className="text-sm font-bold px-5 py-2.5 rounded-full transition-all hover:opacity-90"
+                    style={{ background: '#95D5B2', color: '#1B4332' }}>
+                    Find Care
+                  </Link>
+                  <Link href="/auth/register"
+                    className="text-sm font-bold px-5 py-2.5 rounded-full transition-all hover:opacity-90"
+                    style={{ background: 'white', color: '#1B4332' }}>
+                    List Your Facility
+                  </Link>
+                </>
+              )}
+            </div>
+
+            {/* Mobile menu button */}
+            <button className="md:hidden mobile-menu-button text-white">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Mobile dropdown */}
+          <div className="mobile-menu hidden md:hidden mt-2 rounded-2xl p-4" style={{ background: '#1B4332' }}>
+            <Link href="/browse" className="block px-4 py-2.5 rounded-xl text-sm font-medium mb-1 hover:bg-white/10" style={{ color: '#B7E4C7' }}>Browse Providers</Link>
+            <Link href="/services" className="block px-4 py-2.5 rounded-xl text-sm font-medium mb-1 hover:bg-white/10" style={{ color: '#B7E4C7' }}>Our Services</Link>
+            <Link href="/about" className="block px-4 py-2.5 rounded-xl text-sm font-medium mb-1 hover:bg-white/10" style={{ color: '#B7E4C7' }}>About Us</Link>
+            <Link href="/contact" className="block px-4 py-2.5 rounded-xl text-sm font-medium mb-4 hover:bg-white/10" style={{ color: '#B7E4C7' }}>Contact</Link>
+            <div className="border-t pt-4" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+              {user ? (
+                <>
+                  <Link href="/dashboard" className="block px-4 py-2.5 rounded-xl text-sm font-medium mb-1 hover:bg-white/10" style={{ color: '#B7E4C7' }}>Dashboard</Link>
+                  <form action="/auth/logout" method="POST">
+                    <button className="block w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-white/10" style={{ color: '#B7E4C7' }}>Sign Out</button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="block px-4 py-2.5 rounded-xl text-sm font-medium mb-2 hover:bg-white/10" style={{ color: '#B7E4C7' }}>Sign In</Link>
+                  <Link href="/auth/register-care-seeker" className="block px-4 py-2.5 rounded-xl text-sm font-bold text-center mb-2" style={{ background: '#95D5B2', color: '#1B4332' }}>Find Care</Link>
+                  <Link href="/auth/register" className="block px-4 py-2.5 rounded-xl text-sm font-bold text-center" style={{ background: 'white', color: '#1B4332' }}>List Your Facility</Link>
+                </>
+              )}
             </div>
           </div>
         </nav>
@@ -141,63 +185,56 @@ export default async function RootLayout({
           {children}
         </main>
 
-        {/* Footer - Light Tan Background */}
-        <footer className="py-12" style={{ backgroundColor: '#EDE4D3' }}>
-          <div className="container mx-auto px-4">
+        <footer style={{ background: '#1B4332' }} className="py-12">
+          <div className="container mx-auto px-6">
             <div className="grid md:grid-cols-4 gap-8">
-              {/* Company Info */}
               <div>
-                <div className="flex items-center mb-4">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center mr-2">
-                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <div className="flex items-center gap-2.5 mb-4">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ background: '#95D5B2' }}>
+                    <svg className="w-5 h-5" fill="#1B4332" viewBox="0 0 24 24">
                       <path d="M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z"/>
                     </svg>
                   </div>
                   <div>
-                    <span className="text-lg font-bold text-blue-600">CareConnect</span>
-                    <p className="text-xs text-gray-600">245D Provider Network</p>
+                    <span className="text-white font-black text-lg">CareConnect</span>
+                    <p className="text-xs" style={{ color: '#95D5B2' }}>245D Provider Network</p>
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm">
+                <p className="text-sm" style={{ color: '#B7E4C7' }}>
                   Connecting Minnesota families with quality 245D licensed care providers.
                 </p>
               </div>
 
-              {/* For Care Seekers */}
               <div>
-                <h4 className="font-bold mb-4 text-blue-600">For Families</h4>
+                <h4 className="font-bold mb-4" style={{ color: '#95D5B2' }}>For Families</h4>
                 <ul className="space-y-2">
-                  <li><Link href="/browse" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Browse Providers</Link></li>
-                  <li><Link href="/auth/register-care-seeker" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Create Account</Link></li>
-                  <li><Link href="/about#how-it-works" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">How It Works</Link></li>
-                  <li><Link href="/resources" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Resources</Link></li>
+                  <li><Link href="/browse" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Browse Providers</Link></li>
+                  <li><Link href="/auth/register-care-seeker" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Create Account</Link></li>
+                  <li><Link href="/about#how-it-works" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>How It Works</Link></li>
+                  <li><Link href="/resources" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Resources</Link></li>
                 </ul>
               </div>
 
-              {/* For Providers */}
               <div>
-                <h4 className="font-bold mb-4 text-blue-600">For Providers</h4>
+                <h4 className="font-bold mb-4" style={{ color: '#95D5B2' }}>For Providers</h4>
                 <ul className="space-y-2">
-                  <li><Link href="/auth/register" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Join Network</Link></li>
-                  <li><Link href="/providers/requirements" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Requirements</Link></li>
-                  <li><Link href="/dashboard" className="text-gray-600 hover:text-blue-600 transition-colors font-medium">Provider Login</Link></li>
+                  <li><Link href="/auth/register" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Join Network</Link></li>
+                  <li><Link href="/providers/requirements" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Requirements</Link></li>
+                  <li><Link href="/dashboard" className="text-sm transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Provider Login</Link></li>
                 </ul>
               </div>
 
-              {/* Contact & Support */}
               <div>
-                <h4 className="font-bold mb-4 text-blue-600">Support</h4>
-                <p className="text-gray-600 mb-2 font-medium">
-                  <a href="mailto:careconnectmkting@gmail.com" className="hover:text-blue-600 transition-colors">
+                <h4 className="font-bold mb-4" style={{ color: '#95D5B2' }}>Support</h4>
+                <p className="text-sm mb-1">
+                  <a href="mailto:careconnectmkting@gmail.com" className="transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>
                     careconnectmkting@gmail.com
                   </a>
                 </p>
-                <p className="text-gray-600 text-sm mb-4 font-medium">
-                  Monday - Friday: 8AM - 5PM CST
-                </p>
-                <div className="space-y-2 text-sm">
-                  <p className="text-blue-600 font-bold">Waiver Types Supported:</p>
-                  <ul className="ml-2 text-gray-600 font-medium">
+                <p className="text-sm mb-4" style={{ color: '#B7E4C7' }}>Monday - Friday: 8AM - 5PM CST</p>
+                <div className="space-y-1 text-sm">
+                  <p className="font-bold mb-2" style={{ color: '#95D5B2' }}>Waiver Types Supported:</p>
+                  <ul className="space-y-1" style={{ color: '#B7E4C7' }}>
                     <li>• CADI Waiver</li>
                     <li>• DD Waiver</li>
                     <li>• BI Waiver</li>
@@ -207,14 +244,14 @@ export default async function RootLayout({
               </div>
             </div>
 
-            <div className="border-t border-[#D4C4A8] mt-8 pt-8 text-center text-sm">
-              <p className="text-gray-600 font-medium">&copy; 2025 CareConnect Minnesota. All rights reserved.</p>
-              <p className="mt-2">
-                <Link href="/privacy" className="text-gray-600 hover:text-blue-600 font-medium">Privacy Policy</Link>
-                <span className="mx-2 text-[#D4C4A8]">|</span>
-                <Link href="/terms" className="text-gray-600 hover:text-blue-600 font-medium">Terms of Service</Link>
-                <span className="mx-2 text-[#D4C4A8]">|</span>
-                <Link href="/hipaa" className="text-gray-600 hover:text-blue-600 font-medium">HIPAA Compliance</Link>
+            <div className="mt-8 pt-8 text-center text-sm" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+              <p style={{ color: '#B7E4C7' }}>&copy; 2026 CareConnect Minnesota. All rights reserved.</p>
+              <p className="mt-2 flex justify-center gap-4">
+                <Link href="/privacy" className="transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Privacy Policy</Link>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                <Link href="/terms" className="transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>Terms of Service</Link>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+                <Link href="/hipaa" className="transition-colors hover:text-white" style={{ color: '#B7E4C7' }}>HIPAA Compliance</Link>
               </p>
             </div>
           </div>

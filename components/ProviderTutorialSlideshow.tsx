@@ -103,17 +103,17 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
       {/* Main Container - Slightly darker tan background */}
       <div
         className={`
-          relative rounded-2xl shadow-2xl overflow-hidden border-2 border-[#C9B99A]
+          relative rounded-2xl shadow-2xl overflow-hidden border-2 border-[#2d7a52]
           ${padding}
         `}
-        style={{ backgroundColor: '#D4C4A8' }}
+        style={{ backgroundColor: '#1a5c3a' }}
       >
         {/* Top bar with step indicator */}
         <div className="flex items-center justify-between mb-4">
-          <span className={`font-semibold text-gray-700 ${isPreview ? 'text-sm' : 'text-base'}`}>
+          <span className={`font-semibold text-white ${isPreview ? 'text-sm' : 'text-base'}`}>
             Provider Tutorial
           </span>
-          <span className={`font-medium text-gray-600 ${isPreview ? 'text-sm' : 'text-base'}`}>
+          <span className={`font-medium text-[#B7E4C7] ${isPreview ? 'text-sm' : 'text-base'}`}>
             Step {slide.step} of {slides.length}
           </span>
         </div>
@@ -125,7 +125,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
             onClick={prevSlide}
             className={`
               absolute left-0 top-1/2 -translate-y-1/2 z-10
-              bg-white hover:bg-gray-100 shadow-lg rounded-full border-2 border-[#C9B99A]
+              bg-white hover:bg-gray-100 shadow-lg rounded-full border-2 border-[#2d7a52]
               transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
               ${isPreview ? 'w-10 h-10 -ml-2' : 'w-12 h-12 -ml-4 md:-ml-6'}
             `}
@@ -140,7 +140,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
             onClick={nextSlide}
             className={`
               absolute right-0 top-1/2 -translate-y-1/2 z-10
-              bg-white hover:bg-gray-100 shadow-lg rounded-full border-2 border-[#C9B99A]
+              bg-white hover:bg-gray-100 shadow-lg rounded-full border-2 border-[#2d7a52]
               transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
               ${isPreview ? 'w-10 h-10 -mr-2' : 'w-12 h-12 -mr-4 md:-mr-6'}
             `}
@@ -166,7 +166,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
               </div>
               <h3
                 className={`
-                  font-bold text-gray-800
+                  font-bold text-white
                   ${isPreview ? 'text-lg' : isMedium ? 'text-xl md:text-2xl' : 'text-2xl md:text-3xl'}
                 `}
               >
@@ -177,7 +177,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
             {/* Description */}
             <p
               className={`
-                text-gray-600 text-center max-w-2xl mb-4
+                text-[#B7E4C7] text-center max-w-2xl mb-4
                 ${isPreview ? 'text-sm' : isMedium ? 'text-base' : 'text-lg'}
               `}
             >
@@ -187,7 +187,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
             {/* Screenshot Image - Keep white background */}
             <div
               className={`
-                relative w-full rounded-lg overflow-hidden shadow-xl border-2 border-[#C9B99A] bg-white
+                relative w-full rounded-lg overflow-hidden shadow-xl border-2 border-[#2d7a52] bg-white
                 ${isPreview ? 'h-[180px]' : isMedium ? 'h-[280px] md:h-[340px]' : 'h-[320px] md:h-[400px]'}
               `}
               style={{
@@ -208,7 +208,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
 
         {/* Progress Bar */}
         <div className="mt-4">
-          <div className="h-2 bg-[#C9B99A] rounded-full overflow-hidden">
+          <div className="h-2 bg-[#2d7a52] rounded-full overflow-hidden">
             <div
               className="h-full bg-blue-600 transition-all duration-50 ease-linear"
               style={{ width: `${progress}%` }}
@@ -227,7 +227,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
                 ${isPreview ? 'w-3 h-3' : isMedium ? 'w-4 h-4' : 'w-4 h-4'}
                 ${index === currentSlide
                   ? 'bg-blue-600 scale-110'
-                  : 'bg-[#C9B99A] hover:bg-[#B8A992]'
+                  : 'bg-[#2d7a52] hover:bg-[#3d9966]'
                 }
               `}
               aria-label={`Go to step ${index + 1}`}
@@ -239,15 +239,15 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
         <div className="flex justify-center mt-4">
           <button
             onClick={togglePlayPause}
-            className="w-12 h-12 rounded-full bg-white hover:bg-gray-100 flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg"
+            className="w-12 h-12 rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" style={{ background: 'rgba(255,255,255,0.15)' }}
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? (
-              <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-gray-700 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
@@ -272,7 +272,7 @@ export default function ProviderTutorialSlideshow({ variant }: ProviderTutorialS
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </Link>
-        <p className="mt-3 text-sm text-gray-600">
+        <p className="mt-3 text-sm text-[#B7E4C7]">
           • $99.99/month to go live •
         </p>
       </div>

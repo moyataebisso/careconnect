@@ -246,10 +246,10 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
     <div className="min-h-screen bg-gray-50">
       {/* Header Search */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             <div className="flex items-center gap-4 w-full md:w-auto">
-              <h1 className="text-2xl font-bold text-gray-900">Browse 245D Care Providers</h1>
+              <h1 className="text-xl font-bold text-gray-900">Browse 245D Care Providers</h1>
               <span className="text-gray-500">
                 {filteredProviders.length} providers found
               </span>
@@ -328,8 +328,8 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
           <div className="lg:w-1/4">
-            <div className="bg-white rounded-lg shadow p-6 sticky top-24">
-              <h2 className="text-lg font-semibold mb-4">Filters</h2>
+            <div className="bg-white rounded-lg shadow p-4 sticky top-24">
+              <h2 className="text-base font-semibold mb-4">Filters</h2>
 
               {/* Availability Filter */}
               <div className="mb-6">
@@ -345,7 +345,7 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-medium mb-3">245D Service Types</h3>
+                <h3 className="text-sm font-semibold mb-2">245D Service Types</h3>
                 <div className="mb-3">
                   <h4 className="text-sm font-medium text-blue-600 mb-2">Basic Services</h4>
                   <div className="space-y-2 ml-2">
@@ -382,7 +382,7 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
               </div>
 
               <div className="mb-6">
-                <h3 className="font-medium mb-3">Accepted Waivers</h3>
+                <h3 className="text-sm font-semibold mb-2">Accepted Waivers</h3>
                 <div className="space-y-2">
                   {(['CADI', 'DD', 'BI', 'Elderly'] as WaiverType[]).map(key => (
                     <label key={key} className="flex items-center text-sm">
@@ -395,7 +395,7 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
 
               {/* Location */}
               <div className="mb-6">
-                <h3 className="font-medium mb-3">Location</h3>
+                <h3 className="text-sm font-semibold mb-2">Location</h3>
                 <input
                   type="text"
                   placeholder="City name..."
@@ -491,10 +491,10 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
                         )}
 
                         {/* Content Section */}
-                        <div className="flex-1 p-6">
+                        <div className="flex-1 p-4">
                           <div className="flex justify-between items-start mb-4">
                             <div>
-                              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                              <h2 className="text-lg font-semibold text-gray-900 mb-1">
                                 {provider.business_name}
                               </h2>
                               <p className="text-gray-600">
@@ -561,7 +561,8 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
                           <div className="flex gap-3">
                             <Link
                               href={`/providers/${provider.id}`}
-                              className="flex-1 text-center py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                              className="flex-1 text-center py-2 px-4 rounded-lg hover:opacity-90 transition-colors font-semibold text-white"
+                              style={{ background: '#1B4332' }}
                             >
                               View Details
                             </Link>
@@ -580,7 +581,8 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
                                 </button>
                                 <button
                                   onClick={() => handleContact(provider.id)}
-                                  className="py-2 px-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                  className="py-2 px-4 rounded-lg hover:opacity-90 transition-colors font-semibold text-white"
+                                  style={{ background: '#1B4332' }}
                                 >
                                   Book Service
                                 </button>
@@ -588,7 +590,8 @@ export default function BrowseClient({ initialProviders }: BrowseClientProps) {
                             ) : (
                               <Link
                                 href="/auth/login"
-                                className="py-2 px-4 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                                className="py-2 px-4 rounded-lg transition-colors font-medium border"
+                                style={{ borderColor: '#1B4332', color: '#1B4332', background: 'white' }}
                               >
                                 Sign in to Book
                               </Link>
