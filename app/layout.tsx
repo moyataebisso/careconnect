@@ -5,13 +5,37 @@ import { Inter } from 'next/font/google'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import Navigation from '@/components/Navigation'
+import { CareConnectJsonLd } from '@/app/components/CareConnectJsonLd'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'CareConnect - Minnesota 245D Care Provider Network',
-  description: 'Find verified 245D licensed care facilities and services in Minnesota. Connect with quality providers accepting CADI, DD, BI, and Elderly waivers.',
-  keywords: 'HCBS, 245D, care facilities, Minnesota, CADI, DD waiver, elderly care, assisted living, disability services',
+  title: {
+    default: 'CareConnect — Minnesota 245D Care Provider Network',
+    template: '%s | CareConnect Minnesota',
+  },
+  description:
+    'Find verified 245D licensed care providers across Minnesota. Search by waiver type (CADI, DD, BI, Elderly), service type, and county. The most complete HCBS provider directory in MN.',
+  keywords: [
+    '245D provider Minnesota',
+    'CADI waiver provider Minneapolis',
+    'DD waiver group home Minnesota',
+    'HCBS provider directory MN',
+    'CareConnect Minnesota',
+    '245D licensed care facility',
+    'home care waiver MN',
+  ],
+  metadataBase: new URL('https://careconnectlive.org'),
+  openGraph: {
+    title: 'CareConnect — Minnesota 245D Provider Network',
+    description:
+      'Verified 245D licensed providers accepting CADI, DD, BI, and Elderly waiver clients across Minnesota.',
+    url: 'https://careconnectlive.org',
+    siteName: 'CareConnect Minnesota',
+    locale: 'en_US',
+    type: 'website',
+  },
+  robots: { index: true, follow: true },
 }
 
 export default async function RootLayout({
@@ -66,6 +90,7 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </head>
       <body className={inter.className}>
+        <CareConnectJsonLd />
         <nav className="sticky top-0 z-50 px-4 py-3" style={{ background: '#f8f6f1' }}>
           <div
             className="mx-auto flex items-center justify-between px-6"

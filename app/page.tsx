@@ -2,13 +2,29 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import ProviderTutorialSlideshow from '@/components/ProviderTutorialSlideshow'
 
+const MORATORIUM_BANNER_KEY = 'moratorium-banner-dismissed'
+
 export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
+  const [showMoratoriumBanner, setShowMoratoriumBanner] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem(MORATORIUM_BANNER_KEY) !== 'true') {
+      setShowMoratoriumBanner(true)
+    }
+  }, [])
+
+  const dismissMoratoriumBanner = () => {
+    setShowMoratoriumBanner(false)
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(MORATORIUM_BANNER_KEY, 'true')
+    }
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +106,58 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* MORATORIUM BANNER — dismissible, warm amber */}
+      {showMoratoriumBanner && (
+        <section
+          role="region"
+          aria-label="245D licensing moratorium notice"
+          style={{ background: '#FEF3C7', borderTop: '1px solid #FDE68A', borderBottom: '1px solid #FDE68A' }}
+        >
+          <div className="container mx-auto px-6 py-6 relative">
+            <button
+              type="button"
+              onClick={dismissMoratoriumBanner}
+              aria-label="Dismiss moratorium notice"
+              className="absolute right-4 top-4 rounded-full p-1.5 transition-colors hover:bg-amber-200"
+              style={{ color: '#78350F' }}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <div className="grid md:grid-cols-3 gap-6 items-center pr-8">
+              <div className="md:col-span-2">
+                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#B45309' }}>
+                  Statewide Notice
+                </p>
+                <h2 className="text-xl md:text-2xl font-black mb-2" style={{ color: '#78350F', letterSpacing: '-0.01em' }}>
+                  245D Licensing Moratorium Is Active Through 2027
+                </h2>
+                <p className="text-sm md:text-base leading-relaxed" style={{ color: '#78350F' }}>
+                  Minnesota DHS paused new 245D licensing on January 1, 2026. Existing licensed providers are in HIGH demand — families and case managers need verified options NOW. List on CareConnect to be found by social workers across all 87 Minnesota counties.
+                </p>
+                <Link
+                  href="/blog/minnesota-245d-moratorium-2026"
+                  className="inline-block mt-3 text-sm font-semibold underline decoration-2 underline-offset-2 hover:opacity-80"
+                  style={{ color: '#B45309' }}
+                >
+                  Learn more about the moratorium →
+                </Link>
+              </div>
+              <div className="flex md:justify-end">
+                <Link
+                  href="/auth/register"
+                  className="inline-block px-6 py-3 rounded-xl font-bold text-white text-center transition-all hover:opacity-90 whitespace-nowrap"
+                  style={{ background: '#B45309' }}
+                >
+                  List Your Facility — $99.99/mo
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* TRUST BAR — white, clean stats */}
       <section className="bg-white border-b" style={{ borderColor: '#E8F5E9' }}>
