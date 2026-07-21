@@ -10,6 +10,7 @@ type Props = {
 type ProviderMeta = {
   business_name: string | null
   city: string | null
+  county: string | null
   state: string | null
   zip_code: string | null
   address: string | null
@@ -25,7 +26,7 @@ async function fetchProvider(id: string): Promise<ProviderMeta | null> {
     const { data } = await supabase
       .from('providers')
       .select(
-        'business_name, city, state, zip_code, address, contact_phone, description, service_types, accepted_waivers'
+        'business_name, city, county, state, zip_code, address, contact_phone, description, service_types, accepted_waivers'
       )
       .eq('id', id)
       .single()
@@ -58,11 +59,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const services = serviceLabels(provider.service_types)
   const waivers = waiverLabels(provider.accepted_waivers)
-  const city = provider.city ?? 'Minnesota'
+  const location = provider.county
+    ? `${provider.county} County`
+    : provider.city ?? 'Minnesota'
 
-  const title = `${provider.business_name} — 245D Care Provider in ${city}, MN`
+  const title = `${provider.business_name} — 245D Care Provider in ${location}, MN`
   const description =
-    `${provider.business_name} is a verified 245D licensed provider in ${city}, Minnesota` +
+    `${provider.business_name} is a verified 245D licensed provider in ${location}, Minnesota` +
     (services.length ? ` offering ${services.join(', ')}.` : '.') +
     (waivers.length ? ` Accepting ${waivers.join(', ')} waiver clients.` : '')
 
@@ -71,7 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description,
     openGraph: {
       title: provider.business_name,
-      description: `Verified 245D provider in ${city}, MN`,
+      description: `Verified 245D provider in ${location}, MN`,
     },
   }
 }
