@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 interface Inquiry {
   id: string
@@ -17,94 +15,125 @@ interface Inquiry {
   status: string | null
   created_at: string | null
   updated_at: string | null
-  providers: {
-    business_name: string
-  } | null
+  providers: { business_name: string } | null
 }
 
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; inquiries: Inquiry[] }
+
 export default function AdminInquiriesPage() {
-  const [inquiries, setInquiries] = useState<Inquiry[]>([])
-  const [loading, setLoading] = useState(true)
+  const [state, setState] = useState<LoadState>({ kind: 'loading' })
   const [filterStatus, setFilterStatus] = useState<'all' | 'new' | 'contacted' | 'resolved'>('all')
   const [updating, setUpdating] = useState<string | null>(null)
-  const supabase = createClient()
-  const router = useRouter()
+  const [updateError, setUpdateError] = useState<string | null>(null)
 
-  useEffect(() => {
-    checkAdminAndLoadData()
+  const loadInquiries = useCallback(async () => {
+    setState({ kind: 'loading' })
+    try {
+      const res = await fetch('/api/admin/inquiries', { credentials: 'include' })
+      const payload: unknown = await res.json().catch(() => ({}))
+
+      if (res.status === 403) {
+        setState({ kind: 'error', message: 'Access denied. Admin privileges required.' })
+        return
+      }
+      if (!res.ok) {
+        const message =
+          typeof (payload as { error?: unknown })?.error === 'string'
+            ? (payload as { error: string }).error
+            : `Failed to load inquiries (HTTP ${res.status})`
+        setState({ kind: 'error', message })
+        return
+      }
+      const inquiries = Array.isArray((payload as { data?: unknown })?.data)
+        ? ((payload as { data: Inquiry[] }).data)
+        : []
+      setState({ kind: 'ready', inquiries })
+    } catch (err) {
+      setState({
+        kind: 'error',
+        message: err instanceof Error ? err.message : 'Network error loading inquiries',
+      })
+    }
   }, [])
 
-  const checkAdminAndLoadData = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push('/auth/login')
-        return
-      }
-
-      const { data: adminUser } = await supabase
-        .from('admin_users')
-        .select('role')
-        .eq('user_id', user.id)
-        .single()
-
-      if (!adminUser) {
-        alert('Access denied. Admin privileges required.')
-        router.push('/dashboard')
-        return
-      }
-
-      await loadInquiries()
-    } catch (error) {
-      console.error('Error:', error)
-      router.push('/dashboard')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const loadInquiries = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('referral_requests')
-        .select('*, providers(business_name)')
-        .order('created_at', { ascending: false })
-
-      if (error) throw error
-      setInquiries(data || [])
-    } catch (error) {
-      console.error('Error loading inquiries:', error)
-    }
-  }
+  useEffect(() => {
+    loadInquiries()
+  }, [loadInquiries])
 
   const updateStatus = async (id: string, newStatus: string) => {
     setUpdating(id)
+    setUpdateError(null)
     try {
-      const { error } = await supabase
-        .from('referral_requests')
-        .update({
-          status: newStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', id)
-
-      if (error) throw error
-
+      const res = await fetch('/api/admin/inquiries', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id, status: newStatus }),
+      })
+      const payload = await res.json().catch(() => ({}))
+      if (!res.ok || payload?.success === false) {
+        const message =
+          typeof payload?.error === 'string'
+            ? payload.error
+            : `Failed to update inquiry (HTTP ${res.status})`
+        setUpdateError(message)
+        return
+      }
       await loadInquiries()
-    } catch (error) {
-      console.error('Error updating status:', error)
-      alert('Failed to update status')
+    } catch (err) {
+      setUpdateError(err instanceof Error ? err.message : 'Network error updating inquiry')
     } finally {
       setUpdating(null)
     }
   }
 
-  const filteredInquiries = inquiries.filter(inq => {
+  if (state.kind === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (state.kind === 'error') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="bg-white shadow-sm border-b">
+          <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 className="text-2xl font-bold">Provider Inquiries</h1>
+            <Link href="/admin" className="text-blue-600 hover:text-blue-800">← Back to Admin</Link>
+          </div>
+        </div>
+        <div className="container mx-auto px-4 py-10">
+          <div className="max-w-xl mx-auto bg-red-50 border border-red-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-red-800 mb-2">Couldn't load inquiries</h2>
+            <p className="text-sm text-red-700 mb-4">{state.message}</p>
+            <button
+              onClick={loadInquiries}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+            >
+              Try again
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  const inquiries = state.inquiries
+  const filteredInquiries = inquiries.filter((inq) => {
     if (filterStatus === 'all') return true
     if (filterStatus === 'new') return inq.status === 'new' || !inq.status
     return inq.status === filterStatus
   })
+
+  const countByStatus = (status: string) => {
+    if (status === 'new') return inquiries.filter((i) => i.status === 'new' || !i.status).length
+    return inquiries.filter((i) => i.status === status).length
+  }
 
   const getStatusColor = (status?: string | null) => {
     switch (status) {
@@ -118,26 +147,9 @@ export default function AdminInquiriesPage() {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '—'
     return new Date(dateString).toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: 'numeric', minute: '2-digit', hour12: true,
     })
-  }
-
-  const countByStatus = (status: string) => {
-    if (status === 'new') return inquiries.filter(i => i.status === 'new' || !i.status).length
-    return inquiries.filter(i => i.status === status).length
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    )
   }
 
   return (
@@ -146,15 +158,18 @@ export default function AdminInquiriesPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold">Provider Inquiries</h1>
-            <Link href="/admin" className="text-blue-600 hover:text-blue-800">
-              ← Back to Admin
-            </Link>
+            <Link href="/admin" className="text-blue-600 hover:text-blue-800">← Back to Admin</Link>
           </div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Stats */}
+        {updateError && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+            {updateError}
+          </div>
+        )}
+
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-4">
             <div className="text-2xl font-bold">{inquiries.length}</div>
@@ -174,45 +189,23 @@ export default function AdminInquiriesPage() {
           </div>
         </div>
 
-        {/* Filters */}
         <div className="bg-white rounded-lg shadow mb-6 p-4">
           <div className="flex gap-2">
-            <button
-              onClick={() => setFilterStatus('all')}
-              className={`px-4 py-2 rounded ${
-                filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-              }`}
-            >
+            <button onClick={() => setFilterStatus('all')} className={`px-4 py-2 rounded ${filterStatus === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
               All ({inquiries.length})
             </button>
-            <button
-              onClick={() => setFilterStatus('new')}
-              className={`px-4 py-2 rounded ${
-                filterStatus === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-              }`}
-            >
+            <button onClick={() => setFilterStatus('new')} className={`px-4 py-2 rounded ${filterStatus === 'new' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
               New ({countByStatus('new')})
             </button>
-            <button
-              onClick={() => setFilterStatus('contacted')}
-              className={`px-4 py-2 rounded ${
-                filterStatus === 'contacted' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-              }`}
-            >
+            <button onClick={() => setFilterStatus('contacted')} className={`px-4 py-2 rounded ${filterStatus === 'contacted' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
               Contacted ({countByStatus('contacted')})
             </button>
-            <button
-              onClick={() => setFilterStatus('resolved')}
-              className={`px-4 py-2 rounded ${
-                filterStatus === 'resolved' ? 'bg-blue-600 text-white' : 'bg-gray-100'
-              }`}
-            >
+            <button onClick={() => setFilterStatus('resolved')} className={`px-4 py-2 rounded ${filterStatus === 'resolved' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}>
               Resolved ({countByStatus('resolved')})
             </button>
           </div>
         </div>
 
-        {/* Table */}
         <div className="bg-white rounded-lg shadow overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">

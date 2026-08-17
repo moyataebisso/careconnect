@@ -92,17 +92,17 @@ export default function AdminProvidersPage() {
     }
   }
 
-  // Helper function to send emails (non-blocking)
-  const sendEmail = async (type: string, to: string, data: Record<string, string | number>) => {
+  // Fire admin-only notification via the session/admin-gated wrapper.
+  // Recipient and content are resolved server-side from provider_id.
+  const notifyAdminAction = async (action: 'approve' | 'subscription_reminder' | 'payment_link' | 'custom', providerId: string, extra?: { subject?: string; body?: string }) => {
     try {
-      await fetch('/api/email/send', {
+      await fetch('/api/admin/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, to, data })
+        body: JSON.stringify({ action, provider_id: providerId, ...(extra || {}) }),
       })
-      console.log(`Email sent: ${type} to ${to}`)
     } catch (emailError) {
-      console.log(`Email failed (non-blocking): ${type}`, emailError)
+      console.log(`Admin notify failed (non-blocking): ${action}`, emailError)
     }
   }
 
@@ -147,11 +147,7 @@ export default function AdminProvidersPage() {
       if (error) throw error
 
       if (newStatus === 'active') {
-        sendEmail('provider_approved', provider.contact_email, {
-          providerName: provider.contact_person,
-          businessName: provider.business_name,
-          trialEndDate: ''
-        })
+        notifyAdminAction('approve', providerId)
       }
 
       await loadProviders()
@@ -195,10 +191,10 @@ export default function AdminProvidersPage() {
 
     setSendingPaymentLinkId(provider.id)
     try {
-      const response = await fetch('/api/email/send-payment-link', {
+      const response = await fetch('/api/admin/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider_id: provider.id })
+        body: JSON.stringify({ action: 'payment_link', provider_id: provider.id }),
       })
 
       const data = await response.json()
@@ -256,16 +252,15 @@ export default function AdminProvidersPage() {
 
     setSendingCustomEmail(true)
     try {
-      const response = await fetch('/api/email/send-custom', {
+      const response = await fetch('/api/admin/notifications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          to: selectedProvider.contact_email,
+          action: 'custom',
+          provider_id: selectedProvider.id,
           subject: emailSubject,
           body: emailBody,
-          providerName: selectedProvider.contact_person,
-          businessName: selectedProvider.business_name
-        })
+        }),
       })
       
       const data = await response.json()

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -27,8 +27,13 @@ export default function ProviderDetailPage() {
     preferred_city: '',
     move_in_date: '',
     urgency: '',
-    special_requirements: ''
+    special_requirements: '',
+    website: '' // honeypot — must stay empty
   })
+  const mountedAtRef = useRef<number>(0)
+  useEffect(() => {
+    mountedAtRef.current = Date.now()
+  }, [])
 
   const supabase = createClient()
 
@@ -85,49 +90,35 @@ export default function ProviderDetailPage() {
     e.preventDefault()
     setSubmitting(true)
 
-    const { data, error } = await supabase
-      .from('referral_requests')
-      .insert({
-        provider_id: provider?.id,
-        client_name: formData.client_name,
-        client_email: formData.client_email || null,
-        client_phone: formData.client_phone,
-        waiver_type: formData.waiver_type,
-        service_types_needed: formData.service_needed ? [formData.service_needed] : null,
-        preferred_city: formData.preferred_city || provider?.city,
-        move_in_date: formData.move_in_date || null,
-        urgency: formData.urgency || 'flexible',
-        special_requirements: formData.special_requirements || null,
-        status: 'new'
-      })
-      .select()
-
-    setSubmitting(false)
-
-    if (error) {
-      console.error('Detailed error:', error)
-      alert(`Error: ${error.message}. Check console for details.`)
-    } else {
-      setSubmitSuccess(true)
-
-      // Send admin notification email (fire-and-forget)
-      fetch('/api/email/send', {
+    try {
+      const res = await fetch('/api/referrals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'admin_new_inquiry',
-          to: 'careconnectmkting@gmail.com',
-          data: {
-            clientName: formData.client_name,
-            clientEmail: formData.client_email,
-            clientPhone: formData.client_phone,
-            providerName: provider?.business_name || 'Unknown Provider',
-            urgency: formData.urgency || 'flexible',
-            careNeeds: formData.special_requirements || 'Not specified'
-          }
-        })
-      }).catch(err => console.error('Email notification failed:', err))
+          provider_id: provider?.id,
+          client_name: formData.client_name,
+          client_email: formData.client_email,
+          client_phone: formData.client_phone,
+          waiver_type: formData.waiver_type,
+          service_needed: formData.service_needed,
+          preferred_city: formData.preferred_city || provider?.city || '',
+          move_in_date: formData.move_in_date,
+          urgency: formData.urgency,
+          special_requirements: formData.special_requirements,
+          website: formData.website,
+          mounted_at: mountedAtRef.current,
+        }),
+      })
 
+      const payload = await res.json().catch(() => ({}))
+
+      if (!res.ok || payload?.success === false) {
+        const msg = typeof payload?.error === 'string' ? payload.error : 'Could not submit inquiry. Please try again.'
+        alert(msg)
+        return
+      }
+
+      setSubmitSuccess(true)
       setFormData({
         client_name: '',
         client_email: '',
@@ -137,8 +128,14 @@ export default function ProviderDetailPage() {
         preferred_city: '',
         move_in_date: '',
         urgency: '',
-        special_requirements: ''
+        special_requirements: '',
+        website: '',
       })
+    } catch (err) {
+      console.error('Referral submit failed:', err)
+      alert('Could not submit inquiry. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -459,6 +456,19 @@ export default function ProviderDetailPage() {
                 </div>
 
                 <form onSubmit={handleContactSubmit} className="p-8 space-y-4">
+                  {/* Honeypot — real humans do not see or fill this. */}
+                  <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', top: 'auto', width: '1px', height: '1px', overflow: 'hidden' }}>
+                    <label htmlFor="referral-website">Website</label>
+                    <input
+                      id="referral-website"
+                      type="text"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleInputChange}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
                     <input
