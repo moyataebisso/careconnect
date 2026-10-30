@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: '245D Providers in Anoka County, MN',
   description:
     'Find verified 245D licensed care facilities and HCBS providers in Anoka County, Minnesota. CADI, DD, BI, and Elderly waiver accepted.',
+  alternates: { canonical: '/providers/anoka-county' },
 }
 
 export default function AnokaCountyPage() {

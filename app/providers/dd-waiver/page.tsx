@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'DD Waiver Providers in Minnesota',
   description:
     'Find verified providers accepting Developmental Disabilities (DD) waiver clients in Minnesota. 245D licensed care and residential services statewide.',
+  alternates: { canonical: '/providers/dd-waiver' },
 }
 
 export default function DdWaiverPage() {

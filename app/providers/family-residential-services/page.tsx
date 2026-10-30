@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'Family Residential Services (FRS) Providers Minnesota',
   description:
     'Find 245D licensed Family Residential Service providers in Minnesota accepting waiver clients. Verified listings, current openings.',
+  alternates: { canonical: '/providers/family-residential-services' },
 }
 
 export default function FrsPage() {

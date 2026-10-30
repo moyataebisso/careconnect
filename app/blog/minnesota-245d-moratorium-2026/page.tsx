@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'What the Minnesota 245D Licensing Moratorium Means for Families and Providers',
   description:
     'Minnesota DHS paused all new 245D licensing from January 2026 through December 2027. Here is what that means for families seeking care and for existing licensed providers.',
+  alternates: { canonical: '/blog/minnesota-245d-moratorium-2026' },
 }
 
 export default function MoratoriumBlogPost() {

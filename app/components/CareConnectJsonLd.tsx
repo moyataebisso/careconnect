@@ -1,37 +1,36 @@
 export function CareConnectJsonLd() {
-  const schema = {
+  const orgSchema = {
     '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'MedicalOrganization',
-        name: 'CareConnect Minnesota',
-        url: 'https://careconnections.live',
-        description:
-          'Minnesota 245D/HCBS provider directory connecting families, case managers, and social workers with licensed care providers. CADI, DD, BI, and Elderly waiver types supported.',
-        areaServed: { '@type': 'State', name: 'Minnesota' },
-        medicalSpecialty: 'Home and Community-Based Services',
-        address: {
-          '@type': 'PostalAddress',
-          addressRegion: 'MN',
-          addressCountry: 'US',
-        },
-      },
-      {
-        '@type': 'WebSite',
-        name: 'CareConnect Minnesota',
-        url: 'https://careconnections.live',
-        potentialAction: {
-          '@type': 'SearchAction',
-          target: 'https://careconnections.live/providers?q={search_term_string}',
-          'query-input': 'required name=search_term_string',
-        },
-      },
-    ],
+    '@type': 'Organization',
+    name: 'CareConnect Minnesota',
+    url: 'https://careconnections.live',
+    description:
+      'Search Minnesota 245D, assisted living, and home health providers by waiver (CADI, DD, BI, Elderly), service, and county. Free for families and case managers.',
+    areaServed: { '@type': 'State', name: 'Minnesota' },
+    address: {
+      '@type': 'PostalAddress',
+      addressRegion: 'MN',
+      addressCountry: 'US',
+    },
   }
+
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'CareConnect Minnesota',
+    url: 'https://careconnections.live',
+  }
+
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-    />
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+    </>
   )
 }

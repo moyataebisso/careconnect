@@ -72,6 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: { absolute: `${title} | CareConnect` },
     description,
+    alternates: { canonical: `/providers/${id}` },
     openGraph: {
       title: provider.business_name,
       description: `Verified 245D provider in ${location}, MN`,

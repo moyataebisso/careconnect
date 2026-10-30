@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: '245D Providers in Hennepin County, MN',
   description:
     'Find verified 245D licensed care facilities and HCBS providers in Hennepin County, Minnesota. CADI, DD, BI, and Elderly waiver accepted.',
+  alternates: { canonical: '/providers/hennepin-county' },
 }
 
 export default function HennepinCountyPage() {

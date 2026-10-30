@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: 'CADI Waiver Providers in Minnesota',
   description:
     'Find verified providers accepting Community Access for Disability Inclusion (CADI) waiver clients in Minnesota.',
+  alternates: { canonical: '/providers/cadi-waiver' },
 }
 
 export default function CadiWaiverPage() {

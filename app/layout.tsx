@@ -16,7 +16,7 @@ export const metadata: Metadata = {
     template: '%s | CareConnect Minnesota',
   },
   description:
-    'Find verified 245D licensed care providers across Minnesota. Search by waiver type (CADI, DD, BI, Elderly), service type, and county. The most complete HCBS provider directory in MN.',
+    'Search Minnesota 245D, assisted living, and home health providers by waiver (CADI, DD, BI, Elderly), service, and county. Free for families and case managers.',
   keywords: [
     '245D provider Minnesota',
     'CADI waiver provider Minneapolis',
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'CareConnect — Minnesota 245D Provider Network',
     description:
-      'Verified 245D licensed providers accepting CADI, DD, BI, and Elderly waiver clients across Minnesota.',
+      'Search Minnesota 245D, assisted living, and home health providers by waiver (CADI, DD, BI, Elderly), service, and county. Free for families and case managers.',
     url: 'https://careconnections.live',
     siteName: 'CareConnect Minnesota',
     locale: 'en_US',
