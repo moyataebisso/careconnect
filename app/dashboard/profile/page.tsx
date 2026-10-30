@@ -285,8 +285,6 @@ export default function EditProfilePage() {
         }
       }
 
-      const wasIncomplete = provider.status === 'incomplete'
-
       const updateData: Record<string, unknown> = {
         business_name: formData.business_name,
         business_email: formData.contact_email,
@@ -312,12 +310,7 @@ export default function EditProfilePage() {
         last_updated: new Date().toISOString()
       }
 
-      if (wasIncomplete) {
-        updateData.status = 'active'
-        updateData.verified_245d = true
-      }
-
-      console.log('Updating provider:', { id: provider.id, wasIncomplete, latitude, longitude })
+      console.log('Updating provider:', { id: provider.id, latitude, longitude })
 
       const { data, error: updateError } = await supabase
         .from('providers')
@@ -332,8 +325,21 @@ export default function EditProfilePage() {
 
       console.log('Update successful:', data)
 
+      // Activate listing server-side — no-op if payment not yet confirmed (202),
+      // idempotent if already active
+      let activationPending = false
+      try {
+        const activateRes = await fetch('/api/provider/activate-profile', { method: 'POST' })
+        if (activateRes.status === 202) activationPending = true
+      } catch {
+        // non-blocking
+      }
+
       if (isWelcome) {
-        setSuccessMessage('🎉 Profile saved! Redirecting to your dashboard...')
+        const msg = activationPending
+          ? 'Profile saved! Your listing will activate automatically once payment confirms.'
+          : '🎉 Profile saved! Redirecting to your dashboard...'
+        setSuccessMessage(msg)
         setTimeout(() => {
           router.push('/dashboard')
         }, 2000)

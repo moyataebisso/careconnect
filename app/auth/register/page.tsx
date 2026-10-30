@@ -349,8 +349,6 @@ export default function RegisterPage() {
           years_in_business: formData.years_in_business ? parseInt(formData.years_in_business) : null,
           primary_photo_url: formData.primary_photo_url || null,
           referral_agreement_signed: formData.agree_to_terms,
-          status: 'active',
-          verified_245d: true,
         }
 
         const { data: updateResult, error: updateError } = await supabase
@@ -364,7 +362,10 @@ export default function RegisterPage() {
           throw new Error(`Update failed: ${updateError.message}`)
         }
 
-        console.log('Provider activated:', updateResult)
+        console.log('Provider profile saved:', updateResult)
+
+        // Activate listing server-side only (payment verified in the route)
+        await fetch('/api/provider/activate-profile', { method: 'POST' }).catch(() => {})
 
         // Keep profiles row's name in sync
         const { data: { user } } = await supabase.auth.getUser()

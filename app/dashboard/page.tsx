@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import Link from 'next/link'
 import PaymentRequiredOverlay from '@/components/PaymentRequiredOverlay'
 
@@ -56,6 +57,21 @@ export default async function DashboardPage() {
   // If no provider and no error, redirect to create one
   if (!provider && !providerError) {
     redirect('/auth/register')
+  }
+
+  // Race A resolution: webhook arrived before profile was saved, so checkout.session.completed
+  // set status='pending'. Now that the provider is viewing their dashboard, activate them.
+  if (
+    provider &&
+    provider.subscription_status === 'active' &&
+    (provider.status === 'pending' || provider.status === 'incomplete')
+  ) {
+    const adminClient = createAdminClient()
+    const { error: activateError } = await adminClient
+      .from('providers')
+      .update({ status: 'active' })
+      .eq('id', provider.id)
+    if (!activateError) provider.status = 'active'
   }
 
   // Get user's profile (non-critical — don't block render on failure)
