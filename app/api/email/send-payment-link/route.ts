@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.careconnectlive.org'
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://careconnections.live'
   const paymentLink = `${appUrl}/subscribe?provider_id=${encodeURIComponent(provider.id)}&email=${encodeURIComponent(provider.contact_email)}`
 
   const greetingName = escapeHtml(provider.contact_person ?? 'Provider')
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     : `<p>We noticed your CareConnect registration is almost complete, but payment hasn't been finalized yet.</p>`
 
   const escapedLink = escapeHtml(paymentLink)
-  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>${baseStyles}</style></head><body><div class="container"><div class="header"><h1>CareConnect</h1><p>Minnesota's Trusted 245D Provider Network</p></div><div class="content"><h2>Complete Your CareConnect Registration</h2><p>Dear ${greetingName},</p>${businessLine}<p>To activate your provider listing and start receiving referral requests, click the secure button below to head to checkout and complete your subscription.</p><div style="text-align:center;margin:32px 0"><a href="${escapedLink}" class="button">Complete Payment &amp; Continue</a></div><p style="font-size:14px;color:#64748b">If the button doesn't work, copy and paste this link into your browser:</p><p class="fallback-url">${escapedLink}</p><div class="divider"></div><p>If you have any questions or need assistance, just reply to this email or contact us at the numbers below.</p><p>Best regards,<br><strong>The CareConnect Team</strong></p></div><div class="footer"><p><strong>CareConnect</strong></p><p>📞 763-321-4542</p><p><a href="https://www.careconnectlive.org">www.careconnectlive.org</a></p></div></div></body></html>`
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>${baseStyles}</style></head><body><div class="container"><div class="header"><h1>CareConnect</h1><p>Minnesota's Trusted 245D Provider Network</p></div><div class="content"><h2>Complete Your CareConnect Registration</h2><p>Dear ${greetingName},</p>${businessLine}<p>To activate your provider listing and start receiving referral requests, click the secure button below to head to checkout and complete your subscription.</p><div style="text-align:center;margin:32px 0"><a href="${escapedLink}" class="button">Complete Payment &amp; Continue</a></div><p style="font-size:14px;color:#64748b">If the button doesn't work, copy and paste this link into your browser:</p><p class="fallback-url">${escapedLink}</p><div class="divider"></div><p>If you have any questions or need assistance, just reply to this email or contact us at the numbers below.</p><p>Best regards,<br><strong>The CareConnect Team</strong></p></div><div class="footer"><p><strong>CareConnect</strong></p><p>📞 763-321-4542</p><p><a href="https://careconnections.live">careconnections.live</a></p></div></div></body></html>`
 
   const r = await dispatchEmail({
     to: provider.contact_email,

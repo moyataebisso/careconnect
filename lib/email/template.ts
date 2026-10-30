@@ -60,7 +60,7 @@ const footer = `
   <div class="divider"></div>
   <p>📞 763-321-4542 | 763-355-0711</p>
   <p>📧 <a href="mailto:careconnectmkting@gmail.com">careconnectmkting@gmail.com</a></p>
-  <p><a href="https://www.careconnectlive.org">www.careconnectlive.org</a></p>
+  <p><a href="https://careconnections.live">careconnections.live</a></p>
   <div class="divider"></div>
   <p style="font-size: 12px; color: #94a3b8;">
     You received this email because you registered on CareConnect.<br>
@@ -160,7 +160,7 @@ export const providerApprovedEmail = (providerName: string, businessName: string
       </div>
 
       <center>
-        <a href="https://www.careconnectlive.org/pricing" class="button green">Subscribe Now</a>
+        <a href="https://careconnections.live/pricing" class="button green">Subscribe Now</a>
       </center>
 
       <h3>Get Started Now:</h3>
@@ -189,7 +189,7 @@ export const providerApprovedEmail = (providerName: string, businessName: string
       </div>
 
       <center>
-        <a href="https://www.careconnectlive.org/dashboard" class="button">Go to Your Dashboard</a>
+        <a href="https://careconnections.live/dashboard" class="button">Go to Your Dashboard</a>
       </center>
 
       <div class="divider"></div>
@@ -251,7 +251,7 @@ export const providerSubscriptionReminderEmail = (providerName: string, business
 
 // Legacy alias for backward compatibility
 export const providerTrialEndingEmail = (providerName: string, businessName: string, _daysLeft: number): { subject: string; html: string } =>
-  providerSubscriptionReminderEmail(providerName, businessName, 'https://www.careconnectlive.org/pricing')
+  providerSubscriptionReminderEmail(providerName, businessName, 'https://careconnections.live/pricing')
 
 export const providerSubscriptionConfirmedEmail = (providerName: string, businessName: string): { subject: string; html: string } => ({
   subject: `✅ Subscription Confirmed - ${businessName}`,
@@ -275,7 +275,7 @@ export const providerSubscriptionConfirmedEmail = (providerName: string, busines
       </ul>
 
       <center>
-        <a href="https://www.careconnectlive.org/billing" class="button">Manage Billing</a>
+        <a href="https://careconnections.live/billing" class="button">Manage Billing</a>
       </center>
 
       <p>Thank you for choosing CareConnect!</p>
@@ -337,7 +337,7 @@ export const careSeekerWelcomeEmail = (firstName: string, lastName: string): { s
       </div>
 
       <center>
-        <a href="https://www.careconnectlive.org/providers" class="button green">Browse Providers Now</a>
+        <a href="https://careconnections.live/providers" class="button green">Browse Providers Now</a>
       </center>
 
       <div class="divider"></div>
@@ -393,7 +393,7 @@ export const careSeekerBookingConfirmationEmail = (
       </ul>
 
       <center>
-        <a href="https://www.careconnectlive.org/dashboard" class="button">View Your Dashboard</a>
+        <a href="https://careconnections.live/dashboard" class="button">View Your Dashboard</a>
       </center>
 
       <p>Thank you for using CareConnect!</p>
@@ -434,7 +434,7 @@ export const adminNewProviderNotification = (
       </div>
 
       <center>
-        <a href="https://www.careconnectlive.org/admin/providers" class="button">Review in Admin Panel</a>
+        <a href="https://careconnections.live/admin/providers" class="button">Review in Admin Panel</a>
       </center>
 
       <p>Please verify the 245D license and approve or reject this application.</p>
@@ -467,7 +467,7 @@ export const adminNewCareSeekerNotification = (
       </div>
 
       <center>
-        <a href="https://www.careconnectlive.org/admin" class="button">View in Admin Panel</a>
+        <a href="https://careconnections.live/admin" class="button">View in Admin Panel</a>
       </center>
     </div>
     ${footer}
@@ -508,7 +508,7 @@ export const adminNewInquiryNotification = (
       </div>
 
       <center>
-        <a href="https://www.careconnectlive.org/admin/inquiries" class="button">View in Admin Panel</a>
+        <a href="https://careconnections.live/admin/inquiries" class="button">View in Admin Panel</a>
       </center>
 
       <p>Please follow up with this care seeker within 24 hours.</p>

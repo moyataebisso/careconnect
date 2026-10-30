@@ -42,7 +42,7 @@ async function requireAdmin() {
 // Custom-email template built with fully-escaped body/subject content.
 function buildCustomEmailHtml(providerName: string, escapedBody: string): string {
   const styles = `body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;background:#f5f5f5}.container{max-width:600px;margin:0 auto;background:#fff}.header{background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);padding:30px;text-align:center}.header h1{color:#fff;margin:0;font-size:28px}.header p{color:#e0e7ff;margin:10px 0 0;font-size:14px}.content{padding:40px 30px}.divider{height:1px;background:#e2e8f0;margin:25px 0}.footer{background:#f8fafc;padding:30px;text-align:center;border-top:1px solid #e2e8f0}.footer p{margin:5px 0;color:#64748b;font-size:14px}.footer a{color:#3b82f6;text-decoration:none}`
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>${styles}</style></head><body><div class="container"><div class="header"><h1>CareConnect</h1><p>Minnesota's Trusted 245D Provider Network</p></div><div class="content"><p>Dear ${providerName},</p>${escapedBody}<div class="divider"></div><p>Best regards,<br><strong>The CareConnect Team</strong></p></div><div class="footer"><p><strong>CareConnect</strong></p><p>📞 763-321-4542</p><p><a href="https://www.careconnectlive.org">www.careconnectlive.org</a></p></div></div></body></html>`
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><style>${styles}</style></head><body><div class="container"><div class="header"><h1>CareConnect</h1><p>Minnesota's Trusted 245D Provider Network</p></div><div class="content"><p>Dear ${providerName},</p>${escapedBody}<div class="divider"></div><p>Best regards,<br><strong>The CareConnect Team</strong></p></div><div class="footer"><p><strong>CareConnect</strong></p><p>📞 763-321-4542</p><p><a href="https://careconnections.live">careconnections.live</a></p></div></div></body></html>`
 }
 
 export async function POST(req: NextRequest) {
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'subscription_reminder' || action === 'payment_link') {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.careconnectlive.org'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://careconnections.live'
     const paymentLink = `${appUrl}/subscribe?provider_id=${encodeURIComponent(provider.id)}&email=${encodeURIComponent(to)}`
     const { subject, html } = providerSubscriptionReminderEmail(
       providerName,
