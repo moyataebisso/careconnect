@@ -25,12 +25,12 @@ export const metadata: Metadata = {
     '245D licensed care facility',
     'home care waiver MN',
   ],
-  metadataBase: new URL('https://careconnectlive.org'),
+  metadataBase: new URL('https://careconnections.live'),
   openGraph: {
     title: 'CareConnect — Minnesota 245D Provider Network',
     description:
       'Verified 245D licensed providers accepting CADI, DD, BI, and Elderly waiver clients across Minnesota.',
-    url: 'https://careconnectlive.org',
+    url: 'https://careconnections.live',
     siteName: 'CareConnect Minnesota',
     locale: 'en_US',
     type: 'website',

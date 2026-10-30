@@ -76,7 +76,7 @@ export default function MoratoriumBlogPost() {
             >
               Browse Verified 245D Providers →
             </Link>
-            <p className="text-sm text-gray-500 mt-3">careconnectlive.org/providers</p>
+            <p className="text-sm text-gray-500 mt-3">careconnections.live/providers</p>
           </div>
         </div>
       </article>

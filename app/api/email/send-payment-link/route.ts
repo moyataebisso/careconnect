@@ -57,7 +57,7 @@ const footer = `
   <div class="divider"></div>
   <p>📞 763-321-4542 | 763-355-0711</p>
   <p>📧 <a href="mailto:careconnectmkting@gmail.com">careconnectmkting@gmail.com</a></p>
-  <p><a href="https://www.careconnectlive.org">www.careconnectlive.org</a></p>
+  <p><a href="https://careconnections.live">careconnections.live</a></p>
   <div class="divider"></div>
   <p style="font-size: 12px; color: #94a3b8;">
     © ${new Date().getFullYear()} CareConnect. All rights reserved.
@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.careconnectlive.org'
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://careconnections.live'
     const plainLink = `${appUrl}/subscribe?provider_id=${encodeURIComponent(provider.id)}&email=${encodeURIComponent(provider.contact_email)}`
 
     const greetingName = provider.contact_person || 'Provider'
