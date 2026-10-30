@@ -1,8 +1,7 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import MessagingSystem from '@/app/components/MessagingSystem'
 import Link from 'next/link'
 
@@ -23,94 +22,71 @@ interface Booking {
     address: string
     city: string
     zip_code: string
-  }
+  } | null
 }
+
+type Viewer = { user_id: string; type: 'provider' | 'customer' }
+
+type LoadState =
+  | { kind: 'loading' }
+  | { kind: 'unauthorized' }
+  | { kind: 'notfound' }
+  | { kind: 'error'; message: string }
+  | { kind: 'ready'; booking: Booking; viewer: Viewer }
 
 export default function BookingConfirmationPage() {
   const params = useParams()
-  const router = useRouter()
-  const [booking, setBooking] = useState<Booking | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [currentUserType, setCurrentUserType] = useState<'provider' | 'customer'>('customer')
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const supabase = createClient()
+  const [state, setState] = useState<LoadState>({ kind: 'loading' })
 
   useEffect(() => {
-    if (params.id) {
-      loadBookingAndUserType(params.id as string)
+    const id = params.id as string | undefined
+    if (!id) return
+
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch(`/api/bookings/${encodeURIComponent(id)}`, {
+          credentials: 'include',
+        })
+        const payload = await res.json().catch(() => ({}))
+
+        if (cancelled) return
+
+        if (res.status === 401) {
+          setState({ kind: 'unauthorized' })
+          return
+        }
+        if (res.status === 404) {
+          setState({ kind: 'notfound' })
+          return
+        }
+        if (!res.ok) {
+          const message =
+            typeof payload?.error === 'string'
+              ? payload.error
+              : `Failed to load booking (HTTP ${res.status})`
+          setState({ kind: 'error', message })
+          return
+        }
+
+        setState({
+          kind: 'ready',
+          booking: payload.booking as Booking,
+          viewer: payload.viewer as Viewer,
+        })
+      } catch (err) {
+        if (cancelled) return
+        setState({
+          kind: 'error',
+          message: err instanceof Error ? err.message : 'Network error',
+        })
+      }
+    })()
+
+    return () => {
+      cancelled = true
     }
   }, [params.id])
-
-  const loadBookingAndUserType = async (bookingId: string) => {
-    try {
-      setLoading(true)
-      
-      // Get current user
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      // First get the booking
-      const { data: bookingData, error: bookingError } = await supabase
-        .from('bookings')
-        .select('*')
-        .eq('id', bookingId)
-        .single()
-
-      if (bookingError) {
-        throw bookingError
-      }
-
-      // Get provider data
-      const { data: providerData } = await supabase
-        .from('providers')
-        .select('id, business_name, address, city, zip_code, user_id')
-        .eq('id', bookingData.provider_id)
-        .single()
-
-      const fullBooking: Booking = {
-        ...bookingData,
-        provider: providerData
-      }
-
-      setBooking(fullBooking)
-
-      // Determine user type
-      if (user) {
-        setCurrentUserId(user.id)
-        
-        // Check if current user is the provider
-        if (providerData?.user_id === user.id) {
-          setCurrentUserType('provider')
-        } 
-        // Check if current user is the customer (by email)
-        else if (user.email === bookingData.customer_email) {
-          setCurrentUserType('customer')
-        }
-        // Check if user is a provider (but not THIS provider)
-        else {
-          const { data: providerCheck } = await supabase
-            .from('providers')
-            .select('id')
-            .eq('user_id', user.id)
-            .single()
-          
-          if (providerCheck) {
-            setCurrentUserType('provider')
-          } else {
-            setCurrentUserType('customer')
-          }
-        }
-      } else {
-        setCurrentUserType('customer')
-      }
-
-    } catch (err) {
-      console.error('Error loading booking:', err)
-      setError('Failed to load booking details')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -118,11 +94,11 @@ export default function BookingConfirmationPage() {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
     })
   }
 
-  if (loading) {
+  if (state.kind === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -133,7 +109,27 @@ export default function BookingConfirmationPage() {
     )
   }
 
-  if (error || !booking) {
+  if (state.kind === 'unauthorized') {
+    const path = typeof window !== 'undefined' ? window.location.pathname : ''
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md p-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Sign in required</h1>
+          <p className="text-gray-600 mb-6">
+            Please sign in to view this booking. Access is limited to the customer and provider on the appointment.
+          </p>
+          <Link
+            href={`/auth/login${path ? `?redirect=${encodeURIComponent(path)}` : ''}`}
+            className="inline-block px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Sign in
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (state.kind === 'notfound') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -143,7 +139,7 @@ export default function BookingConfirmationPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Booking Not Found</h1>
-          <p className="text-gray-600 mb-6">{error || 'The booking you are looking for does not exist.'}</p>
+          <p className="text-gray-600 mb-6">The booking you are looking for does not exist or is not accessible to you.</p>
           <Link href="/my-bookings" className="text-blue-600 hover:underline">
             View All Bookings →
           </Link>
@@ -151,6 +147,22 @@ export default function BookingConfirmationPage() {
       </div>
     )
   }
+
+  if (state.kind === 'error') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md p-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Couldn't load booking</h1>
+          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-4">
+            {state.message}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  const { booking, viewer } = state
+  const currentUserType = viewer.type
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -177,8 +189,8 @@ export default function BookingConfirmationPage() {
           {/* Quick Actions */}
           <div className="flex justify-between items-center mb-6">
             <div className="flex space-x-4">
-              <Link 
-                href="/my-bookings" 
+              <Link
+                href="/my-bookings"
                 className="text-gray-600 hover:text-gray-900 flex items-center space-x-2"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -188,7 +200,7 @@ export default function BookingConfirmationPage() {
               </Link>
             </div>
             <div className="flex space-x-3">
-              <button 
+              <button
                 onClick={() => window.print()}
                 className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center space-x-2"
               >
@@ -220,7 +232,7 @@ export default function BookingConfirmationPage() {
                   </svg>
                   Booking Details
                 </h2>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-start">
                     <div className="bg-blue-100 rounded-lg p-3 mr-4">
@@ -264,8 +276,8 @@ export default function BookingConfirmationPage() {
                       <div>
                         <p className="text-sm text-gray-500 mb-1">Booking Status</p>
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                          booking.status === 'confirmed' 
-                            ? 'bg-green-100 text-green-800' 
+                          booking.status === 'confirmed'
+                            ? 'bg-green-100 text-green-800'
                             : booking.status === 'cancelled'
                             ? 'bg-red-100 text-red-800'
                             : booking.status === 'pending'
@@ -359,7 +371,7 @@ export default function BookingConfirmationPage() {
                     providerId={booking.provider_id}
                     customerId={booking.customer_email}
                     bookingId={booking.id}
-                    userType={currentUserType}  // Now dynamic!
+                    userType={currentUserType}
                     providerName={booking.provider.business_name}
                     customerName={booking.customer_name}
                   />

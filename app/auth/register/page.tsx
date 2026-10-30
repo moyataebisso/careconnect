@@ -205,17 +205,17 @@ export default function RegisterPage() {
     setStep(step - 1)
   }
 
-  // Helper function to send emails (non-blocking)
-  const sendEmail = async (type: string, to: string, data: Record<string, string | number>) => {
+  // Fire-and-forget welcome + admin notification. Server route (session-authenticated)
+  // resolves recipient and content from DB, so we don't ship any PII in the body.
+  const notifyProviderRegistration = async () => {
     try {
-      await fetch('/api/email/send', {
+      await fetch('/api/notifications/registration', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, to, data })
+        body: JSON.stringify({ kind: 'provider' }),
       })
-      console.log(`Email sent: ${type} to ${to}`)
     } catch (emailError) {
-      console.log(`Email failed (non-blocking): ${type}`, emailError)
+      console.log('Registration notify failed (non-blocking):', emailError)
     }
   }
 
@@ -381,21 +381,7 @@ export default function RegisterPage() {
           }
         }
 
-        // Welcome email to provider (non-blocking)
-        sendEmail('provider_welcome', formData.email, {
-          providerName: formData.contact_person,
-          businessName: formData.business_name
-        })
-
-        // Admin notification (non-blocking)
-        const adminEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'careconnectmkting@gmail.com'
-        sendEmail('admin_new_provider', adminEmail, {
-          providerName: formData.contact_person,
-          businessName: formData.business_name,
-          email: formData.email,
-          phone: formData.contact_phone,
-          licenseNumber: formData.license_number
-        })
+        notifyProviderRegistration()
 
         router.push('/dashboard?registration_complete=true')
         return
@@ -468,19 +454,7 @@ export default function RegisterPage() {
         console.log('Profile update skipped (table may not exist):', profileError)
       }
 
-      sendEmail('provider_welcome', formData.email, {
-        providerName: formData.contact_person,
-        businessName: formData.business_name
-      })
-
-      const adminEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'careconnectmkting@gmail.com'
-      sendEmail('admin_new_provider', adminEmail, {
-        providerName: formData.contact_person,
-        businessName: formData.business_name,
-        email: formData.email,
-        phone: formData.contact_phone,
-        licenseNumber: formData.license_number
-      })
+      notifyProviderRegistration()
 
       if (providerData?.[0]?.id) {
         sessionStorage.setItem('registered_provider', JSON.stringify({

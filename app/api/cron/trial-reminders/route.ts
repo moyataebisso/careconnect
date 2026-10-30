@@ -1,137 +1,97 @@
 // /app/api/cron/trial-reminders/route.ts
-// Repurposed as subscription reminders for providers with pending payment status
+//
+// Subscription reminders for providers with pending payment.
+// Locked behind BOTH the Vercel cron header AND a bearer CRON_SECRET
+// (constant-time compared, fail-closed on missing/short env). GET-only.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { timingSafeEqual } from 'node:crypto'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { providerSubscriptionReminderEmail } from '@/lib/email/template'
-import nodemailer from 'nodemailer'
+import { dispatchEmail, escapeHtml, isValidEmail } from '@/lib/email/dispatcher'
 
-// Use service role for server-side operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+export const runtime = 'nodejs'
+
+const MIN_SECRET_LEN = 32
+
+// Uniform failure response so the caller can't distinguish which check tripped.
+const UNAUTHORIZED = NextResponse.json(
+  { success: false, error: 'Unauthorized' },
+  { status: 401 },
 )
 
-// Match exactly how send-custom works
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASSWORD
-  }
-})
+function authorized(request: NextRequest): boolean {
+  // Require the Vercel cron header — set by Vercel when invoking a cron.
+  if (!request.headers.get('x-vercel-cron')) return false
 
-// Stripe payment link base URL
+  const expected = process.env.CRON_SECRET
+  if (!expected || expected.length < MIN_SECRET_LEN) return false
+
+  const authHeader = request.headers.get('authorization') || ''
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader)
+  if (!match) return false
+  const provided = match[1]
+
+  const a = Buffer.from(expected, 'utf8')
+  const b = Buffer.from(provided, 'utf8')
+  if (a.length !== b.length) return false
+  try {
+    return timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
+
 const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/bJe5kw6Hof5na0d1NzbfO00'
 
-async function sendEmail(to: string, subject: string, html: string) {
-  try {
-    console.log(`Attempting to send email to: ${to}`)
-    const info = await transporter.sendMail({
-      from: `"CareConnect" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html
-    })
-    console.log(`Email sent successfully to ${to}:`, info.messageId)
-    return { success: true, messageId: info.messageId }
-  } catch (error) {
-    console.error(`Failed to send email to ${to}:`, error)
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' }
-  }
-}
-
 export async function GET(request: NextRequest) {
-  return handleRequest(request)
-}
+  if (!authorized(request)) return UNAUTHORIZED
 
-export async function POST(request: NextRequest) {
-  return handleRequest(request)
-}
-
-async function handleRequest(request: NextRequest) {
-  try {
-    const results = {
-      checked: 0,
-      emailsSent: 0,
-      errors: [] as string[],
-      details: [] as { provider: string; email: string; status: string }[]
-    }
-
-    // Find ALL providers with pending subscription status who need to pay
-    const { data: providers, error } = await supabase
-      .from('providers')
-      .select('id, business_name, contact_person, contact_email, subscription_status, status')
-      .eq('status', 'active') // Only approved providers
-      .or('subscription_status.eq.pending,subscription_status.is.null') // Pending or no subscription
-
-    if (error) {
-      console.error('Error fetching providers:', error)
-      return NextResponse.json({ error: 'Database error: ' + error.message }, { status: 500 })
-    }
-
-    console.log(`Found ${providers?.length || 0} providers needing subscription reminders`)
-
-    results.checked = providers?.length || 0
-
-    // Send reminder emails to each provider
-    for (const provider of providers || []) {
-      // Make sure we have a valid email
-      const email = provider.contact_email
-      if (!email || !email.includes('@')) {
-        console.log(`Skipping ${provider.business_name} - no valid email: ${email}`)
-        results.errors.push(`${provider.business_name}: No valid email address`)
-        results.details.push({
-          provider: provider.business_name,
-          email: email || 'none',
-          status: 'skipped - no valid email'
-        })
-        continue
-      }
-
-      console.log(`Sending subscription reminder to ${provider.business_name} (${email})`)
-
-      // Build payment link with prefilled email
-      const paymentLink = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}`
-
-      const emailContent = providerSubscriptionReminderEmail(
-        provider.contact_person || 'Provider',
-        provider.business_name,
-        paymentLink
-      )
-
-      const result = await sendEmail(email, emailContent.subject, emailContent.html)
-
-      if (result.success) {
-        results.emailsSent++
-        results.details.push({
-          provider: provider.business_name,
-          email: email,
-          status: 'sent'
-        })
-        console.log(`✅ Subscription reminder sent to ${provider.business_name}`)
-      } else {
-        results.errors.push(`${provider.business_name}: ${result.error}`)
-        results.details.push({
-          provider: provider.business_name,
-          email: email,
-          status: `failed: ${result.error}`
-        })
-        console.log(`❌ Failed to send to ${provider.business_name}: ${result.error}`)
-      }
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: `Checked ${results.checked} providers, sent ${results.emailsSent} reminder emails`,
-      ...results
-    })
-
-  } catch (error) {
-    console.error('Subscription reminder cron error:', error)
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
+  const supabase = createAdminClient()
+  const results = {
+    checked: 0,
+    emailsSent: 0,
+    errors: [] as string[],
   }
+
+  const { data: providers, error } = await supabase
+    .from('providers')
+    .select('id, business_name, contact_person, contact_email, subscription_status, status')
+    .eq('status', 'active')
+    .or('subscription_status.eq.pending,subscription_status.is.null')
+
+  if (error) {
+    console.error('cron.trial-reminders: DB error', error)
+    return NextResponse.json({ success: false, error: 'Database error' }, { status: 500 })
+  }
+
+  results.checked = providers?.length || 0
+
+  for (const provider of providers || []) {
+    const email = provider.contact_email
+    if (!email || !isValidEmail(email)) {
+      results.errors.push(`${provider.business_name}: no valid email`)
+      continue
+    }
+
+    const paymentLink = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(email)}`
+    const content = providerSubscriptionReminderEmail(
+      escapeHtml(provider.contact_person || 'Provider'),
+      escapeHtml(provider.business_name),
+      escapeHtml(paymentLink),
+    )
+
+    const r = await dispatchEmail({ to: email, subject: content.subject, html: content.html })
+    if (r.ok) {
+      results.emailsSent++
+    } else {
+      results.errors.push(`${provider.business_name}: ${r.reason}`)
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: `Checked ${results.checked} providers, sent ${results.emailsSent} reminders`,
+    ...results,
+  })
 }

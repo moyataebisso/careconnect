@@ -128,20 +128,13 @@ export default function AdminEmailsPage() {
       if (!provider) continue
 
       try {
-        const paymentLink = `${STRIPE_PAYMENT_LINK}?prefilled_email=${encodeURIComponent(provider.contact_email)}`
-
-        const response = await fetch('/api/email/send', {
+        const response = await fetch('/api/admin/notifications', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            type: 'subscription_reminder',
-            to: provider.contact_email,
-            data: {
-              providerName: provider.contact_person || 'Provider',
-              businessName: provider.business_name,
-              paymentLink
-            }
-          })
+            action: 'subscription_reminder',
+            provider_id: provider.id,
+          }),
         })
 
         const data = await response.json()
@@ -215,16 +208,15 @@ export default function AdminEmailsPage() {
       if (!provider) continue
 
       try {
-        const response = await fetch('/api/email/send-custom', {
+        const response = await fetch('/api/admin/notifications', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            to: provider.contact_email,
+            action: 'custom',
+            provider_id: provider.id,
             subject: customSubject,
             body: customBody,
-            providerName: provider.contact_person || 'Provider',
-            businessName: provider.business_name
-          })
+          }),
         })
 
         const data = await response.json()
